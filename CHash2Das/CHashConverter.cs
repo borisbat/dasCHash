@@ -48,6 +48,7 @@ namespace CHash2Das
                             case "int":
                             case "float":
                             case "double":
+                            case "bool":
                                 return ptype.Keyword.Text;
                             default:
                                 Debug.Fail($"unsupported PredefinedType keyword {ptype.Keyword}");
@@ -111,16 +112,57 @@ namespace CHash2Das
                 return "";
             switch (expression.Kind())
             {
+                case SyntaxKind.ParenthesizedExpression:
+                    return $"({onExpressionSyntax((expression as ParenthesizedExpressionSyntax).Expression)})";
                 case SyntaxKind.InvocationExpression:
                     return onInvocationExpression(expression as  InvocationExpressionSyntax);
+                case SyntaxKind.UnaryPlusExpression:
+                case SyntaxKind.UnaryMinusExpression:
+                case SyntaxKind.BitwiseNotExpression:
+                case SyntaxKind.LogicalNotExpression:
+                    {
+                        var unop = expression as PrefixUnaryExpressionSyntax;
+                        return $"({unop.OperatorToken}{onExpressionSyntax(unop.Operand)})";
+                    }
                 case SyntaxKind.AddExpression:
+                case SyntaxKind.SubtractExpression:
+                case SyntaxKind.MultiplyExpression:
+                case SyntaxKind.DivideExpression:
+                case SyntaxKind.ModuloExpression:
+                case SyntaxKind.EqualsExpression:
+                case SyntaxKind.NotEqualsExpression:
+                case SyntaxKind.LessThanExpression:
+                case SyntaxKind.LessThanOrEqualExpression:
+                case SyntaxKind.GreaterThanExpression:
+                case SyntaxKind.GreaterThanOrEqualExpression:
+                case SyntaxKind.LeftShiftExpression:
+                case SyntaxKind.RightShiftExpression:
+                case SyntaxKind.ExclusiveOrExpression:
+                case SyntaxKind.LogicalAndExpression:
+                case SyntaxKind.LogicalOrExpression:
+                case SyntaxKind.BitwiseAndExpression:
+                case SyntaxKind.BitwiseOrExpression:
                     {
                         var binop = expression as BinaryExpressionSyntax;
                         // TODO: convert operator token properly
-                        return $"({binop.Left}{binop.OperatorToken}{binop.Right})";
+                        // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
+                        return $"({onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)})";
+                    }
+                case SyntaxKind.SimpleAssignmentExpression:
+                case SyntaxKind.LeftShiftAssignmentExpression:
+                case SyntaxKind.RightShiftAssignmentExpression:
+                case SyntaxKind.ExclusiveOrAssignmentExpression:
+                case SyntaxKind.OrAssignmentExpression:
+                case SyntaxKind.AndAssignmentExpression:
+                    {
+                        var binop = expression as AssignmentExpressionSyntax;
+                        // TODO: convert operator token properly
+                        // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
+                        return $"({onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)})";
                     }
                 case SyntaxKind.OmittedArraySizeExpression:
                     return "";  // in int[], this is the portion between the brackets
+                case SyntaxKind.NumericLiteralExpression:
                 case SyntaxKind.StringLiteralExpression:
                     return onSyntaxToken((expression as LiteralExpressionSyntax).Token);
                 case SyntaxKind.SimpleMemberAccessExpression:
@@ -143,6 +185,8 @@ namespace CHash2Das
             {
                 case SyntaxKind.StringLiteralToken:
                     return $"\"{token.ValueText}\"";
+                case SyntaxKind.NumericLiteralToken:
+                    return token.ValueText;
                 default:
                     Debug.Fail($"unsupported SyntaxToken {token.Kind()}");
                     return $"{token}";
@@ -199,15 +243,41 @@ namespace CHash2Das
             return result;
         }
 
+        List<string> onVariableDeclarationSyntax(VariableDeclarationSyntax vardecl)
+        {
+            var values = new List<string>();
+            var tname = onTypeSyntax(vardecl.Type);
+            foreach(SyntaxNode svar in vardecl.Variables)
+            {
+                var result = "var ";
+                var declarator = svar as VariableDeclaratorSyntax;
+                result += $"{declarator.Identifier.Text}";
+                if (tname != "var")
+                    result += $" : {tname}";
+                if ( declarator.Initializer != null)
+                    result += $" = {onExpressionSyntax(declarator.Initializer.Value)}";
+                values.Add(result);
+            }
+            return values;
+        }
+
         string onStatementSyntax(StatementSyntax statement)
         {
             var tabstr = new string('\t', tabs);
             switch (statement.Kind())
             {
                 case SyntaxKind.ExpressionStatement:
-                    return tabstr + onExpressionSyntax((statement as ExpressionStatementSyntax).Expression) + ";\n";
+                    return $"{tabstr}{onExpressionSyntax((statement as ExpressionStatementSyntax).Expression)}\n";
                 case SyntaxKind.ReturnStatement:
-                    return tabstr + $"return {onExpressionSyntax((statement as ReturnStatementSyntax).Expression)}\n";
+                    return $"{tabstr}return {onExpressionSyntax((statement as ReturnStatementSyntax).Expression)}\n";
+                case SyntaxKind.LocalDeclarationStatement:
+                    {
+                        var values = onVariableDeclarationSyntax((statement as LocalDeclarationStatementSyntax).Declaration);
+                        string result = "";
+                        foreach(string val in values)
+                            result += $"{tabstr}{val}\n";
+                        return result;
+                    }
                 default:
                     Debug.Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
