@@ -17,13 +17,21 @@ namespace Main
         {
             string programText = System.IO.File.ReadAllText("../../../Test/test.cs");
 
+            // creating syntax tree
             SyntaxTree tree = CSharpSyntaxTree.ParseText(programText);
             CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
+
+            // creating compilation and semantic model
+            var compilation = CSharpCompilation.Create("HelloWorld")
+                .AddReferences(MetadataReference.CreateFromFile(
+                    typeof(string).Assembly.Location))
+                .AddSyntaxTrees(tree);
+            SemanticModel model = compilation.GetSemanticModel(tree);
 
             CHashConverter hasher = new CHashConverter();
             CHashDefaults.registerInvocations( hasher );
 
-            Console.WriteLine(hasher.convert(root));
+            Console.WriteLine(hasher.convert(compilation,model,root));
         }
     }
 }

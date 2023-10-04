@@ -5,6 +5,7 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace HelloWorld
 {
@@ -21,6 +22,49 @@ namespace HelloWorld
             System.Console.Write("Hello, World!\\n");
 
             Write("1", "2", "3");
+        }
+
+        static void ifThenElse(bool cond)
+        {
+            if (cond)
+                Console.WriteLine("if no-block");
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            if (cond)
+                Console.WriteLine("if no block");
+            else
+                Console.WriteLine("else no block");
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            else
+                Console.WriteLine("else no block");
+            if (cond)
+                Console.WriteLine("if no block");
+            else
+            {
+                Console.WriteLine("else block");
+            }
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            else
+            {
+                Console.WriteLine("else block");
+            }
+            if (cond)
+                if (cond)
+                    Console.WriteLine("if cond if cond");
+            if (cond)
+                Console.WriteLine("cond1");
+            else if (cond)
+                Console.WriteLine("cond2");
+            else
+                Console.WriteLine("cond-else");
         }
 
         static void varDecl()
@@ -71,48 +115,34 @@ namespace HelloWorld
             Console.WriteLine(c);
         }
 
-        static void ifThenElse(bool cond)
+        static void allCasts ( )
         {
-            if (cond)
-                Console.WriteLine("if no-block");
-            if (cond)
-            {
-                Console.WriteLine("if block");
-            }
-            if (cond)
-                Console.WriteLine("if no block");
-            else
-                Console.WriteLine("else no block");
-            if (cond)
-            {
-                Console.WriteLine("if block");
-            }
-            else
-                Console.WriteLine("else no block");
-            if (cond)
-                Console.WriteLine("if no block");
-            else
-            {
-                Console.WriteLine("else block");
-            }
-            if (cond)
-            {
-                Console.WriteLine("if block");
-            }
-            else
-            {
-                Console.WriteLine("else block");
-            }
-            if (cond)
-                if (cond)
-                    Console.WriteLine("if cond if cond");
-            if (cond)
-                Console.WriteLine("cond1");
-            else if (cond)
-                Console.WriteLine("cond2");
-            else
-                Console.WriteLine("cond-else");
-        }
+            sbyte i8 = 0;
+            byte u8 = 0;
+            Int16 i16 = 0;
+            UInt16 u16 = 0;
+            Int32 i32 = 0;
+            UInt32 u32 = 0;
+            int i = 0;
+            uint u = 0;
+            Int64 i64 = 0;
+            UInt64 u64 = 0;
+            float f = 0;
+            double d = 0;
 
+            var i8i8 = i8 + i8;     // int
+            var i8u8 = i8 + u8;     // int
+            var i16i16 = i16 + i16; // int
+            var i16u16 = i16 + u16; // int
+            var ii = i + i;         // int
+            var uu = u + u;         // uint
+            var ui = i + u;         // long
+            var i32i32 = i32 + i32; // int
+            var i32u32 = i32 + u32; // long
+            var i64i64 = i64 + i64; // long
+            var u64u64 = u64 + u64; // ulong
+            // var i64u64 = i64 + u64;  // ambiguity, does not compile
+            var fd = f + d;   // goes to double
+        }
     }
 }

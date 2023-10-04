@@ -14,6 +14,8 @@ namespace CHash2Das
     public class CHashConverter
     {
         int tabs = 0;
+        SemanticModel semanticModel;
+        CSharpCompilation compilation;
 
         string onTypeSyntax(TypeSyntax type)
         {
@@ -50,15 +52,30 @@ namespace CHash2Das
                             case "double":
                             case "bool":
                                 return ptype.Keyword.Text;
+                            case "sbyte":   return "int8";
+                            case "byte":    return "uint8";
+                            case "uint":    return "uint";
                             default:
-                                Debug.Fail($"unsupported PredefinedType keyword {ptype.Keyword}");
+                                Debug.Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";
                         }
                     }
                 case SyntaxKind.IdentifierName:
                     {
                         var itype = type as IdentifierNameSyntax;
-                        return $"{itype.Identifier.Text}";
+                        switch (itype.Identifier.Text)
+                        {
+                            case "Int16":   return "int16";
+                            case "UInt16":  return "uint16";
+                            case "Int32":   return "int";
+                            case "UInt32":  return "uint";
+                            case "Int64":   return "int64";
+                            case "UInt64":  return "uint64";
+                            case "var":     return "var";       // huh?
+                            default:
+                                Debug.Fail($"unknown identifier type {itype.Identifier.Text}");
+                                return $"{itype.Identifier.Text}";
+                        }
                     }
                 default:
                     Debug.Fail($"unsupported TypeSyntax {type.Kind()}");
@@ -106,6 +123,107 @@ namespace CHash2Das
             return $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
         }
 
+        bool isDouble(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Double));
+        }
+
+        bool isFloat(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Single));
+        }
+
+        bool isInt32(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Int32));
+        }
+
+        bool isUInt32(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt32));
+        }
+
+        bool isInt64(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt64));
+        }
+
+        bool isUInt64(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt64));
+        }
+
+        bool isLowBitsInteger(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Int16))
+                || ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt16))
+                || ts.Equals(compilation.GetSpecialType(SpecialType.System_Byte))
+                || ts.Equals(compilation.GetSpecialType(SpecialType.System_SByte));
+        }
+
+        int getTypeRank(ITypeSymbol ts)
+        {
+            // double > float > uint64 > int64 > uint32 > int32 
+            // any int bellow is going to int32
+            if (isDouble(ts)) return 7;
+            if (isFloat(ts)) return 6;
+            if (isUInt64(ts)) return 5;
+            if (isInt64(ts)) return 4;
+            if (isUInt32(ts)) return 3;
+            if (isInt32(ts)) return 2;
+            // lowest rank
+            if (isLowBitsInteger(ts)) return 0;
+            return -1;
+        }
+
+        string getDasCastName ( int rank )
+        {
+            switch ( rank)
+            {
+                case 7: return "double";
+                case 6: return "float";
+                case 5: return "uint64";
+                case 4: return "int64";
+                case 3: return "uint";
+                case 2: return "int";
+                case 0: return "int";
+            }
+            Debug.Fail("we should not be here. why cast?");
+            return "";
+        }
+
+        int getBinaryExpressionCastType(string op, int leftRank, int rightRank)
+        {
+            // TODO: make operator dependent type promotion
+            //  for example i32 + u32 is LONG
+            var maxRank = Math.Max(leftRank, rightRank);
+            if (maxRank == -1) return -1;
+            else if (maxRank == 0) return 2;
+            else return maxRank;
+        }
+
+        string onBinaryExpressionSyntax(BinaryExpressionSyntax binop)
+        {
+            var leftType = semanticModel.GetTypeInfo(binop.Left);
+            var rightType = semanticModel.GetTypeInfo(binop.Right);
+            var leftRank = getTypeRank(leftType.Type);
+            var rightRank = getTypeRank(rightType.Type);
+            var castRank = getBinaryExpressionCastType(binop.OperatorToken.Text,leftRank,rightRank);
+            var result = "(";
+            if (leftRank != castRank && castRank!=-1)
+                result += $"{getDasCastName(castRank)}(";
+            result += onExpressionSyntax(binop.Left);
+            if (leftRank != castRank && castRank != -1)
+                result += ")";
+            result += $" {binop.OperatorToken} ";
+            if (rightRank != castRank && castRank != -1)
+                result += $"{getDasCastName(castRank)}(";
+            result += onExpressionSyntax(binop.Right);
+            if (rightRank != castRank && castRank != -1)
+                result += ")";
+            return $"{result})";
+        }
+
         string onExpressionSyntax(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -142,12 +260,7 @@ namespace CHash2Das
                 case SyntaxKind.LogicalOrExpression:
                 case SyntaxKind.BitwiseAndExpression:
                 case SyntaxKind.BitwiseOrExpression:
-                    {
-                        var binop = expression as BinaryExpressionSyntax;
-                        // TODO: convert operator token properly
-                        // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
-                        return $"({onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)})";
-                    }
+                    return onBinaryExpressionSyntax(expression as BinaryExpressionSyntax);
                 case SyntaxKind.SimpleAssignmentExpression:
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
@@ -350,8 +463,11 @@ namespace CHash2Das
             }
         }
 
-        public string convert(CompilationUnitSyntax root)
+        public string convert(CSharpCompilation comp, SemanticModel model, CompilationUnitSyntax root)
         {
+            compilation = comp;
+            semanticModel = model;
+
             var result = "";
             foreach (UsingDirectiveSyntax u in root.Usings)
             {
