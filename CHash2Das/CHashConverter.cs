@@ -158,7 +158,7 @@ namespace CHash2Das
                         var binop = expression as AssignmentExpressionSyntax;
                         // TODO: convert operator token properly
                         // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
-                        return $"({onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)})";
+                        return $"{onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)}";
                     }
                 case SyntaxKind.OmittedArraySizeExpression:
                     return "";  // in int[], this is the portion between the brackets
