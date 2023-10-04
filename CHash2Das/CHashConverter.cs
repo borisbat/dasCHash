@@ -261,6 +261,40 @@ namespace CHash2Das
             return values;
         }
 
+        string onIfStatement(IfStatementSyntax ifstmt, bool isElif = false)
+        {
+            var tabstr = new string('\t', tabs);
+            var result = isElif ? $"elif " : $"if ";
+            result += $"{onExpressionSyntax(ifstmt.Condition)}\n";
+            if ( ifstmt.Statement is BlockSyntax )
+                result += onStatementSyntax(ifstmt.Statement);
+            else
+            {
+                tabs++;
+                result += onStatementSyntax(ifstmt.Statement);
+                tabs--;
+
+            }
+            if (ifstmt.Else != null)
+            {
+                if (ifstmt.Else.Statement is IfStatementSyntax)
+                    result += $"{tabstr}{onIfStatement(ifstmt.Else.Statement as IfStatementSyntax,true)}";
+                else
+                {
+                    result += $"{tabstr}else\n";
+                    if (ifstmt.Else.Statement is BlockSyntax)
+                        result += onStatementSyntax(ifstmt.Else.Statement);
+                    else
+                    {
+                        tabs++;
+                        result += onStatementSyntax(ifstmt.Else.Statement);
+                        tabs--;
+                    }
+                }
+            }
+            return result;
+        }
+
         string onStatementSyntax(StatementSyntax statement)
         {
             var tabstr = new string('\t', tabs);
@@ -278,6 +312,10 @@ namespace CHash2Das
                             result += $"{tabstr}{val}\n";
                         return result;
                     }
+                case SyntaxKind.IfStatement:
+                    return $"{tabstr}{onIfStatement(statement as IfStatementSyntax)}";
+                case SyntaxKind.Block:
+                    return onBlockSyntax(statement as BlockSyntax);
                 default:
                     Debug.Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";

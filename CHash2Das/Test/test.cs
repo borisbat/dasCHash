@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Text;
-
+using System.Net;
 
 namespace HelloWorld
 {
@@ -29,7 +29,6 @@ namespace HelloWorld
             int x = 1;
             int y = 2, z = 3;
         }
-
 
         static void allOperators ( int a, float b )
         {
@@ -71,5 +70,49 @@ namespace HelloWorld
             a ^= a;
             Console.WriteLine(c);
         }
+
+        static void ifThenElse(bool cond)
+        {
+            if (cond)
+                Console.WriteLine("if no-block");
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            if (cond)
+                Console.WriteLine("if no block");
+            else
+                Console.WriteLine("else no block");
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            else
+                Console.WriteLine("else no block");
+            if (cond)
+                Console.WriteLine("if no block");
+            else
+            {
+                Console.WriteLine("else block");
+            }
+            if (cond)
+            {
+                Console.WriteLine("if block");
+            }
+            else
+            {
+                Console.WriteLine("else block");
+            }
+            if (cond)
+                if (cond)
+                    Console.WriteLine("if cond if cond");
+            if (cond)
+                Console.WriteLine("cond1");
+            else if (cond)
+                Console.WriteLine("cond2");
+            else
+                Console.WriteLine("cond-else");
+        }
+
     }
 }
