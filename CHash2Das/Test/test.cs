@@ -144,5 +144,25 @@ namespace HelloWorld
             // var i64u64 = i64 + u64;  // ambiguity, does not compile
             var fd = f + d;   // goes to double
         }
+
+        static void whileLoop()
+        {
+            var a = 1;
+            while (a < 5)
+                a++;
+            while (a != 10)
+            {
+                ++a;
+                --a;
+                a--;
+            }
+            while ( a==a )
+            {
+                if (a != a)
+                    break;
+                if (a == a)
+                    continue;
+            }
+        }
     }
 }

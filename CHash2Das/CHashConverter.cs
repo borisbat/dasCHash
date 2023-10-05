@@ -285,6 +285,18 @@ namespace CHash2Das
                     }
                 case SyntaxKind.IdentifierName:
                     return $"{(expression as IdentifierNameSyntax).Identifier.Text}";
+                case SyntaxKind.PreIncrementExpression:
+                case SyntaxKind.PreDecrementExpression:
+                    {
+                        var preop = expression as PrefixUnaryExpressionSyntax;
+                        return $"{preop.OperatorToken.Value}{onExpressionSyntax(preop.Operand)}";
+                    }
+                case SyntaxKind.PostIncrementExpression:
+                case SyntaxKind.PostDecrementExpression:
+                    {
+                        var postop = expression as PostfixUnaryExpressionSyntax;
+                        return $"{onExpressionSyntax(postop.Operand)}{postop.OperatorToken.Value}";
+                    }
                 default:
                     Debug.Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     break;
@@ -374,6 +386,20 @@ namespace CHash2Das
             return values;
         }
 
+        string onWhileStatement(WhileStatementSyntax wstmt)
+        {
+            var tabstr = new string('\t', tabs);
+            var result = $"while {wstmt.Condition}\n";
+            if (wstmt.Statement is BlockSyntax)
+                result += onStatementSyntax(wstmt.Statement);
+            else
+            {
+                tabs++;
+                result += onStatementSyntax(wstmt.Statement);
+                tabs--;
+            }
+            return result;
+        }
         string onIfStatement(IfStatementSyntax ifstmt, bool isElif = false)
         {
             var tabstr = new string('\t', tabs);
@@ -427,8 +453,14 @@ namespace CHash2Das
                     }
                 case SyntaxKind.IfStatement:
                     return $"{tabstr}{onIfStatement(statement as IfStatementSyntax)}";
+                case SyntaxKind.WhileStatement:
+                    return $"{tabstr}{onWhileStatement(statement as WhileStatementSyntax)}";
                 case SyntaxKind.Block:
                     return onBlockSyntax(statement as BlockSyntax);
+                case SyntaxKind.BreakStatement:
+                    return $"{tabstr}break\n";
+                case SyntaxKind.ContinueStatement:
+                    return $"{tabstr}continue\n";
                 default:
                     Debug.Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
