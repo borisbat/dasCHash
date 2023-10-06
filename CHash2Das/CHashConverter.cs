@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Linq.Expressions;
 using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace CHash2Das
 {
@@ -123,6 +124,11 @@ namespace CHash2Das
             return $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
         }
 
+        bool isBool(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Boolean));
+        }
+
         bool isDouble(ITypeSymbol ts)
         {
             return ts.Equals(compilation.GetSpecialType(SpecialType.System_Double));
@@ -145,7 +151,7 @@ namespace CHash2Das
 
         bool isInt64(ITypeSymbol ts)
         {
-            return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt64));
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Int64));
         }
 
         bool isUInt64(ITypeSymbol ts)
@@ -153,12 +159,39 @@ namespace CHash2Das
             return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt64));
         }
 
+        bool isInt16(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Int16));
+        }
+
+        bool isUInt16(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt16));
+        }
+
+        bool isInt8(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_SByte));
+        }
+
+        bool isUInt8(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Byte));
+        }
+
         bool isLowBitsInteger(ITypeSymbol ts)
         {
-            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Int16))
-                || ts.Equals(compilation.GetSpecialType(SpecialType.System_UInt16))
-                || ts.Equals(compilation.GetSpecialType(SpecialType.System_Byte))
-                || ts.Equals(compilation.GetSpecialType(SpecialType.System_SByte));
+            return isInt16(ts) || isUInt16(ts) || isInt8(ts) || isUInt8(ts);
+        }
+
+        bool IsNullableValueType(ITypeSymbol typeSymbol)
+        {
+            return (typeSymbol is INamedTypeSymbol namedType && namedType.IsGenericType && namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T);
+        }
+
+        bool isNullable(ITypeSymbol ts)
+        {
+            return ts.IsReferenceType || IsNullableValueType(ts);
         }
 
         int getTypeRank(ITypeSymbol ts)
@@ -267,6 +300,10 @@ namespace CHash2Das
                 case SyntaxKind.ExclusiveOrAssignmentExpression:
                 case SyntaxKind.OrAssignmentExpression:
                 case SyntaxKind.AndAssignmentExpression:
+                case SyntaxKind.AddAssignmentExpression:
+                case SyntaxKind.SubtractAssignmentExpression:
+                case SyntaxKind.MultiplyAssignmentExpression:
+                case SyntaxKind.DivideAssignmentExpression:
                     {
                         var binop = expression as AssignmentExpressionSyntax;
                         // TODO: convert operator token properly
@@ -297,11 +334,36 @@ namespace CHash2Das
                         var postop = expression as PostfixUnaryExpressionSyntax;
                         return $"{onExpressionSyntax(postop.Operand)}{postop.OperatorToken.Value}";
                     }
+                case SyntaxKind.InterpolatedStringExpression:
+                    return onInterpolatedStringExpressionSyntax(expression as InterpolatedStringExpressionSyntax);
                 default:
                     Debug.Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     break;
             }
             return $"{expression.ToString()}";
+        }
+
+        string onInterpolatedStringExpressionSyntax( InterpolatedStringExpressionSyntax iss )
+        {
+            var result = "StringBuilder(";
+            var first = true;
+            foreach (var content in iss.Contents)
+            {
+                if (first)
+                    first = false;
+                else 
+                    result += ", ";
+                switch (content)
+                {
+                    case InterpolatedStringTextSyntax textSyntax:
+                        result += $"\"{content}\""; // TODO: print string better
+                        break;
+                    case InterpolationSyntax interpolationSyntax:
+                        result += onExpressionSyntax(interpolationSyntax.Expression);
+                        break;
+                }
+            }
+            return $"{result})";
         }
 
         string onSyntaxToken(SyntaxToken token)
@@ -368,13 +430,13 @@ namespace CHash2Das
             return result;
         }
 
-        List<string> onVariableDeclarationSyntax(VariableDeclarationSyntax vardecl)
+        List<string> onVariableDeclarationSyntax(VariableDeclarationSyntax vardecl, bool needVar = true)
         {
             var values = new List<string>();
             var tname = onTypeSyntax(vardecl.Type);
             foreach(SyntaxNode svar in vardecl.Variables)
             {
-                var result = "var ";
+                var result = needVar ? "var " : "";
                 var declarator = svar as VariableDeclaratorSyntax;
                 result += $"{declarator.Identifier.Text}";
                 if (tname != "var")
@@ -386,50 +448,176 @@ namespace CHash2Das
             return values;
         }
 
-        string onWhileStatement(WhileStatementSyntax wstmt)
+        bool hasBreakOrContinue(StatementSyntax statementSyntax)
         {
-            var tabstr = new string('\t', tabs);
-            var result = $"while {wstmt.Condition}\n";
-            if (wstmt.Statement is BlockSyntax)
-                result += onStatementSyntax(wstmt.Statement);
+           return statementSyntax.DescendantNodes()
+                .Any(node => node is BreakStatementSyntax || node is ContinueStatementSyntax);
+        }
+
+        bool isIdentifier ( ExpressionSyntax expression, string id )
+        {
+            if (!(expression is IdentifierNameSyntax))
+                return false;
+            if ((expression as IdentifierNameSyntax).Identifier.Text != id)
+                return false;
+            return true;
+        }
+
+        bool isOne ( ExpressionSyntax expression )
+        {
+            if (!(expression is LiteralExpressionSyntax)) return false;
+            if ((expression as LiteralExpressionSyntax).Token.ValueText != "1") return false;
+            return true;
+        }
+
+        bool isRangeFor(ForStatementSyntax fstmt, out string rangeExpr )
+        {
+            rangeExpr = null;
+            if (fstmt.Declaration.Variables.Count != 1) return false;           // only 1 variable
+            var vdecl = fstmt.Declaration.Variables[0];
+            var vname = vdecl.Identifier.Text;
+            ITypeSymbol vtype;
+            ISymbol symbol = semanticModel.GetDeclaredSymbol(vdecl);
+            if (symbol is ILocalSymbol localVariableSymbol)
+                vtype = localVariableSymbol.Type;
             else
+                return false;
+            var range = "";
+            if (isInt32(vtype)) range = "range";                                // int, uint, int64, or uint64
+            else if (isUInt32(vtype)) range = "urange";
+            else if (isInt64(vtype)) range = "range64";
+            else if (isUInt64(vtype)) range = "urange64";
+            else return false;
+            if (fstmt.Incrementors.Count != 1) return false;                    // only 1 incrementor
+            var inc = fstmt.Incrementors[0];
+            switch ( inc.Kind() )
             {
-                tabs++;
-                result += onStatementSyntax(wstmt.Statement);
-                tabs--;
+                case SyntaxKind.PreIncrementExpression:                         // it's ++var
+                    if (!isIdentifier((inc as PrefixUnaryExpressionSyntax).Operand, vname))
+                        return false;
+                    break;
+                case SyntaxKind.PostIncrementExpression:                        // it's var++
+                    if (!isIdentifier((inc as PostfixUnaryExpressionSyntax).Operand, vname))
+                        return false;
+                    break;
+                case SyntaxKind.AddAssignmentExpression:                        // it's var += 1
+                    {
+                        var aa = inc as AssignmentExpressionSyntax;
+                        if ( !isIdentifier(aa.Left, vname)) return false;
+                        if ( !isOne(aa.Right)) return false;
+                        break;
+                    }
+                case SyntaxKind.SimpleAssignmentExpression:                     // its var = var + 1 or var = 1 + var
+                    {
+                        var aa = inc as AssignmentExpressionSyntax;
+                        if ( !isIdentifier(aa.Left, vname)) return false;
+                        if ( !(aa.Right is BinaryExpressionSyntax)) return false;
+                        var bb = aa.Right as BinaryExpressionSyntax;
+                        if (isIdentifier(bb.Left, vname) && isOne(bb.Right)) { }            // var = var + 1
+                        else if (isIdentifier(bb.Right, vname) && isOne(bb.Left)) { }       // var = 1 + var
+                        else return false;
+                        break;
+                    }
+                default:
+                    return false;
             }
+            // condition is var < value or var != value or value > var or value != var
+            var torange = "";
+            switch (fstmt.Condition.Kind())
+            {
+                case SyntaxKind.NotEqualsExpression:
+                    {
+                        var binop = fstmt.Condition as BinaryExpressionSyntax;
+                        if (isIdentifier(binop.Left, vname))
+                            torange = onExpressionSyntax(binop.Right);
+                        else if (isIdentifier(binop.Right, vname))
+                            torange = onExpressionSyntax(binop.Left);
+                        else
+                            return false;
+                        break;
+                    }
+                case SyntaxKind.LessThanExpression:
+                    {
+                        var binop = fstmt.Condition as BinaryExpressionSyntax;
+                        if(isIdentifier(binop.Left, vname))
+                            torange += onExpressionSyntax(binop.Right);
+                        else
+                            return false;
+                        break;
+                    }
+                case SyntaxKind.GreaterThanExpression:
+                    {
+                        var binop = fstmt.Condition as BinaryExpressionSyntax;
+                        if (isIdentifier(binop.Right, vname))
+                            torange += onExpressionSyntax(binop.Left);
+                        else
+                            return false;
+                        break;
+                    }
+            
+            }
+            rangeExpr = $"for {vname} in {range}({onExpressionSyntax(vdecl.Initializer.Value)},{torange})";
+            return true;
+        }
+
+        string loopBlock(StatementSyntax expr)
+        {
+            if (expr is BlockSyntax)
+                return onStatementSyntax(expr);
+            tabs++;
+            string result = onStatementSyntax(expr);
+            tabs--;
             return result;
         }
+
+        string onForStatement(ForStatementSyntax fstmt)
+        {
+            var tabstr = new string('\t', tabs);
+            if (isRangeFor(fstmt,out string rangeExpr))
+                return  $"{rangeExpr}\n{loopBlock(fstmt.Statement)}";
+            var result = "// for\n";
+            var values = onVariableDeclarationSyntax(fstmt.Declaration);
+            foreach (string val in values)
+                result += $"{tabstr}{val}\n";
+            result += $"{tabstr}while {onExpressionSyntax(fstmt.Condition)}\n";
+            bool hasBorC = hasBreakOrContinue(fstmt.Statement);
+            if (hasBorC)
+            {
+                result += $"{tabstr}\tif true // to create block for finally section\n";
+                tabs++;
+            }
+            result += loopBlock(fstmt.Statement);
+            if (hasBorC)
+            {
+                tabs--;
+                result += $"{tabstr}\tfinally\n";
+            }
+            tabs++;
+            tabstr = new string('\t', hasBorC ? (tabs+1) : tabs);
+            foreach (ExpressionSyntax i in fstmt.Incrementors)
+            {
+                result += $"{tabstr}{onExpressionSyntax(i)}\n";
+            }
+            tabs--;
+            return result;
+        }
+
+        string onWhileStatement(WhileStatementSyntax wstmt)
+        {
+            return $"while {onExpressionSyntax(wstmt.Condition)}\n{loopBlock(wstmt.Statement)}";
+        }
+
         string onIfStatement(IfStatementSyntax ifstmt, bool isElif = false)
         {
             var tabstr = new string('\t', tabs);
             var result = isElif ? $"elif " : $"if ";
-            result += $"{onExpressionSyntax(ifstmt.Condition)}\n";
-            if ( ifstmt.Statement is BlockSyntax )
-                result += onStatementSyntax(ifstmt.Statement);
-            else
-            {
-                tabs++;
-                result += onStatementSyntax(ifstmt.Statement);
-                tabs--;
-
-            }
+            result += $"{onExpressionSyntax(ifstmt.Condition)}\n{loopBlock(ifstmt.Statement)}";
             if (ifstmt.Else != null)
             {
                 if (ifstmt.Else.Statement is IfStatementSyntax)
                     result += $"{tabstr}{onIfStatement(ifstmt.Else.Statement as IfStatementSyntax,true)}";
                 else
-                {
-                    result += $"{tabstr}else\n";
-                    if (ifstmt.Else.Statement is BlockSyntax)
-                        result += onStatementSyntax(ifstmt.Else.Statement);
-                    else
-                    {
-                        tabs++;
-                        result += onStatementSyntax(ifstmt.Else.Statement);
-                        tabs--;
-                    }
-                }
+                    result += $"{tabstr}else\n{loopBlock(ifstmt.Else.Statement)}";
             }
             return result;
         }
@@ -455,6 +643,8 @@ namespace CHash2Das
                     return $"{tabstr}{onIfStatement(statement as IfStatementSyntax)}";
                 case SyntaxKind.WhileStatement:
                     return $"{tabstr}{onWhileStatement(statement as WhileStatementSyntax)}";
+                case SyntaxKind.ForStatement:
+                    return $"{tabstr}{onForStatement(statement as ForStatementSyntax)}";
                 case SyntaxKind.Block:
                     return onBlockSyntax(statement as BlockSyntax);
                 case SyntaxKind.BreakStatement:
@@ -471,11 +661,29 @@ namespace CHash2Das
         {
             var result = "";
             tabs++;
-            foreach (StatementSyntax expr in block.Statements)
+            if (block.Statements.Count == 0)
             {
-                result += onStatementSyntax(expr);
+                var tabstr = new string('\t', tabs);
+                result = $"{tabstr}pass\n";
+            }
+            else
+            {
+                foreach (StatementSyntax expr in block.Statements)
+                {
+                    result += onStatementSyntax(expr);
+                }
             }
             tabs--;
+            return result;
+        }
+
+        string onFieldDeclaration(FieldDeclarationSyntax field)
+        {
+            var tabstr = new string('\t', tabs);
+            var values = onVariableDeclarationSyntax(field.Declaration,false);
+            string result = "";
+            foreach (string val in values)
+                result += $"{tabstr}{val}\n";
             return result;
         }
 
@@ -489,6 +697,8 @@ namespace CHash2Das
                     return onClassDeclaration(member as ClassDeclarationSyntax);
                 case SyntaxKind.MethodDeclaration:
                     return onMethodDeclaration(member as MethodDeclarationSyntax);
+                case SyntaxKind.FieldDeclaration:
+                    return onFieldDeclaration(member as FieldDeclarationSyntax);
                 default:
                     Debug.Fail($"Unsupported member {member.Kind()}");
                     return "";

@@ -9,8 +9,16 @@ using System.Runtime.InteropServices;
 
 namespace HelloWorld
 {
+    class Foo { 
+        static void bar()
+        {
+        }
+    }
+
     class HelloProgram
     {
+        int count = 13;
+        
         static void _main(string[] args)
         {
             WriteLine("Hello, World!");
@@ -163,6 +171,40 @@ namespace HelloWorld
                 if (a == a)
                     continue;
             }
+        }
+
+        static void forLoop()
+        {
+            for (var i = 0; i < 10; ++i)
+                Console.WriteLine(i);
+            for (int i = 0, j = 12; i + j < 100; i++, j--)
+                Console.WriteLine($"i={i} j={j}");
+            for (int i=0; i < 10; ++i)
+            {
+                if (i == 5)
+                    break;
+                Console.WriteLine(i);
+            }
+
+            for (var i = 1; i != 3; i += 2) // not it
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = i + 2)    // not it
+                Console.WriteLine(i);
+
+            for (var i = 1; i != 3; ++i)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; 3 != i; ++i)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i < 3; i++)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; 3 > i; i++)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i+=1)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = i + 1)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = 1 + i)    // for i in range(1,3)
+                Console.WriteLine(i);
         }
     }
 }

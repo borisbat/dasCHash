@@ -18,8 +18,16 @@ using System.Runtime.InteropServices;
 
 namespace HelloWorld
 {
+    class Foo { 
+        static void bar()
+        {
+        }
+    }
+
     class HelloProgram
     {
+        int count = 13;
+        
         static void _main(string[] args)
         {
             WriteLine("Hello, World!");
@@ -173,6 +181,40 @@ namespace HelloWorld
                     continue;
             }
         }
+
+        static void forLoop()
+        {
+            for (var i = 0; i < 10; ++i)
+                Console.WriteLine(i);
+            for (int i = 0, j = 12; i + j < 100; i++, j--)
+                Console.WriteLine($"i={i} j={j}");
+            for (int i=0; i < 10; ++i)
+            {
+                if (i == 5)
+                    break;
+                Console.WriteLine(i);
+            }
+
+            for (var i = 1; i != 3; i += 2) // not it
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = i + 2)    // not it
+                Console.WriteLine(i);
+
+            for (var i = 1; i != 3; ++i)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; 3 != i; ++i)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i < 3; i++)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; 3 > i; i++)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i+=1)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = i + 1)    // for i in range(1,3)
+                Console.WriteLine(i);
+            for (var i = 1; i != 3; i = 1 + i)    // for i in range(1,3)
+                Console.WriteLine(i);
+        }
     }
 }
 ```
@@ -190,7 +232,11 @@ to daScript equivalent.
 // using System.Runtime.InteropServices
 
 // namespaced HelloWorld
+class Foo
+        def bar  : void
+                pass
 class HelloProgram
+        count : int = 13
         def _main (args : string[]) : void
                 print(StringBuilder("Hello, World!","\n"))
                 print(StringBuilder("Hello, World!","\n"))
@@ -292,15 +338,53 @@ class HelloProgram
                 var fd = (double(f) + d)
         def whileLoop  : void
                 var a = 1
-                while a < 5
+                while (a < 5)
                         a++
-                while a != 10
+                while (a != 10)
                         ++a
                         --a
                         a--
-                while a==a
+                while (a == a)
                         if (a != a)
                                 break
                         if (a == a)
                                 continue
+        def forLoop  : void
+                for i in range(0,10)
+                        print(StringBuilder(i,"\n"))
+                // for
+                var i : int = 0
+                var j : int = 12
+                while ((i + j) < 100)
+                        print(StringBuilder(StringBuilder("i=", i, " j=", j),"\n"))
+                        i++
+                        j--
+                for i in range(0,10)
+                        if (i == 5)
+                                break
+                        print(StringBuilder(i,"\n"))
+                // for
+                var i = 1
+                while (i != 3)
+                        print(StringBuilder(i,"\n"))
+                        i += 2
+                // for
+                var i = 1
+                while (i != 3)
+                        print(StringBuilder(i,"\n"))
+                        i = (i + 2)
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
+                for i in range(1,3)
+                        print(StringBuilder(i,"\n"))
 ```
