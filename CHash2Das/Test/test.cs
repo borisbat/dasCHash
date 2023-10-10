@@ -237,5 +237,28 @@ namespace HelloWorld
             foreach(var t in b)
                 WriteLine(t);
         }
+
+        static void switchCase()
+        {
+            var i = 13;
+            switch ( i )
+            {
+                case 0:
+                    break;
+                case 1:
+                case 2:
+                    Console.WriteLine("12");
+                    break;
+                default:
+                    Console.WriteLine("anything");
+                    break;
+            }
+            Console.WriteLine("and thats that");
+            switch ( i )
+            {
+                case 1: i++; break;
+                case 2: i--; break;
+            }
+        }
     }
 }

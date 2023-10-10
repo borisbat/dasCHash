@@ -14,10 +14,19 @@ namespace CHash2Das
 {
     public class CHashConverter
     {
+        bool failToDebug = true;
         int tabs = 0;
         int tempVars = 0;
         SemanticModel semanticModel;
         CSharpCompilation compilation;
+
+        void Fail ( string message )
+        {
+            if (failToDebug)
+                Debug.Fail(message);
+            else
+                Console.WriteLine(message);
+        }
 
         string onTypeSyntax(TypeSyntax type)
         {
@@ -62,11 +71,11 @@ namespace CHash2Das
                             case "double":
                             case "bool":
                                 return ptype.Keyword.Text;
-                            case "sbyte":   return "int8";
-                            case "byte":    return "uint8";
-                            case "uint":    return "uint";
+                            case "sbyte": return "int8";
+                            case "byte": return "uint8";
+                            case "uint": return "uint";
                             default:
-                                Debug.Fail($"unknown PredefinedType keyword {ptype.Keyword}");
+                                Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";
                         }
                     }
@@ -75,23 +84,22 @@ namespace CHash2Das
                         var itype = type as IdentifierNameSyntax;
                         switch (itype.Identifier.Text)
                         {
-                            case "Int16":   return "int16";
-                            case "UInt16":  return "uint16";
-                            case "Int32":   return "int";
-                            case "UInt32":  return "uint";
-                            case "Int64":   return "int64";
-                            case "UInt64":  return "uint64";
-                            case "var":     return "var";       // huh?
+                            case "Int16": return "int16";
+                            case "UInt16": return "uint16";
+                            case "Int32": return "int";
+                            case "UInt32": return "uint";
+                            case "Int64": return "int64";
+                            case "UInt64": return "uint64";
+                            case "var": return "var";       // huh?
                             default:
-                                Debug.Fail($"unknown identifier type {itype.Identifier.Text}");
+                                Fail($"unknown identifier type {itype.Identifier.Text}");
                                 return $"{itype.Identifier.Text}";
                         }
                     }
                 default:
-                    Debug.Fail($"unsupported TypeSyntax {type.Kind()}");
-                    break;
+                    Fail($"unsupported TypeSyntax {type.Kind()}");
+                    return $"{type.Kind()}";
             }
-            return $"{type.Kind()}";
         }
 
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
@@ -230,7 +238,7 @@ namespace CHash2Das
                 case 2: return "int";
                 case 0: return "int";
             }
-            Debug.Fail("we should not be here. why cast?");
+            Fail("we should not be here. why cast?");
             return "";
         }
 
@@ -385,10 +393,9 @@ namespace CHash2Das
                 case SyntaxKind.ArrayInitializerExpression:
                     return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax);
                 default:
-                    Debug.Fail($"unsupported ExpressionSyntax {expression.Kind()}");
-                    break;
+                    Fail($"unsupported ExpressionSyntax {expression.Kind()}");
+                    return $"{expression.ToString()}";
             }
-            return $"{expression.ToString()}";
         }
 
         string onInterpolatedStringExpressionSyntax( InterpolatedStringExpressionSyntax iss )
@@ -423,7 +430,7 @@ namespace CHash2Das
                 case SyntaxKind.NumericLiteralToken:
                     return token.ValueText;
                 default:
-                    Debug.Fail($"unsupported SyntaxToken {token.Kind()}");
+                    Fail($"unsupported SyntaxToken {token.Kind()}");
                     return $"{token}";
             }
         }
@@ -701,6 +708,48 @@ namespace CHash2Das
             return $"for {fs.Identifier.Text} in {onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
 
+        string onSwitchStatement(SwitchStatementSyntax fs)
+        {
+            var tempval = makeTempVar("switchcase");
+            var tabstr = new string('\t', tabs);
+            var result = $"let {tempval} = {onExpressionSyntax(fs.Expression)}\n{tabstr}while true\n";
+            var firstIf = true;
+            tabs++; tabstr += '\t';
+            var hasDefault = false;
+            foreach (SwitchSectionSyntax section in fs.Sections)
+            {
+                if (firstIf)
+                {
+                    result += $"{tabstr}if ";
+                    firstIf = false;
+                } 
+                else
+                    result += $"{tabstr}elif ";
+                var first = true;
+                foreach(SwitchLabelSyntax st in section.Labels)
+                {
+                    if (first) first = false;
+                    else result += " || ";
+                    if (st is CaseSwitchLabelSyntax)
+                        result += $"{tempval}=={(st as CaseSwitchLabelSyntax).Value}";
+                    else if (st is DefaultSwitchLabelSyntax)
+                    {
+                        hasDefault = true;
+                        result += "true";
+                    }
+                }
+                result += "\n";
+                tabs++;
+                foreach (var ex in section.Statements)
+                    result += $"{onStatementSyntax(ex)}";
+                tabs--;
+            }
+            tabs--;
+            if ( !hasDefault )
+                result += $"{tabstr}break\n";
+            return result;
+        }
+
         string onStatementSyntax(StatementSyntax statement)
         {
             var tabstr = new string('\t', tabs);
@@ -734,10 +783,12 @@ namespace CHash2Das
                     return $"{tabstr}continue\n";
                 case SyntaxKind.ForEachStatement:
                     return $"{tabstr}{onForeachStatement(statement as ForEachStatementSyntax)}";
+                case SyntaxKind.SwitchStatement:
+                    return $"{tabstr}{onSwitchStatement(statement as SwitchStatementSyntax)}";
                 default:
-                    Debug.Fail($"unsupported StatementSyntax {statement.Kind()}");
+                    Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
-            }
+          }
         }
 
         string onBlockSyntax(BlockSyntax block)
@@ -783,8 +834,8 @@ namespace CHash2Das
                 case SyntaxKind.FieldDeclaration:
                     return onFieldDeclaration(member as FieldDeclarationSyntax);
                 default:
-                    Debug.Fail($"Unsupported member {member.Kind()}");
-                    return "";
+                    Fail($"Unsupported member {member.Kind()}");
+                    return $"{member}";
             }
         }
 
