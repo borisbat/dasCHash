@@ -268,6 +268,12 @@ namespace HelloWorld
                 case 1: i++; break;
                 case 2: i--; break;
             }
+            // and the crazy case
+            switch ( i )
+            {
+                case 1: if (i == 0) break; else { i++; break; }
+                case 2: i--; break;
+            }
             // default in the middle
             switch (i)
             {
@@ -275,15 +281,10 @@ namespace HelloWorld
                 default: break;
                 case 2: i--; break;
             }
-            // and the crazy case
-            switch ( i )
-            {
-                case 1: if (i == 0) break; else { i++; break; }
-                case 2: i--; break;
-            }
         }
     }
 }
+
 ```
 
 to daScript equivalent.
@@ -494,24 +495,24 @@ class HelloProgram
                 elif __temp_4_switchcase==2
                         i--
                 let __temp_5_switchcase = i
-                if __temp_5_switchcase==1
-                        i++
-                elif true
-                        pass
-                elif __temp_5_switchcase==2
-                        i--
-                let __temp_6_switchcase = i
                 while true
-                        if __temp_6_switchcase==1
+                        if __temp_5_switchcase==1
                                 if (i == 0)
                                         break
                                 else
                                         i++
                                         break
-                        elif __temp_6_switchcase==2
+                        elif __temp_5_switchcase==2
                                 i--
                                 break
                         break
+                let __temp_6_switchcase = i
+                if __temp_6_switchcase==1
+                        i++
+                elif __temp_6_switchcase==2
+                        i--
+                else
+                        pass
 ```
 
 

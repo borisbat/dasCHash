@@ -259,17 +259,17 @@ namespace HelloWorld
                 case 1: i++; break;
                 case 2: i--; break;
             }
+            // and the crazy case
+            switch ( i )
+            {
+                case 1: if (i == 0) break; else { i++; break; }
+                case 2: i--; break;
+            }
             // default in the middle
             switch (i)
             {
                 case 1: i++; break;
                 default: break;
-                case 2: i--; break;
-            }
-            // and the crazy case
-            switch ( i )
-            {
-                case 1: if (i == 0) break; else { i++; break; }
                 case 2: i--; break;
             }
         }

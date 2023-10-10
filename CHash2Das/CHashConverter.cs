@@ -732,25 +732,9 @@ namespace CHash2Das
             // optimize simple cases, where while loop is not necessary
             // i.e. every section ends with break, and there are no extra breaks
             // TODO: make this ruleset more inclusive
-            var simpleSwitchCase = true;
-            foreach (SwitchSectionSyntax section in fs.Sections)
-            {
-                int count = section.Statements.Count;
-                if (!(section.Statements[count - 1] is BreakStatementSyntax))   // it needs to end with break statement
-                {
-                    simpleSwitchCase = false;
-                    break;
-                }
-                foreach (var stmt in section.Statements)                        // it can't have any inner 'break'
-                {
-                    if (hasSpecificBreak(stmt, fs))
-                    {
-                        simpleSwitchCase = false;
-                        break;
-                    }
-                }
-                if (!simpleSwitchCase) break;
-            }
+            var simpleSwitchCase = fs.Sections.All(section =>
+                section.Statements.LastOrDefault() is BreakStatementSyntax &&
+                !section.Statements.Any(stmt => hasSpecificBreak(stmt, fs)));
 
             var tempval = makeTempVar("switchcase");
             var tabstr = new string('\t', tabs);
@@ -764,10 +748,22 @@ namespace CHash2Das
                 tabstr += '\t';
             }
             var hasDefault = false;
-            for(int si=0; si<fs.Sections.Count; ++si)
+
+            // lets build sorted sections list. we are making sure default is last
+            int sectionCount = fs.Sections.Count;
+            SwitchSectionSyntax[] sortedSections = fs.Sections.ToArray();
+            int defaultIndex = Array.FindIndex(sortedSections, section =>
+                section.Labels.Any(label => label is DefaultSwitchLabelSyntax));
+            if (defaultIndex != -1)
             {
-               SwitchSectionSyntax section = fs.Sections[si];
-                var isElseTrue = (si==fs.Sections.Count-1) && (section.Labels.Count==1) && (section.Labels[0] is DefaultSwitchLabelSyntax);
+                sortedSections[defaultIndex] = sortedSections[sectionCount - 1];
+                sortedSections[sectionCount - 1] = fs.Sections[defaultIndex];
+            }
+
+            for (int si=0; si<sectionCount; ++si)
+            {
+                SwitchSectionSyntax section = sortedSections[si];
+                var isElseTrue = (si==sectionCount-1) && (section.Labels.Count==1) && (section.Labels[0] is DefaultSwitchLabelSyntax);
                 if (firstIf)
                 {
                     result += $"{tabstr}if ";
@@ -775,14 +771,9 @@ namespace CHash2Das
                     isElseTrue = false;
                 }
                 else if (isElseTrue)
-                {
                     result += $"{tabstr}else\n";
-                }
                 else
-                {
-
                     result += $"{tabstr}elif ";
-                }
                 if (!isElseTrue)
                 {
                     var first = true;
@@ -795,7 +786,7 @@ namespace CHash2Das
                         else if (st is DefaultSwitchLabelSyntax)
                         {
                             hasDefault = true;
-                            result += "true";
+                            result += "true /*default*/";
                         }
                     }
                     result += "\n";
