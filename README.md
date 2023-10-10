@@ -215,6 +215,60 @@ namespace HelloWorld
             for (var i = 1; i != 3; i = 1 + i)    // for i in range(1,3)
                 Console.WriteLine(i);
         }
+
+        static void doWhileLoop()
+        {
+            var a = 1;
+            do
+                ++a;
+            while (a != 10);
+            do
+            {
+                --a;
+                if (a == 5)
+                    break;
+            }
+            while(a != 0);
+        }
+
+        static void arrayTypes()
+        {
+            int[] b = new int[10];
+            int[][] bb = new int[20][];
+            int[,] c = new int[10, 20];
+            int[] d = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            int[] dd = new int[] { 0, 1, 2, 4, 5 };
+        }
+
+        static void forEachLoop()
+        {
+            int[] b = { 1, 2, 3, 4 };
+            foreach(var t in b)
+                WriteLine(t);
+        }
+
+        static void switchCase()
+        {
+            var i = 13;
+            switch ( i )
+            {
+                case 0:
+                    break;
+                case 1:
+                case 2:
+                    Console.WriteLine("12");
+                    break;
+                default:
+                    Console.WriteLine("anything");
+                    break;
+            }
+            Console.WriteLine("and thats that");
+            switch ( i )
+            {
+                case 1: i++; break;
+                case 2: i--; break;
+            }
+        }
     }
 }
 ```
@@ -237,7 +291,7 @@ class Foo
                 pass
 class HelloProgram
         count : int = 13
-        def _main (args : string[]) : void
+        def _main (args : array<string> /*string[]*/) : void
                 print(StringBuilder("Hello, World!","\n"))
                 print(StringBuilder("Hello, World!","\n"))
                 print(StringBuilder("Hello, World!","\n"))
@@ -387,4 +441,50 @@ class HelloProgram
                         print(StringBuilder(i,"\n"))
                 for i in range(1,3)
                         print(StringBuilder(i,"\n"))
+        def doWhileLoop  : void
+                var a = 1
+                var __temp_1_doWhileCond = true
+                while __temp_1_doWhileCond
+                        ++a
+                        __temp_1_doWhileCond = (a != 10)
+        var __temp_2_doWhileCond = true
+        while __temp_2_doWhileCond
+                if true
+                        --a
+                        if (a == 5)
+                                break
+                finally
+                        __temp_2_doWhileCond = (a != 0)
+        def arrayTypes  : void
+                var b : array<int> /*int[]*/ = newArray(10)
+                var bb : array<array<int>> /*int[][]*/ = newArray(20, -1)
+                var c : array<array<int>> /*int[,]*/ = newArray(10, 20)
+                var d : array<int> /*int[]*/ = [{auto 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10}]
+                var dd : array<int> /*int[]*/ = newInitArray(-1, [{auto 0; 1; 2; 4; 5}])
+        def forEachLoop  : void
+                var b : array<int> /*int[]*/ = [{auto 1; 2; 3; 4}]
+                for t in b
+                        print(StringBuilder(t,"\n"))
+        def switchCase  : void
+                var i = 13
+                let __temp_3_switchcase = i
+                while true
+                        if __temp_3_switchcase==0
+                                break
+                        elif __temp_3_switchcase==1 || __temp_3_switchcase==2
+                                print(StringBuilder("12","\n"))
+                                break
+                        elif true
+                                print(StringBuilder("anything","\n"))
+                                break
+                print(StringBuilder("and thats that","\n"))
+                let __temp_4_switchcase = i
+                while true
+                        if __temp_4_switchcase==1
+                                i++
+                                break
+                        elif __temp_4_switchcase==2
+                                i--
+                                break
+                        break
 ```
