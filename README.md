@@ -468,23 +468,30 @@ class HelloProgram
         def switchCase  : void
                 var i = 13
                 let __temp_3_switchcase = i
-                while true
-                        if __temp_3_switchcase==0
-                                break
-                        elif __temp_3_switchcase==1 || __temp_3_switchcase==2
-                                print(StringBuilder("12","\n"))
-                                break
-                        elif true
-                                print(StringBuilder("anything","\n"))
-                                break
+                if __temp_3_switchcase==0
+                        pass
+                elif __temp_3_switchcase==1 || __temp_3_switchcase==2
+                        print(StringBuilder("12","\n"))
+                elif true
+                        print(StringBuilder("anything","\n"))
                 print(StringBuilder("and thats that","\n"))
                 let __temp_4_switchcase = i
+                if __temp_4_switchcase==1
+                        i++
+                elif __temp_4_switchcase==2
+                        i--
+                let __temp_5_switchcase = i
                 while true
-                        if __temp_4_switchcase==1
-                                i++
-                                break
-                        elif __temp_4_switchcase==2
+                        if __temp_5_switchcase==1
+                                if (i == 0)
+                                        break
+                                else
+                                        i++
+                                        break
+                        elif __temp_5_switchcase==2
                                 i--
                                 break
                         break
 ```
+
+

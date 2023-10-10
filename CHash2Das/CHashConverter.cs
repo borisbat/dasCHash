@@ -509,6 +509,25 @@ namespace CHash2Das
                 .Any(node => node is BreakStatementSyntax || node is ContinueStatementSyntax);
         }
 
+        SyntaxNode getEnclosingStatement(BreakStatementSyntax breakStatement)
+        {
+            Console.WriteLine("here");
+            var enclosingStatement = breakStatement.Ancestors()
+                                          .FirstOrDefault(a => a is ForStatementSyntax ||
+                                                               a is WhileStatementSyntax ||
+                                                               a is DoStatementSyntax ||
+                                                               a is SwitchStatementSyntax);
+            return enclosingStatement;
+        }
+
+        bool hasSpecificBreak(StatementSyntax statementSyntax, SyntaxNode enclosure)
+        {
+            return statementSyntax.DescendantNodes()
+                 .Any(
+                node => (node is BreakStatementSyntax) && (getEnclosingStatement(node as BreakStatementSyntax)==enclosure) 
+                );
+        }
+
         bool isIdentifier ( ExpressionSyntax expression, string id )
         {
             if (!(expression is IdentifierNameSyntax))
@@ -710,11 +729,40 @@ namespace CHash2Das
 
         string onSwitchStatement(SwitchStatementSyntax fs)
         {
+            // optimize simple cases, where while loop is not necessary
+            // i.e. every section ends with break, and there are no extra breaks
+            // TODO: make this ruleset more inclusive
+            var simpleSwitchCase = true;
+            foreach (SwitchSectionSyntax section in fs.Sections)
+            {
+                int count = section.Statements.Count;
+                if (!(section.Statements[count - 1] is BreakStatementSyntax))   // it needs to end with break statement
+                {
+                    simpleSwitchCase = false;
+                    break;
+                }
+                foreach (var stmt in section.Statements)                        // it can't have any inner 'break'
+                {
+                    if (hasSpecificBreak(stmt, fs))
+                    {
+                        simpleSwitchCase = false;
+                        break;
+                    }
+                }
+                if (!simpleSwitchCase) break;
+            }
+
             var tempval = makeTempVar("switchcase");
             var tabstr = new string('\t', tabs);
-            var result = $"let {tempval} = {onExpressionSyntax(fs.Expression)}\n{tabstr}while true\n";
+            var result = "";
+            result += $"let {tempval} = {onExpressionSyntax(fs.Expression)}\n";
             var firstIf = true;
-            tabs++; tabstr += '\t';
+            if (!simpleSwitchCase)
+            {
+                result += $"{tabstr}while true\n";
+                tabs++;
+                tabstr += '\t';
+            }
             var hasDefault = false;
             foreach (SwitchSectionSyntax section in fs.Sections)
             {
@@ -741,12 +789,18 @@ namespace CHash2Das
                 result += "\n";
                 tabs++;
                 foreach (var ex in section.Statements)
-                    result += $"{onStatementSyntax(ex)}";
+                    if ( !simpleSwitchCase || !(ex is BreakStatementSyntax) )
+                        result += $"{onStatementSyntax(ex)}";
+                if (simpleSwitchCase && section.Statements.Count == 1)
+                    result += $"{tabstr}\tpass\n";
                 tabs--;
             }
-            tabs--;
-            if ( !hasDefault )
-                result += $"{tabstr}break\n";
+            if (!simpleSwitchCase)
+            {
+                tabs--;
+                if (!hasDefault)
+                    result += $"{tabstr}break\n";
+            }
             return result;
         }
 
