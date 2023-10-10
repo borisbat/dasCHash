@@ -15,6 +15,7 @@ namespace CHash2Das
     public class CHashConverter
     {
         int tabs = 0;
+        int tempVars = 0;
         SemanticModel semanticModel;
         CSharpCompilation compilation;
 
@@ -30,16 +31,24 @@ namespace CHash2Das
                     {
                         var atype = type as ArrayTypeSyntax;
                         var ranks = "";
+                        var tname = "";
+                        int count = 0;
                         foreach (ArrayRankSpecifierSyntax rank in atype.RankSpecifiers)
                         {
+                            ranks += "[";
+                            var first = true;
                             foreach (ExpressionSyntax size in rank.Sizes)
                             {
-                                ranks += "[";
+                                if (first) first = false;
+                                else ranks += ",";
                                 ranks += onExpressionSyntax(size);
-                                ranks += "]";
+                                tname += "array<";
+                                count++;
                             }
+                            ranks += "]";
                         }
-                        return $"{atype.ElementType}{ranks}";
+                        var tail = new string('>', count);
+                        return $"{tname}{onTypeSyntax(atype.ElementType)}{tail} /*{atype.ElementType}{ranks}*/";
                     }
                 case SyntaxKind.PredefinedType:
                     {
@@ -257,6 +266,41 @@ namespace CHash2Das
             return $"{result})";
         }
 
+        string onArrayCreationExpressionSyntax(ArrayCreationExpressionSyntax ac)
+        {
+            var result = ac.Initializer!=null ? "newInitArray(" : "newArray(";
+            var first = true;
+            foreach (ArrayRankSpecifierSyntax rank in ac.Type.RankSpecifiers)
+            {
+                foreach (ExpressionSyntax size in rank.Sizes)
+                {
+                    if (first) first = false;
+                    else result += ", ";
+                    var es = onExpressionSyntax(size);
+                    if (es.Length == 0) result += "-1";
+                    else result += es;
+                }
+            }
+            if (ac.Initializer != null)
+                result += $", {onArrayInitializerExpressionSyntax(ac.Initializer)}";
+            result += ")";
+            return result;
+        }
+
+        string onArrayInitializerExpressionSyntax(InitializerExpressionSyntax ass)
+        {
+            var result = "[{auto ";
+            var first = true;
+            foreach(ExpressionSyntax exp in ass.Expressions) 
+            { 
+                if (first) first = false;
+                else result += "; ";
+                result += onExpressionSyntax(exp);
+            }
+            result += "}]";
+            return result;
+        }
+
         string onExpressionSyntax(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -336,6 +380,10 @@ namespace CHash2Das
                     }
                 case SyntaxKind.InterpolatedStringExpression:
                     return onInterpolatedStringExpressionSyntax(expression as InterpolatedStringExpressionSyntax);
+                case SyntaxKind.ArrayCreationExpression:
+                    return onArrayCreationExpressionSyntax(expression as ArrayCreationExpressionSyntax);
+                case SyntaxKind.ArrayInitializerExpression:
+                    return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax);
                 default:
                     Debug.Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     break;
@@ -607,6 +655,32 @@ namespace CHash2Das
             return $"while {onExpressionSyntax(wstmt.Condition)}\n{loopBlock(wstmt.Statement)}";
         }
 
+        string makeTempVar ( string suffix )
+        {
+            return $"__temp_{++tempVars}_{suffix}";
+        }
+
+        string onDoStatement(DoStatementSyntax wstmt)
+        {
+            var tv = makeTempVar("doWhileCond");
+            var tabstr = new string('\t', tabs);
+            bool hasBorC = hasBreakOrContinue(wstmt.Statement);
+            var result = $"var {tv} = true\n{tabstr}while {tv}\n";
+            if (hasBorC)
+            {
+                tabstr += '\t';
+                result += $"{tabstr}if true\n";
+                tabs++;
+            }
+            result += loopBlock(wstmt.Statement);
+            if (!hasBorC)
+                tabs--;
+            if (hasBorC)
+                result += $"{tabstr}finally\n";
+            result += $"{tabstr}\t{tv} = {onExpressionSyntax(wstmt.Condition)}\n";
+            return result;
+        }
+
         string onIfStatement(IfStatementSyntax ifstmt, bool isElif = false)
         {
             var tabstr = new string('\t', tabs);
@@ -620,6 +694,11 @@ namespace CHash2Das
                     result += $"{tabstr}else\n{loopBlock(ifstmt.Else.Statement)}";
             }
             return result;
+        }
+
+        string onForeachStatement(ForEachStatementSyntax fs) 
+        {
+            return $"for {fs.Identifier.Text} in {onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
 
         string onStatementSyntax(StatementSyntax statement)
@@ -643,6 +722,8 @@ namespace CHash2Das
                     return $"{tabstr}{onIfStatement(statement as IfStatementSyntax)}";
                 case SyntaxKind.WhileStatement:
                     return $"{tabstr}{onWhileStatement(statement as WhileStatementSyntax)}";
+                case SyntaxKind.DoStatement:
+                    return $"{tabstr}{onDoStatement(statement as DoStatementSyntax)}";
                 case SyntaxKind.ForStatement:
                     return $"{tabstr}{onForStatement(statement as ForStatementSyntax)}";
                 case SyntaxKind.Block:
@@ -651,6 +732,8 @@ namespace CHash2Das
                     return $"{tabstr}break\n";
                 case SyntaxKind.ContinueStatement:
                     return $"{tabstr}continue\n";
+                case SyntaxKind.ForEachStatement:
+                    return $"{tabstr}{onForeachStatement(statement as ForEachStatementSyntax)}";
                 default:
                     Debug.Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";

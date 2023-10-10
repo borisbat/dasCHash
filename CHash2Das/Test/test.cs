@@ -206,5 +206,36 @@ namespace HelloWorld
             for (var i = 1; i != 3; i = 1 + i)    // for i in range(1,3)
                 Console.WriteLine(i);
         }
+
+        static void doWhileLoop()
+        {
+            var a = 1;
+            do
+                ++a;
+            while (a != 10);
+            do
+            {
+                --a;
+                if (a == 5)
+                    break;
+            }
+            while(a != 0);
+        }
+
+        static void arrayTypes()
+        {
+            int[] b = new int[10];
+            int[][] bb = new int[20][];
+            int[,] c = new int[10, 20];
+            int[] d = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            int[] dd = new int[] { 0, 1, 2, 4, 5 };
+        }
+
+        static void forEachLoop()
+        {
+            int[] b = { 1, 2, 3, 4 };
+            foreach(var t in b)
+                WriteLine(t);
+        }
     }
 }
