@@ -764,29 +764,42 @@ namespace CHash2Das
                 tabstr += '\t';
             }
             var hasDefault = false;
-            foreach (SwitchSectionSyntax section in fs.Sections)
+            for(int si=0; si<fs.Sections.Count; ++si)
             {
+               SwitchSectionSyntax section = fs.Sections[si];
+                var isElseTrue = (si==fs.Sections.Count-1) && (section.Labels.Count==1) && (section.Labels[0] is DefaultSwitchLabelSyntax);
                 if (firstIf)
                 {
                     result += $"{tabstr}if ";
                     firstIf = false;
-                } 
-                else
-                    result += $"{tabstr}elif ";
-                var first = true;
-                foreach(SwitchLabelSyntax st in section.Labels)
-                {
-                    if (first) first = false;
-                    else result += " || ";
-                    if (st is CaseSwitchLabelSyntax)
-                        result += $"{tempval}=={(st as CaseSwitchLabelSyntax).Value}";
-                    else if (st is DefaultSwitchLabelSyntax)
-                    {
-                        hasDefault = true;
-                        result += "true";
-                    }
+                    isElseTrue = false;
                 }
-                result += "\n";
+                else if (isElseTrue)
+                {
+                    result += $"{tabstr}else\n";
+                }
+                else
+                {
+
+                    result += $"{tabstr}elif ";
+                }
+                if (!isElseTrue)
+                {
+                    var first = true;
+                    foreach (SwitchLabelSyntax st in section.Labels)
+                    {
+                        if (first) first = false;
+                        else result += " || ";
+                        if (st is CaseSwitchLabelSyntax)
+                            result += $"{tempval}=={(st as CaseSwitchLabelSyntax).Value}";
+                        else if (st is DefaultSwitchLabelSyntax)
+                        {
+                            hasDefault = true;
+                            result += "true";
+                        }
+                    }
+                    result += "\n";
+                }
                 tabs++;
                 foreach (var ex in section.Statements)
                     if ( !simpleSwitchCase || !(ex is BreakStatementSyntax) )
