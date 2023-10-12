@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace HelloWorld
 {
@@ -282,9 +283,19 @@ namespace HelloWorld
                 case 2: i--; break;
             }
         }
+
+        private static Dictionary<int, string> POTToText = new Dictionary<int, string>
+        {
+            {14, "16K"},            {15, "32K"},            {16, "64K"},            {17, "128K"},
+            {18, "256K"},           {19, "512K"},           {20, "1M"},             {21, "2M"},
+            {22, "4M"},             {23, "8M"},             {24, "16M"},            {25, "32M"},
+            {26, "64M"},            {27, "128M"},           {28, "256M"},           {29, "512M"},
+            {30, "1B"},             {31, "2B"},             {32, "4B"},             {33, "8B"},
+            {34, "16B"},            {35, "32B"},            {36, "64B"},            {37, "128B"},
+            {38, "256B"},           {39, "512B"},           {40, "1024B"},
+        };
     }
 }
-
 ```
 
 to daScript equivalent.
@@ -298,6 +309,7 @@ to daScript equivalent.
 // using System.Text
 // using System.Net
 // using System.Runtime.InteropServices
+// using System.Collections.Generic
 
 // namespaced HelloWorld
 class Foo
@@ -513,6 +525,7 @@ class HelloProgram
                         i--
                 else
                         pass
+        POTToText : table<int; string> = {{14 => "16K"; 15 => "32K"; 16 => "64K"; 17 => "128K"; 18 => "256K"; 19 => "512K"; 20 => "1M"; 21 => "2M"; 22 => "4M"; 23 => "8M"; 24 => "16M"; 25 => "32M"; 26 => "64M"; 27 => "128M"; 28 => "256M"; 29 => "512M"; 30 => "1B"; 31 => "2B"; 32 => "4B"; 33 => "8B"; 34 => "16B"; 35 => "32B"; 36 => "64B"; 37 => "128B"; 38 => "256B"; 39 => "512B"; 40 => "1024B"; }}
 ```
 
 

@@ -96,9 +96,25 @@ namespace CHash2Das
                                 return $"{itype.Identifier.Text}";
                         }
                     }
+                case SyntaxKind.GenericName:
+                    {
+                        var genn = type as GenericNameSyntax;
+                        switch (genn.Identifier.Text)
+                        {
+                            case "Dictionary":
+                                {
+                                    if (genn.TypeArgumentList.Arguments.Count == 2)
+                                    {
+                                        return $"table<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}; {onTypeSyntax(genn.TypeArgumentList.Arguments[1])}>";
+                                    }
+                                    break;
+                                }
+                        }
+                        return $"{type}";
+                    }
                 default:
                     Fail($"unsupported TypeSyntax {type.Kind()}");
-                    return $"{type.Kind()}";
+                    return $"{type}";
             }
         }
 
@@ -211,6 +227,19 @@ namespace CHash2Das
             return ts.IsReferenceType || IsNullableValueType(ts);
         }
 
+        bool isTable(ITypeSymbol ts)
+        {
+            // Check if the type is a generic type
+            if (ts is INamedTypeSymbol namedType && namedType.IsGenericType)
+            {
+                // Check if the type is a Dictionary by comparing the metadata name and containing namespace
+                return namedType.MetadataName == "Dictionary`2" &&
+                       namedType.ContainingNamespace?.ToDisplayString() == "System.Collections.Generic";
+            }
+
+            return false;
+        }
+
         int getTypeRank(ITypeSymbol ts)
         {
             // double > float > uint64 > int64 > uint32 > int32 
@@ -309,6 +338,50 @@ namespace CHash2Das
             return result;
         }
 
+        string onObjectCreationExpression(ObjectCreationExpressionSyntax oce)
+        {
+            var restype = semanticModel.GetTypeInfo(oce);
+            if ( isTable(restype.Type) )
+            {
+                var result = "{{";
+                if ( oce.Initializer.Kind()==SyntaxKind.CollectionInitializerExpression  )
+                {
+                    foreach (ExpressionSyntax element in oce.Initializer.Expressions )
+                    {
+                        if ( element.Kind()==SyntaxKind.ComplexElementInitializerExpression )
+                        {
+                            var kv = element as InitializerExpressionSyntax;
+                            if ( kv.Expressions.Count==2 )
+                            {
+                                var key = kv.Expressions[0];
+                                var value = kv.Expressions[1];
+                                result += $"{onExpressionSyntax(key)} => {onExpressionSyntax(value)}; ";
+                            }
+                            else
+                            {
+                                Fail($"expecting key => value in {kv}");
+                                result += $"{kv}; ";
+                            }
+                        }
+                        else
+                        {
+                            Fail($"expecting complex initialization in {element.Kind()}");
+                            result += $"{element}; ";
+                        }
+                    }
+                } 
+                else 
+                {
+                    Fail("unsupported table initialization {oce.Initializer}");
+                    result += $"{oce.Initializer}";
+                }
+                result += "}}";
+                return result;
+            }
+            Fail($"unsupported object creation {oce}");
+            return $"{oce}";
+        }
+
         string onExpressionSyntax(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -392,6 +465,8 @@ namespace CHash2Das
                     return onArrayCreationExpressionSyntax(expression as ArrayCreationExpressionSyntax);
                 case SyntaxKind.ArrayInitializerExpression:
                     return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax);
+                case SyntaxKind.ObjectCreationExpression:
+                    return onObjectCreationExpression(expression as ObjectCreationExpressionSyntax);
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
