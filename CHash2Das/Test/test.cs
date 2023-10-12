@@ -285,5 +285,10 @@ namespace HelloWorld
             {34, "16B"},            {35, "32B"},            {36, "64B"},            {37, "128B"},
             {38, "256B"},           {39, "512B"},           {40, "1024B"},
         };
+
+        void objectInit()
+        {
+            System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+        }
     }
 }

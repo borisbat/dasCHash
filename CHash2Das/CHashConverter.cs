@@ -91,6 +91,15 @@ namespace CHash2Das
                             case "Int64": return "int64";
                             case "UInt64": return "uint64";
                             case "var": return "var";       // huh?
+
+                            // namespaces - we will eventually comment this out, and remove 'Fail' bellow
+                            case "System":
+                                return $"{itype.Identifier.Text}";
+
+                            // system types - we will eventually comment this out, and remove 'Fail' bellow
+                            case "DateTime":
+                                return $"{itype.Identifier.Text}";
+
                             default:
                                 Fail($"unknown identifier type {itype.Identifier.Text}");
                                 return $"{itype.Identifier.Text}";
@@ -111,6 +120,11 @@ namespace CHash2Das
                                 }
                         }
                         return $"{type}";
+                    }
+                case SyntaxKind.QualifiedName:
+                    {
+                        var cname = type as QualifiedNameSyntax;
+                        return $"{onTypeSyntax(cname.Left)}::{onTypeSyntax(cname.Right)}";
                     }
                 default:
                     Fail($"unsupported TypeSyntax {type.Kind()}");
@@ -134,18 +148,7 @@ namespace CHash2Das
 
         public string onArgumentListSyntax ( ArgumentListSyntax argumentList )
         {
-            var arguments = "";
-            var first = true;
-            foreach (ArgumentSyntax arg in argumentList.Arguments)
-            {
-                if (first)
-                    first = false;
-                else
-                    arguments += ", ";
-                // TODO: handle named calls
-                arguments += onExpressionSyntax(arg.Expression);
-            }
-            return arguments;
+            return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
         string onInvocationExpression( InvocationExpressionSyntax inv )
@@ -240,6 +243,11 @@ namespace CHash2Das
             return false;
         }
 
+        bool isClassOrStruct(ITypeSymbol ts)
+        {
+            return ts.TypeKind == TypeKind.Class || ts.TypeKind == TypeKind.Struct;
+        }
+
         int getTypeRank(ITypeSymbol ts)
         {
             // double > float > uint64 > int64 > uint32 > int32 
@@ -326,16 +334,7 @@ namespace CHash2Das
 
         string onArrayInitializerExpressionSyntax(InitializerExpressionSyntax ass)
         {
-            var result = "[{auto ";
-            var first = true;
-            foreach(ExpressionSyntax exp in ass.Expressions) 
-            { 
-                if (first) first = false;
-                else result += "; ";
-                result += onExpressionSyntax(exp);
-            }
-            result += "}]";
-            return result;
+            return "[{auto " + string.Join("; ", ass.Expressions.Select(exp => onExpressionSyntax(exp))) + "}]";
         }
 
         string onObjectCreationExpression(ObjectCreationExpressionSyntax oce)
@@ -343,43 +342,60 @@ namespace CHash2Das
             var restype = semanticModel.GetTypeInfo(oce);
             if ( isTable(restype.Type) )
             {
-                var result = "{{";
-                if ( oce.Initializer.Kind()==SyntaxKind.CollectionInitializerExpression  )
-                {
-                    foreach (ExpressionSyntax element in oce.Initializer.Expressions )
-                    {
-                        if ( element.Kind()==SyntaxKind.ComplexElementInitializerExpression )
-                        {
-                            var kv = element as InitializerExpressionSyntax;
-                            if ( kv.Expressions.Count==2 )
-                            {
-                                var key = kv.Expressions[0];
-                                var value = kv.Expressions[1];
-                                result += $"{onExpressionSyntax(key)} => {onExpressionSyntax(value)}; ";
-                            }
-                            else
-                            {
-                                Fail($"expecting key => value in {kv}");
-                                result += $"{kv}; ";
-                            }
-                        }
-                        else
-                        {
-                            Fail($"expecting complex initialization in {element.Kind()}");
-                            result += $"{element}; ";
-                        }
-                    }
-                } 
-                else 
-                {
-                    Fail("unsupported table initialization {oce.Initializer}");
-                    result += $"{oce.Initializer}";
-                }
-                result += "}}";
-                return result;
+                return onObjectCreationExpression_Table(oce);
+            } 
+            else if ( isClassOrStruct(restype.Type) )
+            {
+                return onObjectCreationExpression_ClassOrStruct(oce);
             }
             Fail($"unsupported object creation {oce}");
             return $"{oce}";
+        }
+
+        private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce)
+        {
+            var arguments = oce.ArgumentList.Arguments
+                .Select(arg => onExpressionSyntax(arg.Expression))
+                .Aggregate((current, next) => $"{current}, {next}");
+            return $"{onTypeSyntax(oce.Type)}({arguments})";
+        }
+
+        private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
+        {
+            var result = "{{";
+            if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
+            {
+                foreach (ExpressionSyntax element in oce.Initializer.Expressions)
+                {
+                    if (element.Kind() == SyntaxKind.ComplexElementInitializerExpression)
+                    {
+                        var kv = element as InitializerExpressionSyntax;
+                        if (kv.Expressions.Count == 2)
+                        {
+                            var key = kv.Expressions[0];
+                            var value = kv.Expressions[1];
+                            result += $"{onExpressionSyntax(key)} => {onExpressionSyntax(value)}; ";
+                        }
+                        else
+                        {
+                            Fail($"expecting key => value in {kv}");
+                            result += $"{kv}; ";
+                        }
+                    }
+                    else
+                    {
+                        Fail($"expecting complex initialization in {element.Kind()}");
+                        result += $"{element}; ";
+                    }
+                }
+            }
+            else
+            {
+                Fail("unsupported table initialization {oce.Initializer}");
+                result += $"{oce.Initializer}";
+            }
+            result += "}}";
+            return result;
         }
 
         string onExpressionSyntax(ExpressionSyntax expression)

@@ -294,6 +294,11 @@ namespace HelloWorld
             {34, "16B"},            {35, "32B"},            {36, "64B"},            {37, "128B"},
             {38, "256B"},           {39, "512B"},           {40, "1024B"},
         };
+
+        void objectInit()
+        {
+            System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+        }
     }
 }
 ```
@@ -526,6 +531,8 @@ class HelloProgram
                 else
                         pass
         POTToText : table<int; string> = {{14 => "16K"; 15 => "32K"; 16 => "64K"; 17 => "128K"; 18 => "256K"; 19 => "512K"; 20 => "1M"; 21 => "2M"; 22 => "4M"; 23 => "8M"; 24 => "16M"; 25 => "32M"; 26 => "64M"; 27 => "128M"; 28 => "256M"; 29 => "512M"; 30 => "1B"; 31 => "2B"; 32 => "4B"; 33 => "8B"; 34 => "16B"; 35 => "32B"; 36 => "64B"; 37 => "128B"; 38 => "256B"; 39 => "512B"; 40 => "1024B"; }}
+        def objectInit  : void
+                var epochStart : System::DateTime = System::DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc)
 ```
 
 
