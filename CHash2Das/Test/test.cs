@@ -10,9 +10,26 @@ using System.Collections.Generic;
 
 namespace HelloWorld
 {
-    class Foo { 
-        static void bar()
+    class Foo {
+
+        int a = 13;
+
+        public Foo() { }
+        public Foo(int A) { a = A; }
+
+        public void bar()
         {
+            a = 123;
+        }
+
+        public void bar(int t)
+        {
+            a = t;
+        }
+
+        static void farfar()
+        {
+            Console.WriteLine("static method");
         }
     }
 
@@ -289,6 +306,10 @@ namespace HelloWorld
         void objectInit()
         {
             System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
+            Foo t = new Foo();
+            Foo tt = new Foo(1);
+            t.bar();
+            t.bar(1);
         }
     }
 }

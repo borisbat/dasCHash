@@ -28,12 +28,21 @@ namespace CHash2Das
                 Console.WriteLine(message);
         }
 
+        string onVarTypeSyntax(TypeSyntax ts)
+        {
+            var tt = semanticModel.GetTypeInfo(ts);
+            var txt = onTypeSyntax(ts);
+            if ( isClassOrStructRef(tt.Type) ) txt += "?";
+            return txt;
+        }
+
         string onTypeSyntax(TypeSyntax type)
         {
             if (type == null)
             {
                 return "void";
             }
+
             switch (type.Kind())
             {
                 case SyntaxKind.ArrayType:
@@ -57,7 +66,7 @@ namespace CHash2Das
                             ranks += "]";
                         }
                         var tail = new string('>', count);
-                        return $"{tname}{onTypeSyntax(atype.ElementType)}{tail} /*{atype.ElementType}{ranks}*/";
+                        return $"{tname}{onVarTypeSyntax(atype.ElementType)}{tail} /*{atype.ElementType}{ranks}*/";
                     }
                 case SyntaxKind.PredefinedType:
                     {
@@ -92,16 +101,8 @@ namespace CHash2Das
                             case "UInt64": return "uint64";
                             case "var": return "var";       // huh?
 
-                            // namespaces - we will eventually comment this out, and remove 'Fail' bellow
-                            case "System":
-                                return $"{itype.Identifier.Text}";
-
-                            // system types - we will eventually comment this out, and remove 'Fail' bellow
-                            case "DateTime":
-                                return $"{itype.Identifier.Text}";
-
                             default:
-                                Fail($"unknown identifier type {itype.Identifier.Text}");
+                                // Fail($"unknown identifier type {itype.Identifier.Text}");
                                 return $"{itype.Identifier.Text}";
                         }
                     }
@@ -151,13 +152,43 @@ namespace CHash2Das
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
+        bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
+        {
+            var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+            if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+            {
+                return methodSymbol.ContainingType.TypeKind == TypeKind.Class;
+            }
+            return false;
+        }
+
+        bool IsCallingStaticMethod(InvocationExpressionSyntax invocation)
+        {
+            var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+            if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
+            {
+                return methodSymbol.IsStatic;
+            }
+            return false;
+        }
+
         string onInvocationExpression( InvocationExpressionSyntax inv )
         {
             string key = inv.Expression.ToString();
             onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
             if (invExpr != null)
                 return invExpr(this,inv);
-            return $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+            var callText = "";
+            if ( IsCallingClassMethod(inv) && !IsCallingStaticMethod(inv) )
+            {
+                if ( inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression )
+                {
+                    var ma = inv.Expression as MemberAccessExpressionSyntax;
+                    callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}";
+                }
+            } 
+            if ( callText=="" ) callText = onExpressionSyntax(inv.Expression);
+            return $"{callText}({onArgumentListSyntax(inv.ArgumentList)})";
         }
 
         bool isBool(ITypeSymbol ts)
@@ -248,8 +279,33 @@ namespace CHash2Das
             return ts.TypeKind == TypeKind.Class || ts.TypeKind == TypeKind.Struct;
         }
 
+        bool isClassOrStructRef(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null)
+                return false;
+
+            // Check if it's a built-in type (like int, double, etc.)
+            if (typeSymbol.IsValueType && typeSymbol.SpecialType != SpecialType.None)
+                return false;
+
+            switch (typeSymbol.TypeKind)
+            {
+                case TypeKind.Class:
+                    return true;
+                case TypeKind.Struct:
+                    // Exclude pointers and other non-standard structs
+                    if (typeSymbol is INamedTypeSymbol namedType && namedType.IsTupleType)
+                        return false;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+
         int getTypeRank(ITypeSymbol ts)
         {
+            if (ts == null) return -1;
             // double > float > uint64 > int64 > uint32 > int32 
             // any int bellow is going to int32
             if (isDouble(ts)) return 7;
@@ -355,9 +411,11 @@ namespace CHash2Das
         private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce)
         {
             var arguments = oce.ArgumentList.Arguments
-                .Select(arg => onExpressionSyntax(arg.Expression))
-                .Aggregate((current, next) => $"{current}, {next}");
-            return $"{onTypeSyntax(oce.Type)}({arguments})";
+                .Select(arg => onExpressionSyntax(arg.Expression));
+            if (arguments.Count() == 0)
+                return $"new {onTypeSyntax(oce.Type)}()";
+            var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
+            return $"new {onTypeSyntax(oce.Type)}({arguments2})";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -536,7 +594,7 @@ namespace CHash2Das
             var result = $"// namespaced {namespaceDeclaration.Name}\n";
             foreach (MemberDeclarationSyntax memberDeclaration in namespaceDeclaration.Members)
             {
-                result += onMemberDeclaration(memberDeclaration);
+                result += onMemberDeclaration(memberDeclaration) + "\n";
             }
             return result;
         }
@@ -547,9 +605,23 @@ namespace CHash2Das
             tabs++;
             foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
             {
-                result += onMemberDeclaration(membersDeclaration);
+                result += onMemberDeclaration(membersDeclaration) + "\n";
             }
             tabs--;
+            return result;
+        }
+
+        string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
+        {
+            var tabstr = new string('\t', tabs);
+            var result = $"{tabstr}def {methodDeclaration.Identifier} ";
+            if (methodDeclaration.ParameterList.Parameters.Count != 0)
+            {
+                var parameters = methodDeclaration.ParameterList.Parameters
+                    .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                result += $"({string.Join("; ", parameters)})";
+            }
+            result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
             return result;
         }
 
@@ -559,19 +631,11 @@ namespace CHash2Das
             var result = $"{tabstr}def {methodDeclaration.Identifier} ";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
-                result += "(";
-                var first = true;
-                foreach (ParameterSyntax param in methodDeclaration.ParameterList.Parameters)
-                {
-                    if (first)
-                        first = false;
-                    else
-                        result += "; ";
-                    result += $"{param.Identifier} : {onTypeSyntax(param.Type)}";
-                }
-                result += ")";
+                var parameters = methodDeclaration.ParameterList.Parameters
+                    .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                result += $"({string.Join("; ", parameters)})";
             }
-            result += $" : {onTypeSyntax(methodDeclaration.ReturnType)}\n";
+            result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
             result += onBlockSyntax(methodDeclaration.Body);
             return result;
         }
@@ -579,7 +643,7 @@ namespace CHash2Das
         List<string> onVariableDeclarationSyntax(VariableDeclarationSyntax vardecl, bool needVar = true)
         {
             var values = new List<string>();
-            var tname = onTypeSyntax(vardecl.Type);
+            var tname = onVarTypeSyntax(vardecl.Type);
             foreach(SyntaxNode svar in vardecl.Variables)
             {
                 var result = needVar ? "var " : "";
@@ -982,6 +1046,8 @@ namespace CHash2Das
                     return onMethodDeclaration(member as MethodDeclarationSyntax);
                 case SyntaxKind.FieldDeclaration:
                     return onFieldDeclaration(member as FieldDeclarationSyntax);
+                case SyntaxKind.ConstructorDeclaration:
+                    return onConstructorDeclaration(member as ConstructorDeclarationSyntax);
                 default:
                     Fail($"Unsupported member {member.Kind()}");
                     return $"{member}";
