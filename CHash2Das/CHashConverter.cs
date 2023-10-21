@@ -854,10 +854,11 @@ namespace CHash2Das
                 tabs++;
             }
             result += loopBlock(wstmt.Statement);
-            if (!hasBorC)
-                tabs--;
             if (hasBorC)
+            {
+                tabs--;
                 result += $"{tabstr}finally\n";
+            }
             result += $"{tabstr}\t{tv} = {onExpressionSyntax(wstmt.Condition)}\n";
             return result;
         }
