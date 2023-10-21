@@ -614,12 +614,12 @@ namespace CHash2Das
         string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
-            var result = $"{tabstr}def {methodDeclaration.Identifier} ";
+            var result = $"{tabstr}def {methodDeclaration.Identifier}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
                     .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
-                result += $"({string.Join("; ", parameters)})";
+                result += $" ({string.Join("; ", parameters)})";
             }
             result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
             return result;
@@ -628,12 +628,12 @@ namespace CHash2Das
         string onMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
-            var result = $"{tabstr}def {methodDeclaration.Identifier} ";
+            var result = $"{tabstr}def {methodDeclaration.Identifier}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
                     .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
-                result += $"({string.Join("; ", parameters)})";
+                result += $" ({string.Join("; ", parameters)})";
             }
             result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
             result += onBlockSyntax(methodDeclaration.Body);
