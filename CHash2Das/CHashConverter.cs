@@ -20,7 +20,7 @@ namespace CHash2Das
         SemanticModel semanticModel;
         CSharpCompilation compilation;
 
-        void Fail ( string message )
+        void Fail(string message)
         {
             if (failToDebug)
                 Debug.Fail(message);
@@ -32,7 +32,7 @@ namespace CHash2Das
         {
             var tt = semanticModel.GetTypeInfo(ts);
             var txt = onTypeSyntax(ts);
-            if ( isClassOrStructRef(tt.Type) ) txt += "?";
+            if (isClassOrStructRef(tt.Type)) txt += "?";
             return txt;
         }
 
@@ -147,7 +147,7 @@ namespace CHash2Das
             onInvExpr[key] = inv;
         }
 
-        public string onArgumentListSyntax ( ArgumentListSyntax argumentList )
+        public string onArgumentListSyntax(ArgumentListSyntax argumentList)
         {
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
@@ -172,22 +172,22 @@ namespace CHash2Das
             return false;
         }
 
-        string onInvocationExpression( InvocationExpressionSyntax inv )
+        string onInvocationExpression(InvocationExpressionSyntax inv)
         {
             string key = inv.Expression.ToString();
             onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
             if (invExpr != null)
-                return invExpr(this,inv);
+                return invExpr(this, inv);
             var callText = "";
-            if ( IsCallingClassMethod(inv) && !IsCallingStaticMethod(inv) )
+            if (IsCallingClassMethod(inv) && !IsCallingStaticMethod(inv))
             {
-                if ( inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression )
+                if (inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
                 {
                     var ma = inv.Expression as MemberAccessExpressionSyntax;
                     callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}";
                 }
-            } 
-            if ( callText=="" ) callText = onExpressionSyntax(inv.Expression);
+            }
+            if (callText == "") callText = onExpressionSyntax(inv.Expression);
             return $"{callText}({onArgumentListSyntax(inv.ArgumentList)})";
         }
 
@@ -319,9 +319,9 @@ namespace CHash2Das
             return -1;
         }
 
-        string getDasCastName ( int rank )
+        string getDasCastName(int rank)
         {
-            switch ( rank)
+            switch (rank)
             {
                 case 7: return "double";
                 case 6: return "float";
@@ -351,9 +351,9 @@ namespace CHash2Das
             var rightType = semanticModel.GetTypeInfo(binop.Right);
             var leftRank = getTypeRank(leftType.Type);
             var rightRank = getTypeRank(rightType.Type);
-            var castRank = getBinaryExpressionCastType(binop.OperatorToken.Text,leftRank,rightRank);
+            var castRank = getBinaryExpressionCastType(binop.OperatorToken.Text, leftRank, rightRank);
             var result = "(";
-            if (leftRank != castRank && castRank!=-1)
+            if (leftRank != castRank && castRank != -1)
                 result += $"{getDasCastName(castRank)}(";
             result += onExpressionSyntax(binop.Left);
             if (leftRank != castRank && castRank != -1)
@@ -369,7 +369,7 @@ namespace CHash2Das
 
         string onArrayCreationExpressionSyntax(ArrayCreationExpressionSyntax ac)
         {
-            var result = ac.Initializer!=null ? "newInitArray(" : "newArray(";
+            var result = ac.Initializer != null ? "newInitArray(" : "newArray(";
             var first = true;
             foreach (ArrayRankSpecifierSyntax rank in ac.Type.RankSpecifiers)
             {
@@ -396,11 +396,11 @@ namespace CHash2Das
         string onObjectCreationExpression(ObjectCreationExpressionSyntax oce)
         {
             var restype = semanticModel.GetTypeInfo(oce);
-            if ( isTable(restype.Type) )
+            if (isTable(restype.Type))
             {
                 return onObjectCreationExpression_Table(oce);
-            } 
-            else if ( isClassOrStruct(restype.Type) )
+            }
+            else if (isClassOrStruct(restype.Type))
             {
                 return onObjectCreationExpression_ClassOrStruct(oce);
             }
@@ -465,7 +465,7 @@ namespace CHash2Das
                 case SyntaxKind.ParenthesizedExpression:
                     return $"({onExpressionSyntax((expression as ParenthesizedExpressionSyntax).Expression)})";
                 case SyntaxKind.InvocationExpression:
-                    return onInvocationExpression(expression as  InvocationExpressionSyntax);
+                    return onInvocationExpression(expression as InvocationExpressionSyntax);
                 case SyntaxKind.UnaryPlusExpression:
                 case SyntaxKind.UnaryMinusExpression:
                 case SyntaxKind.BitwiseNotExpression:
@@ -547,7 +547,7 @@ namespace CHash2Das
             }
         }
 
-        string onInterpolatedStringExpressionSyntax( InterpolatedStringExpressionSyntax iss )
+        string onInterpolatedStringExpressionSyntax(InterpolatedStringExpressionSyntax iss)
         {
             var result = "StringBuilder(";
             var first = true;
@@ -555,7 +555,7 @@ namespace CHash2Das
             {
                 if (first)
                     first = false;
-                else 
+                else
                     result += ", ";
                 switch (content)
                 {
@@ -644,14 +644,14 @@ namespace CHash2Das
         {
             var values = new List<string>();
             var tname = onVarTypeSyntax(vardecl.Type);
-            foreach(SyntaxNode svar in vardecl.Variables)
+            foreach (SyntaxNode svar in vardecl.Variables)
             {
                 var result = needVar ? "var " : "";
                 var declarator = svar as VariableDeclaratorSyntax;
                 result += $"{declarator.Identifier.Text}";
                 if (tname != "var")
                     result += $" : {tname}";
-                if ( declarator.Initializer != null)
+                if (declarator.Initializer != null)
                     result += $" = {onExpressionSyntax(declarator.Initializer.Value)}";
                 values.Add(result);
             }
@@ -660,8 +660,8 @@ namespace CHash2Das
 
         bool hasBreakOrContinue(StatementSyntax statementSyntax)
         {
-           return statementSyntax.DescendantNodes()
-                .Any(node => node is BreakStatementSyntax || node is ContinueStatementSyntax);
+            return statementSyntax.DescendantNodes()
+                 .Any(node => node is BreakStatementSyntax || node is ContinueStatementSyntax);
         }
 
         SyntaxNode getEnclosingStatement(BreakStatementSyntax breakStatement)
@@ -679,11 +679,11 @@ namespace CHash2Das
         {
             return statementSyntax.DescendantNodes()
                  .Any(
-                node => (node is BreakStatementSyntax) && (getEnclosingStatement(node as BreakStatementSyntax)==enclosure) 
+                node => (node is BreakStatementSyntax) && (getEnclosingStatement(node as BreakStatementSyntax) == enclosure)
                 );
         }
 
-        bool isIdentifier ( ExpressionSyntax expression, string id )
+        bool isIdentifier(ExpressionSyntax expression, string id)
         {
             if (!(expression is IdentifierNameSyntax))
                 return false;
@@ -692,14 +692,14 @@ namespace CHash2Das
             return true;
         }
 
-        bool isOne ( ExpressionSyntax expression )
+        bool isOne(ExpressionSyntax expression)
         {
             if (!(expression is LiteralExpressionSyntax)) return false;
             if ((expression as LiteralExpressionSyntax).Token.ValueText != "1") return false;
             return true;
         }
 
-        bool isRangeFor(ForStatementSyntax fstmt, out string rangeExpr )
+        bool isRangeFor(ForStatementSyntax fstmt, out string rangeExpr)
         {
             rangeExpr = null;
             if (fstmt.Declaration.Variables.Count != 1) return false;           // only 1 variable
@@ -719,7 +719,7 @@ namespace CHash2Das
             else return false;
             if (fstmt.Incrementors.Count != 1) return false;                    // only 1 incrementor
             var inc = fstmt.Incrementors[0];
-            switch ( inc.Kind() )
+            switch (inc.Kind())
             {
                 case SyntaxKind.PreIncrementExpression:                         // it's ++var
                     if (!isIdentifier((inc as PrefixUnaryExpressionSyntax).Operand, vname))
@@ -732,15 +732,15 @@ namespace CHash2Das
                 case SyntaxKind.AddAssignmentExpression:                        // it's var += 1
                     {
                         var aa = inc as AssignmentExpressionSyntax;
-                        if ( !isIdentifier(aa.Left, vname)) return false;
-                        if ( !isOne(aa.Right)) return false;
+                        if (!isIdentifier(aa.Left, vname)) return false;
+                        if (!isOne(aa.Right)) return false;
                         break;
                     }
                 case SyntaxKind.SimpleAssignmentExpression:                     // its var = var + 1 or var = 1 + var
                     {
                         var aa = inc as AssignmentExpressionSyntax;
-                        if ( !isIdentifier(aa.Left, vname)) return false;
-                        if ( !(aa.Right is BinaryExpressionSyntax)) return false;
+                        if (!isIdentifier(aa.Left, vname)) return false;
+                        if (!(aa.Right is BinaryExpressionSyntax)) return false;
                         var bb = aa.Right as BinaryExpressionSyntax;
                         if (isIdentifier(bb.Left, vname) && isOne(bb.Right)) { }            // var = var + 1
                         else if (isIdentifier(bb.Right, vname) && isOne(bb.Left)) { }       // var = 1 + var
@@ -768,7 +768,7 @@ namespace CHash2Das
                 case SyntaxKind.LessThanExpression:
                     {
                         var binop = fstmt.Condition as BinaryExpressionSyntax;
-                        if(isIdentifier(binop.Left, vname))
+                        if (isIdentifier(binop.Left, vname))
                             torange += onExpressionSyntax(binop.Right);
                         else
                             return false;
@@ -783,7 +783,7 @@ namespace CHash2Das
                             return false;
                         break;
                     }
-            
+
             }
             rangeExpr = $"for {vname} in {range}({onExpressionSyntax(vdecl.Initializer.Value)},{torange})";
             return true;
@@ -802,8 +802,8 @@ namespace CHash2Das
         string onForStatement(ForStatementSyntax fstmt)
         {
             var tabstr = new string('\t', tabs);
-            if (isRangeFor(fstmt,out string rangeExpr))
-                return  $"{rangeExpr}\n{loopBlock(fstmt.Statement)}";
+            if (isRangeFor(fstmt, out string rangeExpr))
+                return $"{rangeExpr}\n{loopBlock(fstmt.Statement)}";
             var result = "// for\n";
             var values = onVariableDeclarationSyntax(fstmt.Declaration);
             foreach (string val in values)
@@ -822,7 +822,7 @@ namespace CHash2Das
                 result += $"{tabstr}\tfinally\n";
             }
             tabs++;
-            tabstr = new string('\t', hasBorC ? (tabs+1) : tabs);
+            tabstr = new string('\t', hasBorC ? (tabs + 1) : tabs);
             foreach (ExpressionSyntax i in fstmt.Incrementors)
             {
                 result += $"{tabstr}{onExpressionSyntax(i)}\n";
@@ -836,7 +836,7 @@ namespace CHash2Das
             return $"while {onExpressionSyntax(wstmt.Condition)}\n{loopBlock(wstmt.Statement)}";
         }
 
-        string makeTempVar ( string suffix )
+        string makeTempVar(string suffix)
         {
             return $"__temp_{++tempVars}_{suffix}";
         }
@@ -870,14 +870,14 @@ namespace CHash2Das
             if (ifstmt.Else != null)
             {
                 if (ifstmt.Else.Statement is IfStatementSyntax)
-                    result += $"{tabstr}{onIfStatement(ifstmt.Else.Statement as IfStatementSyntax,true)}";
+                    result += $"{tabstr}{onIfStatement(ifstmt.Else.Statement as IfStatementSyntax, true)}";
                 else
                     result += $"{tabstr}else\n{loopBlock(ifstmt.Else.Statement)}";
             }
             return result;
         }
 
-        string onForeachStatement(ForEachStatementSyntax fs) 
+        string onForeachStatement(ForEachStatementSyntax fs)
         {
             return $"for {fs.Identifier.Text} in {onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
@@ -915,10 +915,10 @@ namespace CHash2Das
                 sortedSections[sectionCount - 1] = fs.Sections[defaultIndex];
             }
 
-            for (int si=0; si<sectionCount; ++si)
+            for (int si = 0; si < sectionCount; ++si)
             {
                 SwitchSectionSyntax section = sortedSections[si];
-                var isElseTrue = (si==sectionCount-1) && (section.Labels.Count==1) && (section.Labels[0] is DefaultSwitchLabelSyntax);
+                var isElseTrue = (si == sectionCount - 1) && (section.Labels.Count == 1) && (section.Labels[0] is DefaultSwitchLabelSyntax);
                 if (firstIf)
                 {
                     result += $"{tabstr}if ";
@@ -948,7 +948,7 @@ namespace CHash2Das
                 }
                 tabs++;
                 foreach (var ex in section.Statements)
-                    if ( !simpleSwitchCase || !(ex is BreakStatementSyntax) )
+                    if (!simpleSwitchCase || !(ex is BreakStatementSyntax))
                         result += $"{onStatementSyntax(ex)}";
                 if (simpleSwitchCase && section.Statements.Count == 1)
                     result += $"{tabstr}\tpass\n";
@@ -976,7 +976,7 @@ namespace CHash2Das
                     {
                         var values = onVariableDeclarationSyntax((statement as LocalDeclarationStatementSyntax).Declaration);
                         string result = "";
-                        foreach(string val in values)
+                        foreach (string val in values)
                             result += $"{tabstr}{val}\n";
                         return result;
                     }
@@ -1001,7 +1001,7 @@ namespace CHash2Das
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
-          }
+            }
         }
 
         string onBlockSyntax(BlockSyntax block)
@@ -1027,7 +1027,7 @@ namespace CHash2Das
         string onFieldDeclaration(FieldDeclarationSyntax field)
         {
             var tabstr = new string('\t', tabs);
-            var values = onVariableDeclarationSyntax(field.Declaration,false);
+            var values = onVariableDeclarationSyntax(field.Declaration, false);
             string result = "";
             foreach (string val in values)
                 result += $"{tabstr}{val}\n";

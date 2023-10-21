@@ -15,7 +15,7 @@ namespace CHash2Das
     {
         static bool isSingleString(ArgumentListSyntax list)
         {
-            if(list.Arguments.Count != 1)
+            if (list.Arguments.Count != 1)
                 return false;
             var kind = (list.Arguments[0] as ArgumentSyntax).Expression.Kind();
             return kind == SyntaxKind.StringLiteralExpression;
@@ -30,7 +30,7 @@ namespace CHash2Das
         static string das_Write(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
             var args = converter.onArgumentListSyntax(invocationExpression.ArgumentList);
-            if ( !isSingleString(invocationExpression.ArgumentList) )
+            if (!isSingleString(invocationExpression.ArgumentList))
                 return $"print(StringBuilder({args}))";
             else
                 return $"print({args})";
