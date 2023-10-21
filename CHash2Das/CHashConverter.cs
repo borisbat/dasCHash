@@ -559,10 +559,23 @@ namespace CHash2Das
                 case SyntaxKind.ParenthesizedExpression:
                     return reqMove((expression as ParenthesizedExpressionSyntax).Expression);
                 case SyntaxKind.NumericLiteralExpression:
+                case SyntaxKind.NullLiteralExpression:
+                case SyntaxKind.TrueLiteralExpression:
+                case SyntaxKind.FalseLiteralExpression:
+                case SyntaxKind.CharacterLiteralExpression:
                     return false;
+                case SyntaxKind.ArrayInitializerExpression:
+                case SyntaxKind.ObjectInitializerExpression:
+                case SyntaxKind.CollectionInitializerExpression:
+                case SyntaxKind.ComplexElementInitializerExpression:
+                    return true;
                 default:
                     var type = semanticModel.GetTypeInfo(expression);
-                    if (type.Type != null && type.Type.IsValueType)
+                    if (type.Type == null)
+                    {
+                        Fail($"unsupported ExpressionSyntax {expression.Kind()}");
+                    }
+                    if (type.Type == null || type.Type.IsValueType)
                     {
                         return false;
                     }
