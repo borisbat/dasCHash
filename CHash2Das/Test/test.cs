@@ -13,7 +13,8 @@ namespace HelloWorld
     class Foo
     {
 
-        int a = 13;
+        public int a = 13;
+        private int b = 13;
 
         public Foo() { }
         public Foo(int A) { a = A; }

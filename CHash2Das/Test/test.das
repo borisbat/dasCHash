@@ -12,6 +12,8 @@
 class Foo
 	a : int = int(13)
 
+	private b : int = int(13)
+
 	def Foo
 		pass
 
@@ -250,7 +252,7 @@ class HelloProgram
 		else
 			pass
 
-	POTToText : table<int; string>? <- new {{int(14) => "16K"; int(15) => "32K"; int(16) => "64K"; int(17) => "128K"; int(18) => "256K"; int(19) => "512K"; int(20) => "1M"; int(21) => "2M"; int(22) => "4M"; int(23) => "8M"; int(24) => "16M"; int(25) => "32M"; int(26) => "64M"; int(27) => "128M"; int(28) => "256M"; int(29) => "512M"; int(30) => "1B"; int(31) => "2B"; int(32) => "4B"; int(33) => "8B"; int(34) => "16B"; int(35) => "32B"; int(36) => "64B"; int(37) => "128B"; int(38) => "256B"; int(39) => "512B"; int(40) => "1024B"; }}
+	private POTToText : table<int; string>? <- new {{int(14) => "16K"; int(15) => "32K"; int(16) => "64K"; int(17) => "128K"; int(18) => "256K"; int(19) => "512K"; int(20) => "1M"; int(21) => "2M"; int(22) => "4M"; int(23) => "8M"; int(24) => "16M"; int(25) => "32M"; int(26) => "64M"; int(27) => "128M"; int(28) => "256M"; int(29) => "512M"; int(30) => "1B"; int(31) => "2B"; int(32) => "4B"; int(33) => "8B"; int(34) => "16B"; int(35) => "32B"; int(36) => "64B"; int(37) => "128B"; int(38) => "256B"; int(39) => "512B"; int(40) => "1024B"; }}
 
 	def objectInit : void
 		var epochStart : System::DateTime = new [[System::DateTime(int(1970), int(1), int(1), int(0), int(0), int(0), System.DateTimeKind.Utc)]]

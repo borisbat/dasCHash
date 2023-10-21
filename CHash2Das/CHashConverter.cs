@@ -1175,8 +1175,10 @@ namespace CHash2Das
             var tabstr = new string('\t', tabs);
             var values = onVariableDeclarationSyntax(field.Declaration, false);
             string result = "";
+            var isPrivate = field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.PrivateKeyword);
+            var prefix = isPrivate ? "private " : "";
             foreach (string val in values)
-                result += $"{tabstr}{val}\n";
+                result += $"{tabstr}{prefix}{val}\n";
             return result;
         }
 
