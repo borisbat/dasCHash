@@ -318,9 +318,13 @@ namespace HelloWorld
         {
             var a = new List<float>()
             {
-                1
+                1, 2, 3, 4, 5, 6
             };
-            a.Add(2);
+            a.Add(7);
+            a.RemoveAt(0);
+            a.Remove(2);
+            a.Insert(0, 123);
+            a.RemoveRange(0, 1);
             var b = a[0];
             Console.WriteLine($"a = {a.ToString()} size: {a.Count}");
             Console.WriteLine($"b = {b}");

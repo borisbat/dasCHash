@@ -181,6 +181,11 @@ namespace CHash2Das
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
+        public string onArgumentReverseListSyntax(ArgumentListSyntax argumentList)
+        {
+            return string.Join(", ", argumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+        }
+
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
         {
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
@@ -223,11 +228,11 @@ namespace CHash2Das
                     if (invExpr != null)
                         callText = invExpr(this, inv);
                     else
-                        callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}";
+                        callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}({onArgumentListSyntax(inv.ArgumentList)})";
                 }
             }
-            if (callText == "") callText = onExpressionSyntax(inv.Expression);
-            return $"{callText}({onArgumentListSyntax(inv.ArgumentList)})";
+            if (callText == "") callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+            return callText;
         }
 
         bool isBool(ITypeSymbol ts)

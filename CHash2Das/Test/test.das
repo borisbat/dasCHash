@@ -262,8 +262,12 @@ class HelloProgram
 		t->bar(int(1))
 
 	def lists : void
-		var a <- new [{auto 1; }]
-		*a |> push(int(2))
+		var a <- new [{auto 1; 2; 3; 4; 5; 6; }]
+		*a |> push(int(7))
+		*a |> erase(int(0))
+		*a |> remove_value(int(2))
+		*a |> push(int(123), int(0))
+		*a |> erase(int(0), int(1))
 		var b = a[0]
 		print(StringBuilder(StringBuilder("a = ", a->ToString(), " size: ", *a |> length()),"\n"))
 		print(StringBuilder(StringBuilder("b = ", b),"\n"))

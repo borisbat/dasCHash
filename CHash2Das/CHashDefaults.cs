@@ -45,12 +45,28 @@ namespace CHash2Das
         static string das_Add(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push";
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push({converter.onArgumentListSyntax(inv.ArgumentList)})";
+        }
+        static string das_Insert(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push({converter.onArgumentReverseListSyntax(inv.ArgumentList)})";
         }
         static string das_Clear(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> clear";
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> clear()";
+        }
+        static string das_RemoveAt(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> erase({converter.onArgumentListSyntax(inv.ArgumentList)})";
+        }
+
+        static string das_Remove(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> remove_value({converter.onArgumentListSyntax(inv.ArgumentList)})";
         }
         static string das_Count(CHashConverter converter, MemberAccessExpressionSyntax acc)
         {
@@ -69,6 +85,10 @@ namespace CHash2Das
             converter.addInvocation("Write", das_Write);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Add" }, das_Add);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Clear" }, das_Clear);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "RemoveAt" }, das_RemoveAt);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "RemoveRange" }, das_RemoveAt);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Remove" }, das_Remove);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Insert" }, das_Insert);
             converter.addMemberAccess(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Count" }, das_Count);
         }
     }
