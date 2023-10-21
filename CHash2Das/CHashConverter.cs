@@ -119,6 +119,12 @@ namespace CHash2Das
                                     }
                                     break;
                                 }
+                            case "List":
+                                if (genn.TypeArgumentList.Arguments.Count == 1)
+                                {
+                                    return $"array<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}>";
+                                }
+                                break;
                         }
                         return $"{type}";
                     }
@@ -134,8 +140,11 @@ namespace CHash2Das
         }
 
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
+        public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
+        Dictionary<INamedTypeSymbolField, InvocationDelegate> methodInvExpr = new Dictionary<INamedTypeSymbolField, InvocationDelegate>();
+        Dictionary<INamedTypeSymbolField, MemberAccessDelegate> memberAccessExpr = new Dictionary<INamedTypeSymbolField, MemberAccessDelegate>();
 
         public void addInvocation(string key, InvocationDelegate inv)
         {
@@ -145,6 +154,26 @@ namespace CHash2Das
                 return;
             }
             onInvExpr[key] = inv;
+        }
+
+        public void addMethod(INamedTypeSymbolField typeWithMethod, InvocationDelegate inv)
+        {
+            if (methodInvExpr.ContainsKey(typeWithMethod))
+            {
+                Debug.Fail($"method {typeWithMethod.MetadataName}.{typeWithMethod.FieldName} is already declared");
+                return;
+            }
+            methodInvExpr[typeWithMethod] = inv;
+        }
+
+        public void addMemberAccess(INamedTypeSymbolField typeWithMethod, MemberAccessDelegate acc)
+        {
+            if (memberAccessExpr.ContainsKey(typeWithMethod))
+            {
+                Debug.Fail($"member access {typeWithMethod.MetadataName}.{typeWithMethod.FieldName} is already declared");
+                return;
+            }
+            memberAccessExpr[typeWithMethod] = acc;
         }
 
         public string onArgumentListSyntax(ArgumentListSyntax argumentList)
@@ -184,7 +213,17 @@ namespace CHash2Das
                 if (inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
                 {
                     var ma = inv.Expression as MemberAccessExpressionSyntax;
-                    callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}";
+                    var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
+                    methodInvExpr.TryGetValue(new INamedTypeSymbolField()
+                    {
+                        MetadataName = exprTypeInfo.Type.MetadataName,
+                        ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
+                        FieldName = ma.Name.Identifier.Text
+                    }, out invExpr);
+                    if (invExpr != null)
+                        callText = invExpr(this, inv);
+                    else
+                        callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}";
                 }
             }
             if (callText == "") callText = onExpressionSyntax(inv.Expression);
@@ -274,6 +313,19 @@ namespace CHash2Das
             return false;
         }
 
+        bool isArray(ITypeSymbol ts)
+        {
+            // Check if the type is a generic type
+            if (ts is INamedTypeSymbol namedType && namedType.IsGenericType)
+            {
+                // Check if the type is a List by comparing the metadata name and containing namespace
+                return namedType.MetadataName == "List`1" &&
+                       namedType.ContainingNamespace?.ToDisplayString() == "System.Collections.Generic";
+            }
+
+            return false;
+        }
+
         bool isClassOrStruct(ITypeSymbol ts)
         {
             return ts.TypeKind == TypeKind.Class || ts.TypeKind == TypeKind.Struct;
@@ -306,7 +358,7 @@ namespace CHash2Das
         int getTypeRank(ITypeSymbol ts)
         {
             if (ts == null) return -1;
-            // double > float > uint64 > int64 > uint32 > int32 
+            // double > float > uint64 > int64 > uint32 > int32
             // any int bellow is going to int32
             if (isDouble(ts)) return 7;
             if (isFloat(ts)) return 6;
@@ -396,9 +448,13 @@ namespace CHash2Das
         string onObjectCreationExpression(ObjectCreationExpressionSyntax oce)
         {
             var restype = semanticModel.GetTypeInfo(oce);
-            if (isTable(restype.Type))
+            if (isTable(restype.Type) && oce.Initializer != null)
             {
                 return onObjectCreationExpression_Table(oce);
+            }
+            else if (isArray(restype.Type) && oce.Initializer != null)
+            {
+                return onObjectCreationExpression_Array(oce);
             }
             else if (isClassOrStruct(restype.Type))
             {
@@ -413,14 +469,14 @@ namespace CHash2Das
             var arguments = oce.ArgumentList.Arguments
                 .Select(arg => onExpressionSyntax(arg.Expression));
             if (arguments.Count() == 0)
-                return $"new {onTypeSyntax(oce.Type)}()";
+                return $"new [[{onTypeSyntax(oce.Type)}()]]";
             var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-            return $"new {onTypeSyntax(oce.Type)}({arguments2})";
+            return $"new [[{onTypeSyntax(oce.Type)}({arguments2})]]";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
         {
-            var result = "{{";
+            var result = "new {{";
             if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
             {
                 foreach (ExpressionSyntax element in oce.Initializer.Expressions)
@@ -456,7 +512,65 @@ namespace CHash2Das
             return result;
         }
 
-        string onExpressionSyntax(ExpressionSyntax expression)
+        private string onObjectCreationExpression_Array(ObjectCreationExpressionSyntax oce)
+        {
+            var result = "new [{auto "; // TODO: actual type
+            if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
+            {
+                foreach (ExpressionSyntax element in oce.Initializer.Expressions)
+                {
+                    if (element.Kind() == SyntaxKind.ObjectInitializerExpression)
+                    {
+                        var kv = element as InitializerExpressionSyntax;
+                        if (kv.Expressions.Count == 1)
+                        {
+                            var value = kv.Expressions[0];
+                            result += $"{onExpressionSyntax(value)}; ";
+                        }
+                        else
+                        {
+                            Fail($"expecting key => value in {kv}");
+                            result += $"{kv}; ";
+                        }
+                    }
+                    else
+                    {
+                        Fail($"expecting complex initialization in {element.Kind()}");
+                        result += $"{element}; ";
+                    }
+                }
+            }
+            else
+            {
+                Fail("unsupported table initialization {oce.Initializer}");
+                result += $"{oce.Initializer}";
+            }
+            result += "}]";
+            return result;
+        }
+
+        bool reqMove(ExpressionSyntax expression)
+        {
+            if (expression == null)
+                return false;
+
+            switch (expression.Kind())
+            {
+                case SyntaxKind.ParenthesizedExpression:
+                    return reqMove((expression as ParenthesizedExpressionSyntax).Expression);
+                case SyntaxKind.NumericLiteralExpression:
+                    return false;
+                default:
+                    var type = semanticModel.GetTypeInfo(expression);
+                    if (type.Type != null && type.Type.IsValueType)
+                    {
+                        return false;
+                    }
+                    return true;
+            }
+        }
+
+        public string onExpressionSyntax(ExpressionSyntax expression)
         {
             if (expression == null)
                 return "";
@@ -512,11 +626,27 @@ namespace CHash2Das
                 case SyntaxKind.OmittedArraySizeExpression:
                     return "";  // in int[], this is the portion between the brackets
                 case SyntaxKind.NumericLiteralExpression:
+                    var leftType = semanticModel.GetTypeInfo(expression);
+                    var typeRank = getTypeRank(leftType.Type);
+                    if (typeRank == -1)
+                        return $"{expression}";
+                    else
+                        return $"{getDasCastName(typeRank)}({expression})";
                 case SyntaxKind.StringLiteralExpression:
                     return onSyntaxToken((expression as LiteralExpressionSyntax).Token);
                 case SyntaxKind.SimpleMemberAccessExpression:
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
+                        TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
+                        if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
+                        {
+                            MetadataName = typeInfo.Type.MetadataName,
+                            ContainingNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString(),
+                            FieldName = smm.Name.Identifier.Text
+                        }, out MemberAccessDelegate acc))
+                        {
+                            return acc(this, smm);
+                        }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
                 case SyntaxKind.IdentifierName:
@@ -644,15 +774,17 @@ namespace CHash2Das
         {
             var values = new List<string>();
             var tname = onVarTypeSyntax(vardecl.Type);
-            foreach (SyntaxNode svar in vardecl.Variables)
+            foreach (VariableDeclaratorSyntax declarator in vardecl.Variables)
             {
                 var result = needVar ? "var " : "";
-                var declarator = svar as VariableDeclaratorSyntax;
                 result += $"{declarator.Identifier.Text}";
-                if (tname != "var")
+                if (tname != "var" && tname != "var?")
                     result += $" : {tname}";
                 if (declarator.Initializer != null)
-                    result += $" = {onExpressionSyntax(declarator.Initializer.Value)}";
+                {
+                    var assign = reqMove(declarator.Initializer.Value) ? "<-" : "=";
+                    result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
+                }
                 values.Add(result);
             }
             return values;

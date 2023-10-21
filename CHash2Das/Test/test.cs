@@ -312,5 +312,22 @@ namespace HelloWorld
             t.bar();
             t.bar(1);
         }
+
+        void lists()
+        {
+            var a = new List<float>()
+            {
+                1
+            };
+            a.Add(2);
+            var b = a[0];
+            Console.WriteLine($"a = {a.ToString()} size: {a.Count}");
+            Console.WriteLine($"b = {b}");
+            a.Clear();
+
+            var c = new List<int>();
+            c.Add(1);
+            Console.WriteLine($"c = {c.ToString()}");
+        }
     }
 }

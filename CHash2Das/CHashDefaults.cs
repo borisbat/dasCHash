@@ -11,6 +11,13 @@ using System;
 
 namespace CHash2Das
 {
+    public struct INamedTypeSymbolField
+    {
+        public string MetadataName;
+        public string ContainingNamespace;
+        public string FieldName;
+    }
+
     public class CHashDefaults
     {
         static bool isSingleString(ArgumentListSyntax list)
@@ -35,9 +42,24 @@ namespace CHash2Das
             else
                 return $"print({args})";
         }
+        static string das_Add(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push";
+        }
+        static string das_Clear(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> clear";
+        }
+        static string das_Count(CHashConverter converter, MemberAccessExpressionSyntax acc)
+        {
+            return $"*{converter.onExpressionSyntax(acc.Expression)} |> length()";
+        }
 
         public static void registerInvocations(CHashConverter converter)
         {
+            const string CollectionGeneric = "System.Collections.Generic";
             converter.addInvocation("System.Console.WriteLine", das_WriteLine);
             converter.addInvocation("Console.WriteLine", das_WriteLine);
             converter.addInvocation("WriteLine", das_WriteLine);
@@ -45,6 +67,9 @@ namespace CHash2Das
             converter.addInvocation("System.Console.Write", das_Write);
             converter.addInvocation("Console.Write", das_Write);
             converter.addInvocation("Write", das_Write);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Add" }, das_Add);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Clear" }, das_Clear);
+            converter.addMemberAccess(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Count" }, das_Count);
         }
     }
 }
