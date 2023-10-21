@@ -838,7 +838,7 @@ namespace CHash2Das
 
         string makeTempVar(string suffix)
         {
-            return $"__temp_{++tempVars}_{suffix}";
+            return $"_temp_{++tempVars}_{suffix}_";
         }
 
         string onDoStatement(DoStatementSyntax wstmt)
