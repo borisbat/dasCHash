@@ -33,7 +33,9 @@ namespace Main
             CHashConverter hasher = new CHashConverter();
             CHashDefaults.registerInvocations(hasher);
 
-            Console.WriteLine(hasher.convert(compilation, model, root));
+            var result = hasher.convert(compilation, model, root);
+            Console.WriteLine(result);
+            System.IO.File.WriteAllText(Path.Combine(OUTPUT_PATH, "test.das"), result);
         }
     }
 }
