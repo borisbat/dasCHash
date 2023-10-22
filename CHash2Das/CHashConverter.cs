@@ -33,7 +33,7 @@ namespace CHash2Das
         {
             var tt = semanticModel.GetTypeInfo(ts);
             var txt = onTypeSyntax(ts);
-            if (isClassOrStructRef(tt.Type)) txt += "?";
+            if (isPointerType(tt.Type)) txt += "?";
             return txt;
         }
 
@@ -380,7 +380,7 @@ namespace CHash2Das
             return ts.TypeKind == TypeKind.Class || ts.TypeKind == TypeKind.Struct;
         }
 
-        bool isClassOrStructRef(ITypeSymbol typeSymbol)
+        public bool isPointerType(ITypeSymbol typeSymbol)
         {
             if (typeSymbol == null)
                 return false;
@@ -393,14 +393,49 @@ namespace CHash2Das
             {
                 case TypeKind.Class:
                     return true;
+                default:
+                    return false;
+            }
+        }
+
+        public bool isStructType(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null)
+                return false;
+
+            // Check if it's a built-in type (like int, double, etc.)
+            if (typeSymbol.IsValueType && typeSymbol.SpecialType != SpecialType.None)
+                return false;
+
+            switch (typeSymbol.TypeKind)
+            {
                 case TypeKind.Struct:
-                    // Exclude pointers and other non-standard structs
-                    if (typeSymbol is INamedTypeSymbol namedType && namedType.IsTupleType)
-                        return false;
                     return true;
                 default:
                     return false;
             }
+        }
+
+        public bool isMoveType(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol == null)
+                return false;
+            switch (typeSymbol.TypeKind)
+            {
+                case TypeKind.Array:
+                case TypeKind.Class:
+                    return true;
+                default:
+                    if (isPointerType(typeSymbol))
+                        return true;
+                    return false;
+            }
+
+        }
+
+        public bool isCloneType(ITypeSymbol typeSymbol)
+        {
+            return isStructType(typeSymbol);
         }
 
         public int getTypeRank(TypeSyntax type)
@@ -543,13 +578,13 @@ namespace CHash2Das
             }
             else if (isClassOrStruct(restype.Type))
             {
-                return onObjectCreationExpression_ClassOrStruct(oce);
+                return onObjectCreationExpression_ClassOrStruct(oce, restype);
             }
             Fail($"unsupported object creation {oce}");
             return $"{oce}";
         }
 
-        private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce)
+        private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce, TypeInfo resType)
         {
             var init = "";
             if (oce.Initializer != null)
@@ -563,10 +598,11 @@ namespace CHash2Das
                 init += " ";
             var arguments = oce.ArgumentList.Arguments
                 .Select(arg => onExpressionSyntax(arg.Expression));
+            var newCall = isPointerType(resType.Type) ? "new " : "";
             if (arguments.Count() == 0)
-                return $"new [[{onTypeSyntax(oce.Type)}(){init}]]";
+                return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
             var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-            return $"new [[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
+            return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -678,40 +714,6 @@ namespace CHash2Das
             return result;
         }
 
-        bool reqMove(ExpressionSyntax expression)
-        {
-            if (expression == null)
-                return false;
-
-            switch (expression.Kind())
-            {
-                case SyntaxKind.ParenthesizedExpression:
-                    return reqMove((expression as ParenthesizedExpressionSyntax).Expression);
-                case SyntaxKind.NumericLiteralExpression:
-                case SyntaxKind.NullLiteralExpression:
-                case SyntaxKind.TrueLiteralExpression:
-                case SyntaxKind.FalseLiteralExpression:
-                case SyntaxKind.CharacterLiteralExpression:
-                    return false;
-                case SyntaxKind.ArrayInitializerExpression:
-                case SyntaxKind.ObjectInitializerExpression:
-                case SyntaxKind.CollectionInitializerExpression:
-                case SyntaxKind.ComplexElementInitializerExpression:
-                    return true;
-                default:
-                    var type = semanticModel.GetTypeInfo(expression);
-                    if (type.Type == null)
-                    {
-                        Fail($"unsupported ExpressionSyntax {expression.Kind()}");
-                    }
-                    if (type.Type == null || type.Type.IsValueType)
-                    {
-                        return false;
-                    }
-                    return true;
-            }
-        }
-
         /// <param name="typeRankHint">Expression was casted to this type outside</param>
         public string onExpressionSyntax(ExpressionSyntax expression, int typeRankHint = -1)
         {
@@ -751,6 +753,12 @@ namespace CHash2Das
                 case SyntaxKind.BitwiseOrExpression:
                     return onBinaryExpressionSyntax(expression as BinaryExpressionSyntax);
                 case SyntaxKind.SimpleAssignmentExpression:
+                    {
+                        var binop = expression as AssignmentExpressionSyntax;
+                        var typeInfo = semanticModel.GetTypeInfo(binop.Left);
+                        var assign = isMoveType(typeInfo.Type) ? "<-" : isStructType(typeInfo.Type) ? ":=" : "=";
+                        return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
+                    }
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
                 case SyntaxKind.ExclusiveOrAssignmentExpression:
@@ -819,7 +827,7 @@ namespace CHash2Das
                 case SyntaxKind.ElementAccessExpression:
                     {
                         var eae = expression as ElementAccessExpressionSyntax;
-                        var isClass = isClassOrStructRef(semanticModel.GetTypeInfo(eae.Expression).Type);
+                        var isClass = isPointerType(semanticModel.GetTypeInfo(eae.Expression).Type);
                         var deref = isClass ? "*" : "";
                         var result = $"{deref}{onExpressionSyntax(eae.Expression)}[";
                         var first = true;
@@ -832,6 +840,8 @@ namespace CHash2Das
                         result += "]";
                         return result;
                     }
+                case SyntaxKind.DefaultExpression:
+                    return $"[[{onVarTypeSyntax((expression as DefaultExpressionSyntax).Type)}]]";
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
@@ -902,6 +912,18 @@ namespace CHash2Das
             return result;
         }
 
+        string onStructDeclaration(StructDeclarationSyntax classDeclaration)
+        {
+            var result = $"struct {classDeclaration.Identifier}\n";
+            tabs++;
+            foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
+            {
+                result += onMemberDeclaration(membersDeclaration) + "\n";
+            }
+            tabs--;
+            return result;
+        }
+
         string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
@@ -943,7 +965,12 @@ namespace CHash2Das
                     result += $" : {tname}";
                 if (declarator.Initializer != null)
                 {
-                    var assign = reqMove(declarator.Initializer.Value) ? "<-" : "=";
+                    var typeInfo = semanticModel.GetTypeInfo(vardecl.Type);
+                    var assign = "=";
+                    if (isMoveType(typeInfo.Type))
+                        assign = "<-";
+                    else if (declarator.Initializer.Value.IsKind(SyntaxKind.IdentifierName) && isCloneType(typeInfo.Type))
+                        assign = ":=";
                     result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
                 }
                 values.Add(result);
@@ -1173,7 +1200,7 @@ namespace CHash2Das
 
         string onForeachStatement(ForEachStatementSyntax fs)
         {
-            var isClass = isClassOrStructRef(semanticModel.GetTypeInfo(fs.Expression).Type);
+            var isClass = isPointerType(semanticModel.GetTypeInfo(fs.Expression).Type);
             var deref = isClass ? "*" : "";
             return $"for {fs.Identifier.Text} in {deref}{onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
@@ -1376,6 +1403,8 @@ namespace CHash2Das
                     return onFieldDeclaration(member as FieldDeclarationSyntax);
                 case SyntaxKind.ConstructorDeclaration:
                     return onConstructorDeclaration(member as ConstructorDeclarationSyntax);
+                case SyntaxKind.StructDeclaration:
+                    return onStructDeclaration(member as StructDeclarationSyntax);
                 default:
                     Fail($"Unsupported member {member.Kind()}");
                     return $"{member}";

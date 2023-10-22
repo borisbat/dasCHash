@@ -48,28 +48,36 @@ namespace CHash2Das
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
         }
         static string das_Insert(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             var args = converter.onArgumentReverseListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { false, true });
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
         }
         static string das_Contains(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> has_value({args})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> has_value({args})";
         }
         static string das_IndexOf(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> find_index({args})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> find_index({args})";
         }
         static string das_Sort(CHashConverter converter, InvocationExpressionSyntax inv)
         {
@@ -77,17 +85,23 @@ namespace CHash2Das
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             if (inv.ArgumentList.Arguments.Count != 0)
                 converter.Fail("Sort with comparer not supported");
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> sort()";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> sort()";
         }
         static string das_Clear(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> clear()";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> clear()";
         }
         static string das_RemoveAt(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> erase({converter.onArgumentListSyntax(inv.ArgumentList)})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> erase({converter.onArgumentListSyntax(inv.ArgumentList)})";
         }
 
         static string das_Remove(CHashConverter converter, InvocationExpressionSyntax inv)
@@ -95,17 +109,23 @@ namespace CHash2Das
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
             var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
-            return $"*{converter.onExpressionSyntax(ma.Expression)} |> remove_value({args})";
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> remove_value({args})";
         }
 
         static string das_ToString(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
-            return $"(*{converter.onExpressionSyntax(ma.Expression)})"; // maybe string(*<arg>)
+            var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"({deref}{converter.onExpressionSyntax(ma.Expression)})"; // maybe string(*<arg>)
         }
         static string das_Count(CHashConverter converter, MemberAccessExpressionSyntax acc)
         {
-            return $"*{converter.onExpressionSyntax(acc.Expression)} |> length()";
+            var artType = converter.semanticModel.GetTypeInfo(acc.Expression);
+            var deref = converter.isPointerType(artType.Type) ? "*" : "";
+            return $"{deref}{converter.onExpressionSyntax(acc.Expression)} |> length()";
         }
 
         public static void registerInvocations(CHashConverter converter)

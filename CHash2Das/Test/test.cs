@@ -35,6 +35,11 @@ namespace HelloWorld
         }
     }
 
+    struct SFoo
+    {
+        public int a;
+    }
+
     class HelloProgram
     {
         int count = 13;
@@ -314,6 +319,15 @@ namespace HelloWorld
             t.bar(1);
         }
 
+        void structures()
+        {
+            var f1 = new SFoo();
+            var f2 = new SFoo() { a = 1 };
+            var f3 = f1; // clone!
+            f1 = default(SFoo);
+            Console.WriteLine($"f1 = {f1} f2 = {f2.ToString()} f3 = {f3.a}");
+        }
+
         void lists()
         {
             var a = new List<float>()
@@ -342,6 +356,10 @@ namespace HelloWorld
             var c = new List<Foo>() { new Foo() { a = 1 }, new Foo() { a = 2 } };
             c.Add(new Foo() { a = 3 });
             Console.WriteLine($"c = {c}");
+
+            var d = new List<SFoo>() { new SFoo() { a = 1 }, new SFoo() { a = 2 } };
+            d.Add(new SFoo() { a = 3 });
+            Console.WriteLine($"d = {d.ToString()}");
         }
     }
 }
