@@ -329,10 +329,19 @@ namespace HelloWorld
             Console.WriteLine($"a = {a.ToString()} size: {a.Count}");
             Console.WriteLine($"b = {b}");
             a.Clear();
+            var sum = 0f;
+            foreach (var i in a)
+            {
+                sum += i;
 
-            var c = new List<int>();
-            c.Add(1);
-            Console.WriteLine($"c = {c.ToString()}");
+                Console.WriteLine($"i = {i}");
+            }
+            Console.WriteLine($"sum = {sum} has 6 {a.Contains(6)}, 7 index {a.IndexOf(7)}");
+            a.Sort();
+
+            var c = new List<Foo>() { new Foo() { a = 1 }, new Foo() { a = 2 } };
+            c.Add(new Foo() { a = 3 });
+            Console.WriteLine($"c = {c}");
         }
     }
 }
