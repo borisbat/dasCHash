@@ -333,6 +333,7 @@ namespace HelloWorld
             foreach (var i in a)
             {
                 sum += i;
+
                 Console.WriteLine($"i = {i}");
             }
             Console.WriteLine($"sum = {sum}");

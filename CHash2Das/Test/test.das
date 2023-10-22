@@ -37,9 +37,11 @@ class HelloProgram
 		print(StringBuilder("Hello, World!","\n"))
 		print(StringBuilder("Hello, World!","\n"))
 		print(StringBuilder("Hello, World!","\n"))
+
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
+
 		print(StringBuilder("1", "2", "3"))
 
 	def ifThenElse (cond : bool) : void
@@ -81,29 +83,35 @@ class HelloProgram
 
 	def allOperators (a : int; b : float) : void
 		a = a
+
 		var a1 : int = (+a)
 		var a2 : int = (-a)
 		var a3 : int = (~a)
 		var a4 : bool = (!((a == int(0))))
+
 		var c : float = (float(a) + b)
 		var d : float = (float(a) - b)
 		var e : float = (float(a) * b)
 		var f : float = (float(a) / b)
 		var g : float = (float(a) % b)
+
 		var t1 : bool = (a == a)
 		var t2 : bool = (a != a)
 		var t3 : bool = (a <= a)
 		var t4 : bool = (a >= a)
 		var t5 : bool = (a > a)
 		var t6 : bool = (a < a)
+
 		var tt1 : bool = (t1 && t2)
 		var tt2 : bool = (t2 || t3)
 		var tt3 : bool = (t3 ^ t4)
+
 		var b1 : int = (a & a)
 		var b2 : int = (a | a)
 		var b3 : int = (a ^ a)
 		var b4 : int = (a << int(1))
 		var b5 : int = (a >> int(1))
+
 		a <<= int(1)
 		a >>= int(1)
 		a |= a
@@ -124,6 +132,7 @@ class HelloProgram
 		var u64 : uint64 = int(0)
 		var f : float = int(0)
 		var d : double = int(0)
+
 		var i8i8 = (int(i8) + int(i8))
 		var i8u8 = (int(i8) + int(u8))
 		var i16i16 = (int(i16) + int(i16))
@@ -135,6 +144,7 @@ class HelloProgram
 		var i32u32 = (uint(i32) + u32)
 		var i64i64 = (i64 + i64)
 		var u64u64 = (u64 + u64)
+
 		var fd = (double(f) + d)
 
 	def whileLoop : void
@@ -165,6 +175,7 @@ class HelloProgram
 			if (i == int(5))
 				break
 			print(StringBuilder(i,"\n"))
+
 		// for
 		var i = int(1)
 		while (i != int(3))
@@ -175,6 +186,7 @@ class HelloProgram
 		while (i != int(3))
 			print(StringBuilder(i,"\n"))
 			i = (i + int(2))
+
 		for i in range(int(1),int(3))
 			print(StringBuilder(i,"\n"))
 		for i in range(int(1),int(3))
@@ -232,6 +244,7 @@ class HelloProgram
 			i++
 		elif _temp_4_switchcase_==2
 			i--
+
 		let _temp_5_switchcase_ = i
 		while true
 			if _temp_5_switchcase_==1
@@ -244,6 +257,7 @@ class HelloProgram
 				i--
 				break
 			break
+
 		let _temp_6_switchcase_ = i
 		if _temp_6_switchcase_==1
 			i++
@@ -275,8 +289,10 @@ class HelloProgram
 		var sum = float(0f)
 		for i in a
 			sum += i
+
 			print(StringBuilder(StringBuilder("i = ", i),"\n"))
 		print(StringBuilder(StringBuilder("sum = ", sum),"\n"))
+
 		var c <- new [[array<int>()]]
 		*c |> push(int(1))
 		print(StringBuilder(StringBuilder("c = ", (*c)),"\n"))

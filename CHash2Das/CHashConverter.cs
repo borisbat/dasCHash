@@ -1204,9 +1204,16 @@ namespace CHash2Das
                     result += "\n";
                 }
                 tabs++;
+                StatementSyntax prevExpr = null;
                 foreach (var ex in section.Statements)
+                {
                     if (!simpleSwitchCase || !(ex is BreakStatementSyntax))
+                    {
+                        result += InsertSpaces(prevExpr, ex);
                         result += $"{onStatementSyntax(ex)}";
+                    }
+                    prevExpr = ex;
+                }
                 if (simpleSwitchCase && section.Statements.Count == 1)
                     result += $"{tabstr}\tpass\n";
                 tabs--;
@@ -1261,6 +1268,26 @@ namespace CHash2Das
             }
         }
 
+        string InsertSpaces(StatementSyntax prev, StatementSyntax current)
+        {
+            if (prev == null || current == null)
+                return "";
+            var sourceText = prev.SyntaxTree.GetText();
+            var result = "";
+            var first = true;
+            for (var i = prev.Span.End; i < current.Span.Start; ++i)
+            {
+                if (sourceText[i] == '\n')
+                {
+                    if (first)
+                        first = false;
+                    else
+                        result += "\n";
+                }
+            }
+            return result;
+        }
+
         string onBlockSyntax(BlockSyntax block)
         {
             var result = "";
@@ -1272,9 +1299,13 @@ namespace CHash2Das
             }
             else
             {
+                Microsoft.CodeAnalysis.Text.SourceText sourceText = block.SyntaxTree.GetText();
+                StatementSyntax prevExpr = null;
                 foreach (StatementSyntax expr in block.Statements)
                 {
+                    result += InsertSpaces(prevExpr, expr);
                     result += onStatementSyntax(expr);
+                    prevExpr = expr;
                 }
             }
             tabs--;
