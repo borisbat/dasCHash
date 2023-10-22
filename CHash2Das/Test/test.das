@@ -291,7 +291,8 @@ class HelloProgram
 			sum += i
 
 			print(StringBuilder(StringBuilder("i = ", i),"\n"))
-		print(StringBuilder(StringBuilder("sum = ", sum),"\n"))
+		print(StringBuilder(StringBuilder("sum = ", sum, " has 6 ", *a |> has_value(float(6)), ", 7 index ", *a |> find_index(float(7))),"\n"))
+		*a |> sort()
 
 		var c <- new [[array<int>()]]
 		*c |> push(int(1))

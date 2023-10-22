@@ -21,7 +21,7 @@ namespace CHash2Das
         public SemanticModel semanticModel;
         CSharpCompilation compilation;
 
-        void Fail(string message)
+        public void Fail(string message)
         {
             if (failToDebug)
                 Debug.Fail(message);

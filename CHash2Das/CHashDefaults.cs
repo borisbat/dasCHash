@@ -57,6 +57,28 @@ namespace CHash2Das
             var args = converter.onArgumentReverseListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { false, true });
             return $"*{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
         }
+        static string das_Contains(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> has_value({args})";
+        }
+        static string das_IndexOf(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> find_index({args})";
+        }
+        static string das_Sort(CHashConverter converter, InvocationExpressionSyntax inv)
+        {
+            var ma = inv.Expression as MemberAccessExpressionSyntax;
+            var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
+            if (inv.ArgumentList.Arguments.Count != 0)
+                converter.Fail("Sort with comparer not supported");
+            return $"*{converter.onExpressionSyntax(ma.Expression)} |> sort()";
+        }
         static string das_Clear(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
@@ -102,6 +124,9 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "RemoveRange" }, das_RemoveAt);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Remove" }, das_Remove);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Insert" }, das_Insert);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Contains" }, das_Contains);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "IndexOf" }, das_IndexOf);
+            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Sort" }, das_Sort);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "ToString" }, das_ToString);
             converter.addMemberAccess(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Count" }, das_Count);
         }
