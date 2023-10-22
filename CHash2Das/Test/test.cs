@@ -10,9 +10,11 @@ using System.Collections.Generic;
 
 namespace HelloWorld
 {
-    class Foo {
+    class Foo
+    {
 
-        int a = 13;
+        public int a = 13;
+        private int b = 13;
 
         public Foo() { }
         public Foo(int A) { a = A; }
@@ -36,7 +38,7 @@ namespace HelloWorld
     class HelloProgram
     {
         int count = 13;
-        
+
         static void _main(string[] args)
         {
             WriteLine("Hello, World!");
@@ -100,7 +102,7 @@ namespace HelloWorld
             int y = 2, z = 3;
         }
 
-        static void allOperators ( int a, float b )
+        static void allOperators(int a, float b)
         {
             // assignment
             a = a;
@@ -108,7 +110,7 @@ namespace HelloWorld
             int a1 = +a;
             int a2 = -a;
             int a3 = ~a;
-            bool a4 = !(a==0);
+            bool a4 = !(a == 0);
             // op2
             float c = a + b;
             float d = a - b;
@@ -141,7 +143,7 @@ namespace HelloWorld
             Console.WriteLine(c);
         }
 
-        static void allCasts ( )
+        static void allCasts()
         {
             sbyte i8 = 0;
             byte u8 = 0;
@@ -182,7 +184,7 @@ namespace HelloWorld
                 --a;
                 a--;
             }
-            while ( a==a )
+            while (a == a)
             {
                 if (a != a)
                     break;
@@ -197,7 +199,7 @@ namespace HelloWorld
                 Console.WriteLine(i);
             for (int i = 0, j = 12; i + j < 100; i++, j--)
                 Console.WriteLine($"i={i} j={j}");
-            for (int i=0; i < 10; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 if (i == 5)
                     break;
@@ -217,7 +219,7 @@ namespace HelloWorld
                 Console.WriteLine(i);
             for (var i = 1; 3 > i; i++)    // for i in range(1,3)
                 Console.WriteLine(i);
-            for (var i = 1; i != 3; i+=1)    // for i in range(1,3)
+            for (var i = 1; i != 3; i += 1)    // for i in range(1,3)
                 Console.WriteLine(i);
             for (var i = 1; i != 3; i = i + 1)    // for i in range(1,3)
                 Console.WriteLine(i);
@@ -237,7 +239,7 @@ namespace HelloWorld
                 if (a == 5)
                     break;
             }
-            while(a != 0);
+            while (a != 0);
         }
 
         static void arrayTypes()
@@ -252,14 +254,14 @@ namespace HelloWorld
         static void forEachLoop()
         {
             int[] b = { 1, 2, 3, 4 };
-            foreach(var t in b)
+            foreach (var t in b)
                 WriteLine(t);
         }
 
         static void switchCase()
         {
             var i = 13;
-            switch ( i )
+            switch (i)
             {
                 case 0:
                     break;
@@ -272,13 +274,13 @@ namespace HelloWorld
                     break;
             }
             Console.WriteLine("and thats that");
-            switch ( i )
+            switch (i)
             {
                 case 1: i++; break;
                 case 2: i--; break;
             }
             // and the crazy case
-            switch ( i )
+            switch (i)
             {
                 case 1: if (i == 0) break; else { i++; break; }
                 case 2: i--; break;
@@ -310,6 +312,27 @@ namespace HelloWorld
             Foo tt = new Foo(1);
             t.bar();
             t.bar(1);
+        }
+
+        void lists()
+        {
+            var a = new List<float>()
+            {
+                1, 2, 3, 4, 5, 6
+            };
+            a.Add(7);
+            a.RemoveAt(0);
+            a.Remove(2);
+            a.Insert(0, 123);
+            a.RemoveRange(0, 1);
+            var b = a[0];
+            Console.WriteLine($"a = {a.ToString()} size: {a.Count}");
+            Console.WriteLine($"b = {b}");
+            a.Clear();
+
+            var c = new List<int>();
+            c.Add(1);
+            Console.WriteLine($"c = {c.ToString()}");
         }
     }
 }
