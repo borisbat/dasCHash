@@ -30,6 +30,10 @@ class Foo
 		print(StringBuilder("static method","\n"))
 
 
+struct SFoo
+	a : int
+
+
 class HelloProgram
 	count : int = int(13)
 
@@ -269,11 +273,18 @@ class HelloProgram
 	private POTToText : table<int; string>? <- new {{int(14) => "16K"; int(15) => "32K"; int(16) => "64K"; int(17) => "128K"; int(18) => "256K"; int(19) => "512K"; int(20) => "1M"; int(21) => "2M"; int(22) => "4M"; int(23) => "8M"; int(24) => "16M"; int(25) => "32M"; int(26) => "64M"; int(27) => "128M"; int(28) => "256M"; int(29) => "512M"; int(30) => "1B"; int(31) => "2B"; int(32) => "4B"; int(33) => "8B"; int(34) => "16B"; int(35) => "32B"; int(36) => "64B"; int(37) => "128B"; int(38) => "256B"; int(39) => "512B"; int(40) => "1024B"; }}
 
 	def objectInit : void
-		var epochStart : System::DateTime = new [[System::DateTime(int(1970), int(1), int(1), int(0), int(0), int(0), System.DateTimeKind.Utc)]]
+		var epochStart : System::DateTime = [[System::DateTime(int(1970), int(1), int(1), int(0), int(0), int(0), System.DateTimeKind.Utc)]]
 		var t : Foo? <- new [[Foo()]]
 		var tt : Foo? <- new [[Foo(int(1))]]
 		t->bar()
 		t->bar(int(1))
+
+	def structures : void
+		var f1 = [[SFoo()]]
+		var f2 = [[SFoo() a = int(1), ]]
+		var f3 := f1
+		f1 := [[SFoo]]
+		print(StringBuilder(StringBuilder("f1 = ", f1, " f2 = ", f2->ToString(), " f3 = ", f3.a),"\n"))
 
 	def lists : void
 		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]
@@ -297,5 +308,9 @@ class HelloProgram
 		var c <- new [{Foo? new [[Foo() a = int(1), ]]; new [[Foo() a = int(2), ]]; }]
 		*c |> push(new [[Foo() a = int(3), ]])
 		print(StringBuilder(StringBuilder("c = ", c),"\n"))
+
+		var d <- new [{SFoo [[SFoo() a = int(1), ]]; [[SFoo() a = int(2), ]]; }]
+		*d |> push([[SFoo() a = int(3), ]])
+		print(StringBuilder(StringBuilder("d = ", (*d)),"\n"))
 
 
