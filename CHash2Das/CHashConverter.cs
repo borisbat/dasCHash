@@ -678,6 +678,7 @@ namespace CHash2Das
             }
         }
 
+        /// <param name="typeRankHint">Expression was casted to this type outside</param>
         public string onExpressionSyntax(ExpressionSyntax expression, int typeRankHint = -1)
         {
             if (expression == null)
@@ -1299,7 +1300,6 @@ namespace CHash2Das
             }
             else
             {
-                Microsoft.CodeAnalysis.Text.SourceText sourceText = block.SyntaxTree.GetText();
                 StatementSyntax prevExpr = null;
                 foreach (StatementSyntax expr in block.Statements)
                 {
