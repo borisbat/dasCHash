@@ -269,7 +269,7 @@ class HelloProgram
 		*a |> push(float(123), int(0))
 		*a |> erase(int(0), int(1))
 		var b = a[int(0)]
-		print(StringBuilder(StringBuilder("a = ", a->ToString(), " size: ", *a |> length()),"\n"))
+		print(StringBuilder(StringBuilder("a = ", (*a), " size: ", *a |> length()),"\n"))
 		print(StringBuilder(StringBuilder("b = ", b),"\n"))
 		*a |> clear()
 		var sum = float(0f)
@@ -279,6 +279,6 @@ class HelloProgram
 		print(StringBuilder(StringBuilder("sum = ", sum),"\n"))
 		var c <- new [[array<int>()]]
 		*c |> push(int(1))
-		print(StringBuilder(StringBuilder("c = ", c->ToString()),"\n"))
+		print(StringBuilder(StringBuilder("c = ", (*c)),"\n"))
 
 
