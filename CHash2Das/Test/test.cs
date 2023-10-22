@@ -339,9 +339,9 @@ namespace HelloWorld
             Console.WriteLine($"sum = {sum} has 6 {a.Contains(6)}, 7 index {a.IndexOf(7)}");
             a.Sort();
 
-            var c = new List<int>();
-            c.Add(1);
-            Console.WriteLine($"c = {c.ToString()}");
+            var c = new List<Foo>() { new Foo() { a = 1 }, new Foo() { a = 2 } };
+            c.Add(new Foo() { a = 3 });
+            Console.WriteLine($"c = {c}");
         }
     }
 }

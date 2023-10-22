@@ -551,12 +551,22 @@ namespace CHash2Das
 
         private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce)
         {
+            var init = "";
+            if (oce.Initializer != null)
+            {
+                foreach (var initExpr in oce.Initializer.Expressions)
+                {
+                    init += $" {onExpressionSyntax(initExpr)},";
+                }
+            }
+            if (init.Length > 0)
+                init += " ";
             var arguments = oce.ArgumentList.Arguments
                 .Select(arg => onExpressionSyntax(arg.Expression));
             if (arguments.Count() == 0)
-                return $"new [[{onTypeSyntax(oce.Type)}()]]";
+                return $"new [[{onTypeSyntax(oce.Type)}(){init}]]";
             var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-            return $"new [[{onTypeSyntax(oce.Type)}({arguments2})]]";
+            return $"new [[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -600,7 +610,7 @@ namespace CHash2Das
         private string onObjectCreationExpression_Array(ObjectCreationExpressionSyntax oce)
         {
             var itemRank = getTypeRank((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0]);
-            var result = $"new [{{{onTypeSyntax((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0])} ";
+            var result = $"new [{{{onVarTypeSyntax((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0])} ";
             if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
             {
                 foreach (ExpressionSyntax element in oce.Initializer.Expressions)
@@ -627,6 +637,30 @@ namespace CHash2Das
                             result += $"{getDasCastName(itemRank)}({onExpressionSyntax(value, itemRank)}); ";
                         else
                             result += $"{onExpressionSyntax(value)}; ";
+                    }
+                    else if (element.Kind() == SyntaxKind.ObjectCreationExpression)
+                    {
+                        var value = element as ObjectCreationExpressionSyntax;
+                        result += $"{onObjectCreationExpression(value)}; ";
+                    }
+                    else if (element.Kind() == SyntaxKind.ArrayCreationExpression)
+                    {
+                        var value = element as ArrayCreationExpressionSyntax;
+                        result += $"{onArrayCreationExpressionSyntax(value)}; ";
+                    }
+                    else if (element.Kind() == SyntaxKind.ComplexElementInitializerExpression)
+                    {
+                        var kv = element as InitializerExpressionSyntax;
+                        if (kv.Expressions.Count == 1)
+                        {
+                            var value = kv.Expressions[0];
+                            result += $"{onExpressionSyntax(value)}; ";
+                        }
+                        else
+                        {
+                            Fail($"expecting key => value in {kv}");
+                            result += $"{kv}; ";
+                        }
                     }
                     else
                     {
@@ -785,7 +819,9 @@ namespace CHash2Das
                 case SyntaxKind.ElementAccessExpression:
                     {
                         var eae = expression as ElementAccessExpressionSyntax;
-                        var result = $"{onExpressionSyntax(eae.Expression)}[";
+                        var isClass = isClassOrStructRef(semanticModel.GetTypeInfo(eae.Expression).Type);
+                        var deref = isClass ? "*" : "";
+                        var result = $"{deref}{onExpressionSyntax(eae.Expression)}[";
                         var first = true;
                         foreach (var arg in eae.ArgumentList.Arguments)
                         {
@@ -1137,7 +1173,9 @@ namespace CHash2Das
 
         string onForeachStatement(ForEachStatementSyntax fs)
         {
-            return $"for {fs.Identifier.Text} in {onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
+            var isClass = isClassOrStructRef(semanticModel.GetTypeInfo(fs.Expression).Type);
+            var deref = isClass ? "*" : "";
+            return $"for {fs.Identifier.Text} in {deref}{onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
 
         string onSwitchStatement(SwitchStatementSyntax fs)

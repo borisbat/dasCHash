@@ -282,20 +282,20 @@ class HelloProgram
 		*a |> remove_value(float(2))
 		*a |> push(float(123), int(0))
 		*a |> erase(int(0), int(1))
-		var b = a[int(0)]
+		var b = *a[int(0)]
 		print(StringBuilder(StringBuilder("a = ", (*a), " size: ", *a |> length()),"\n"))
 		print(StringBuilder(StringBuilder("b = ", b),"\n"))
 		*a |> clear()
 		var sum = float(0f)
-		for i in a
+		for i in *a
 			sum += i
 
 			print(StringBuilder(StringBuilder("i = ", i),"\n"))
 		print(StringBuilder(StringBuilder("sum = ", sum, " has 6 ", *a |> has_value(float(6)), ", 7 index ", *a |> find_index(float(7))),"\n"))
 		*a |> sort()
 
-		var c <- new [[array<int>()]]
-		*c |> push(int(1))
-		print(StringBuilder(StringBuilder("c = ", (*c)),"\n"))
+		var c <- new [{Foo? new [[Foo() a = int(1), ]]; new [[Foo() a = int(2), ]]; }]
+		*c |> push(new [[Foo() a = int(3), ]])
+		print(StringBuilder(StringBuilder("c = ", c),"\n"))
 
 
