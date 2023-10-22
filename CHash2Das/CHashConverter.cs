@@ -9,6 +9,7 @@ using System.Linq.Expressions;
 using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
+using System.Text;
 
 namespace CHash2Das
 {
@@ -17,7 +18,7 @@ namespace CHash2Das
         bool failToDebug = true;
         int tabs = 0;
         int tempVars = 0;
-        SemanticModel semanticModel;
+        public SemanticModel semanticModel;
         CSharpCompilation compilation;
 
         void Fail(string message)
@@ -126,6 +127,7 @@ namespace CHash2Das
                                 }
                                 break;
                         }
+                        Fail($"unsupported TypeSyntax {genn}");
                         return $"{type}";
                     }
                 case SyntaxKind.QualifiedName:
@@ -176,14 +178,56 @@ namespace CHash2Das
             memberAccessExpr[typeWithMethod] = acc;
         }
 
+        public string onArgumentListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type, bool[] castArts)
+        {
+            Debug.Assert(argumentList.Arguments.Count == castArts.Length);
+            var typeRank = getTypeRank(type);
+            var res = new string[argumentList.Arguments.Count];
+            var idx = 0;
+            foreach (var arg in argumentList.Arguments)
+            {
+                if (castArts[idx])
+                {
+                    int itemRank = getTypeRank(semanticModel.GetTypeInfo(arg.Expression).Type);
+                    if (itemRank != typeRank && typeRank != -1)
+                    {
+                        res[idx++] = $"{getDasCastName(typeRank)}({onExpressionSyntax(arg.Expression, typeRank)})";
+                        continue;
+                    }
+                }
+                res[idx++] = onExpressionSyntax(arg.Expression);
+            }
+            return string.Join(", ", res);
+        }
+
         public string onArgumentListSyntax(ArgumentListSyntax argumentList)
         {
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
-        public string onArgumentReverseListSyntax(ArgumentListSyntax argumentList)
+        public string onArgumentReverseListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type, bool[] castArts)
         {
-            return string.Join(", ", argumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+            Debug.Assert(argumentList.Arguments.Count == castArts.Length);
+            var typeRank = getTypeRank(type);
+            var res = new string[argumentList.Arguments.Count];
+            var idx = 0;
+            var insertIdx = argumentList.Arguments.Count - 1;
+            foreach (var arg in argumentList.Arguments)
+            {
+                if (castArts[idx])
+                {
+                    int itemRank = getTypeRank(semanticModel.GetTypeInfo(arg.Expression).Type);
+                    if (itemRank != typeRank && typeRank != -1)
+                    {
+                        res[insertIdx--] = $"{getDasCastName(typeRank)}({onExpressionSyntax(arg.Expression, typeRank)})";
+                        idx++;
+                        continue;
+                    }
+                }
+                res[insertIdx--] = onExpressionSyntax(arg.Expression);
+                idx++;
+            }
+            return string.Join(", ", res);
         }
 
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
@@ -359,8 +403,34 @@ namespace CHash2Das
             }
         }
 
+        public int getTypeRank(TypeSyntax type)
+        {
+            switch (type.Kind())
+            {
+                case SyntaxKind.PredefinedType:
+                    {
+                        var ptype = type as PredefinedTypeSyntax;
+                        switch (ptype.Keyword.Text)
+                        {
+                            case "void": return -1;
+                            case "string": return -1;
+                            case "int": return 2;
+                            case "float": return 6;
+                            case "double": return 7;
+                            case "bool": return 1;
+                            case "sbyte": return 0;
+                            case "byte": return 0;
+                            case "uint": return 3;
+                            default:
+                                Fail($"unknown PredefinedType keyword {ptype.Keyword}");
+                                return -1;
+                        }
+                    }
+            }
+            return -1;
+        }
 
-        int getTypeRank(ITypeSymbol ts)
+        public int getTypeRank(ITypeSymbol ts)
         {
             if (ts == null) return -1;
             // double > float > uint64 > int64 > uint32 > int32
@@ -411,16 +481,26 @@ namespace CHash2Das
             var castRank = getBinaryExpressionCastType(binop.OperatorToken.Text, leftRank, rightRank);
             var result = "(";
             if (leftRank != castRank && castRank != -1)
+            {
                 result += $"{getDasCastName(castRank)}(";
-            result += onExpressionSyntax(binop.Left);
-            if (leftRank != castRank && castRank != -1)
+                result += onExpressionSyntax(binop.Left, castRank);
                 result += ")";
+            }
+            else
+            {
+                result += onExpressionSyntax(binop.Left);
+            }
             result += $" {binop.OperatorToken} ";
             if (rightRank != castRank && castRank != -1)
+            {
                 result += $"{getDasCastName(castRank)}(";
-            result += onExpressionSyntax(binop.Right);
-            if (rightRank != castRank && castRank != -1)
+                result += onExpressionSyntax(binop.Right, castRank);
                 result += ")";
+            }
+            else
+            {
+                result += onExpressionSyntax(binop.Right);
+            }
             return $"{result})";
         }
 
@@ -519,24 +599,34 @@ namespace CHash2Das
 
         private string onObjectCreationExpression_Array(ObjectCreationExpressionSyntax oce)
         {
-            var result = "new [{auto "; // TODO: actual type
+            var itemRank = getTypeRank((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0]);
+            var result = $"new [{{{onTypeSyntax((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0])} ";
             if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
             {
                 foreach (ExpressionSyntax element in oce.Initializer.Expressions)
                 {
-                    if (element.Kind() == SyntaxKind.ObjectInitializerExpression)
+                    // if (element.Kind() == SyntaxKind.ObjectInitializerExpression)
+                    // {
+                    //     var kv = element as InitializerExpressionSyntax;
+                    //     if (kv.Expressions.Count == 1)
+                    //     {
+                    //         var value = kv.Expressions[0];
+                    //         result += $"{onExpressionSyntax(value)}; ";
+                    //     }
+                    //     else
+                    //     {
+                    //         Fail($"expecting key => value in {kv}");
+                    //         result += $"{kv}; ";
+                    //     }
+                    // }
+                    if (element.Kind() == SyntaxKind.NumericLiteralExpression)
                     {
-                        var kv = element as InitializerExpressionSyntax;
-                        if (kv.Expressions.Count == 1)
-                        {
-                            var value = kv.Expressions[0];
-                            result += $"{onExpressionSyntax(value)}; ";
-                        }
+                        var value = element as LiteralExpressionSyntax;
+                        var valueRank = getTypeRank(semanticModel.GetTypeInfo(element).Type);
+                        if (valueRank != itemRank && itemRank != -1)
+                            result += $"{getDasCastName(itemRank)}({onExpressionSyntax(value, itemRank)}); ";
                         else
-                        {
-                            Fail($"expecting key => value in {kv}");
-                            result += $"{kv}; ";
-                        }
+                            result += $"{onExpressionSyntax(value)}; ";
                     }
                     else
                     {
@@ -588,7 +678,7 @@ namespace CHash2Das
             }
         }
 
-        public string onExpressionSyntax(ExpressionSyntax expression)
+        public string onExpressionSyntax(ExpressionSyntax expression, int typeRankHint = -1)
         {
             if (expression == null)
                 return "";
@@ -644,6 +734,8 @@ namespace CHash2Das
                 case SyntaxKind.OmittedArraySizeExpression:
                     return "";  // in int[], this is the portion between the brackets
                 case SyntaxKind.NumericLiteralExpression:
+                    if (typeRankHint != -1)
+                        return $"{expression}";
                     var leftType = semanticModel.GetTypeInfo(expression);
                     var typeRank = getTypeRank(leftType.Type);
                     if (typeRank == -1)
@@ -689,6 +781,20 @@ namespace CHash2Das
                     return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax);
                 case SyntaxKind.ObjectCreationExpression:
                     return onObjectCreationExpression(expression as ObjectCreationExpressionSyntax);
+                case SyntaxKind.ElementAccessExpression:
+                    {
+                        var eae = expression as ElementAccessExpressionSyntax;
+                        var result = $"{onExpressionSyntax(eae.Expression)}[";
+                        var first = true;
+                        foreach (var arg in eae.ArgumentList.Arguments)
+                        {
+                            if (first) first = false;
+                            else result += ", ";
+                            result += onExpressionSyntax(arg.Expression);
+                        }
+                        result += "]";
+                        return result;
+                    }
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";

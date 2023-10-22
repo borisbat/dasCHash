@@ -262,16 +262,21 @@ class HelloProgram
 		t->bar(int(1))
 
 	def lists : void
-		var a <- new [{auto 1; 2; 3; 4; 5; 6; }]
-		*a |> push(int(7))
+		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]
+		*a |> push(float(7))
 		*a |> erase(int(0))
-		*a |> remove_value(int(2))
-		*a |> push(int(123), int(0))
+		*a |> remove_value(float(2))
+		*a |> push(float(123), int(0))
 		*a |> erase(int(0), int(1))
-		var b = a[0]
+		var b = a[int(0)]
 		print(StringBuilder(StringBuilder("a = ", a->ToString(), " size: ", *a |> length()),"\n"))
 		print(StringBuilder(StringBuilder("b = ", b),"\n"))
 		*a |> clear()
+		var sum = float(0f)
+		for i in a
+			sum += i
+			print(StringBuilder(StringBuilder("i = ", i),"\n"))
+		print(StringBuilder(StringBuilder("sum = ", sum),"\n"))
 		var c <- new [[array<int>()]]
 		*c |> push(int(1))
 		print(StringBuilder(StringBuilder("c = ", c->ToString()),"\n"))

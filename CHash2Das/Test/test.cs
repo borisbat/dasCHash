@@ -329,6 +329,13 @@ namespace HelloWorld
             Console.WriteLine($"a = {a.ToString()} size: {a.Count}");
             Console.WriteLine($"b = {b}");
             a.Clear();
+            var sum = 0f;
+            foreach (var i in a)
+            {
+                sum += i;
+                Console.WriteLine($"i = {i}");
+            }
+            Console.WriteLine($"sum = {sum}");
 
             var c = new List<int>();
             c.Add(1);
