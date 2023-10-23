@@ -10,6 +10,8 @@
 
 // namespaced HelloWorld
 class Foo
+	static count : int = int(13)
+
 	a : int = int(13)
 
 	private b : int = int(13)
@@ -26,8 +28,11 @@ class Foo
 	def bar (t : int) : void
 		a = t
 
-	def farfar : void
+	def static farfar : void
 		print("static method\n")
+
+	def static next : int
+		return count++
 
 
 struct SFoo
@@ -37,7 +42,7 @@ struct SFoo
 class HelloProgram
 	count : int = int(13)
 
-	def _main (args : array<string?> /*string[]*/) : void
+	def static _main (args : array<string?> /*string[]*/) : void
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
@@ -48,7 +53,7 @@ class HelloProgram
 
 		print("1 2 3")
 
-	def ifThenElse (cond : bool) : void
+	def static ifThenElse (cond : bool) : void
 		if cond
 			print("if no-block\n")
 		if cond
@@ -79,13 +84,13 @@ class HelloProgram
 		else
 			print("cond-else\n")
 
-	def varDecl : void
+	def static varDecl : void
 		var t : float
 		var x : int = int(1)
 		var y : int = int(2)
 		var z : int = int(3)
 
-	def allOperators (a : int; b : float) : void
+	def static allOperators (a : int; b : float) : void
 		a = a
 
 		var a1 : int = (+a)
@@ -123,7 +128,7 @@ class HelloProgram
 		a ^= a
 		print("{c}\n")
 
-	def allCasts : void
+	def static allCasts : void
 		var i8 : int8 = int(0)
 		var u8 : uint8 = int(0)
 		var i16 : int16 = int(0)
@@ -151,7 +156,7 @@ class HelloProgram
 
 		var fd = (double(f) + d)
 
-	def whileLoop : void
+	def static whileLoop : void
 		var a = int(1)
 		while (a < int(5))
 			a++
@@ -165,7 +170,7 @@ class HelloProgram
 			if (a == a)
 				continue
 
-	def forLoop : void
+	def static forLoop : void
 		for i in range(int(0),int(10))
 			print("{i}\n")
 		// for
@@ -206,7 +211,7 @@ class HelloProgram
 		for i in range(int(1),int(3))
 			print("{i}\n")
 
-	def doWhileLoop : void
+	def static doWhileLoop : void
 		var a = int(1)
 		var _temp_1_doWhileCond_ = true
 		while _temp_1_doWhileCond_
@@ -221,19 +226,19 @@ class HelloProgram
 			finally
 				_temp_2_doWhileCond_ = (a != int(0))
 
-	def arrayTypes : void
+	def static arrayTypes : void
 		var b : array<int> /*int[]*/ <- newArray(int(10))
 		var bb : array<array<int>> /*int[][]*/ <- newArray(int(20), -1)
 		var c : array<array<int>> /*int[,]*/ <- newArray(int(10), int(20))
 		var d : array<int> /*int[]*/ <- [{auto int(0); int(1); int(2); int(3); int(4); int(5); int(6); int(7); int(8); int(9); int(10)}]
 		var dd : array<int> /*int[]*/ <- newInitArray(-1, [{auto int(0); int(1); int(2); int(4); int(5)}])
 
-	def forEachLoop : void
+	def static forEachLoop : void
 		var b : array<int> /*int[]*/ <- [{auto int(1); int(2); int(3); int(4)}]
 		for t in b
 			print("{t}\n")
 
-	def switchCase : void
+	def static switchCase : void
 		var i = int(13)
 		let _temp_3_switchcase_ = i
 		if _temp_3_switchcase_==0
@@ -270,7 +275,7 @@ class HelloProgram
 		else
 			pass
 
-	private POTToText : table<int; string>? <- new {{int(14) => "16K"; int(15) => "32K"; int(16) => "64K"; int(17) => "128K"; int(18) => "256K"; int(19) => "512K"; int(20) => "1M"; int(21) => "2M"; int(22) => "4M"; int(23) => "8M"; int(24) => "16M"; int(25) => "32M"; int(26) => "64M"; int(27) => "128M"; int(28) => "256M"; int(29) => "512M"; int(30) => "1B"; int(31) => "2B"; int(32) => "4B"; int(33) => "8B"; int(34) => "16B"; int(35) => "32B"; int(36) => "64B"; int(37) => "128B"; int(38) => "256B"; int(39) => "512B"; int(40) => "1024B"; }}
+	static private POTToText : table<int; string>? <- new {{int(14) => "16K"; int(15) => "32K"; int(16) => "64K"; int(17) => "128K"; int(18) => "256K"; int(19) => "512K"; int(20) => "1M"; int(21) => "2M"; int(22) => "4M"; int(23) => "8M"; int(24) => "16M"; int(25) => "32M"; int(26) => "64M"; int(27) => "128M"; int(28) => "256M"; int(29) => "512M"; int(30) => "1B"; int(31) => "2B"; int(32) => "4B"; int(33) => "8B"; int(34) => "16B"; int(35) => "32B"; int(36) => "64B"; int(37) => "128B"; int(38) => "256B"; int(39) => "512B"; int(40) => "1024B"; }}
 
 	def objectInit : void
 		var epochStart : System::DateTime = [[System::DateTime(int(1970), int(1), int(1), int(0), int(0), int(0), System.DateTimeKind.Utc)]]
@@ -313,5 +318,9 @@ class HelloProgram
 		var d <- new [{SFoo [[SFoo() a = int(1), ]]; [[SFoo() a = int(2), ]]; }]
 		*d |> push([[SFoo() a = int(3), ]])
 		print("d = {(*d)}\n")
+
+	def static_methods : void
+		var i = Foo`next()
+		print("i = {i}\n")
 
 

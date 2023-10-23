@@ -12,6 +12,7 @@ namespace HelloWorld
 {
     class Foo
     {
+        static int count = 13;
 
         public int a = 13;
         private int b = 13;
@@ -32,6 +33,11 @@ namespace HelloWorld
         static void farfar()
         {
             Console.WriteLine("static method");
+        }
+
+        static public int next()
+        {
+            return count++;
         }
     }
 
@@ -361,6 +367,12 @@ namespace HelloWorld
             var d = new List<SFoo>() { new SFoo() { a = 1 }, new SFoo() { a = 2 } };
             d.Add(new SFoo() { a = 3 });
             Console.WriteLine($"d = {d.ToString()}");
+        }
+
+        void static_methods()
+        {
+            var i = Foo.next();
+            Console.WriteLine($"i = {i}");
         }
     }
 }

@@ -257,22 +257,36 @@ namespace CHash2Das
             if (invExpr != null)
                 return invExpr(this, inv);
             var callText = "";
-            if (IsCallingClassMethod(inv) && !IsCallingStaticMethod(inv))
+            if (IsCallingClassMethod(inv))
             {
-                if (inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
+                if (IsCallingStaticMethod(inv))
                 {
-                    var ma = inv.Expression as MemberAccessExpressionSyntax;
-                    var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
-                    methodInvExpr.TryGetValue(new INamedTypeSymbolField()
+                    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
+                    IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+                    if (methodSymbol != null)
                     {
-                        MetadataName = exprTypeInfo.Type.MetadataName,
-                        ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
-                        FieldName = ma.Name.Identifier.Text
-                    }, out invExpr);
-                    if (invExpr != null)
-                        callText = invExpr(this, inv);
-                    else
-                        callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}({onArgumentListSyntax(inv.ArgumentList)})";
+                        string methodName = methodSymbol.Name; // Name of the method
+                        string className = methodSymbol.ContainingType.Name; // Name of the class containing the method
+                        callText = $"{className}`{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                    }
+                }
+                else
+                {
+                    if (inv.Expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
+                    {
+                        var ma = inv.Expression as MemberAccessExpressionSyntax;
+                        var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
+                        methodInvExpr.TryGetValue(new INamedTypeSymbolField()
+                        {
+                            MetadataName = exprTypeInfo.Type.MetadataName,
+                            ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
+                            FieldName = ma.Name.Identifier.Text
+                        }, out invExpr);
+                        if (invExpr != null)
+                            callText = invExpr(this, inv);
+                        else
+                            callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}({onArgumentListSyntax(inv.ArgumentList)})";
+                    }
                 }
             }
             if (callText == "") callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
@@ -936,7 +950,12 @@ namespace CHash2Das
         string onMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
-            var result = $"{tabstr}def {methodDeclaration.Identifier}";
+            var prefix = "";
+            if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.PrivateKeyword))
+                prefix += "private ";
+            if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
+                prefix += "static ";
+            var result = $"{tabstr}def {prefix}{methodDeclaration.Identifier}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
@@ -1377,8 +1396,11 @@ namespace CHash2Das
             var tabstr = new string('\t', tabs);
             var values = onVariableDeclarationSyntax(field.Declaration, false);
             string result = "";
-            var isPrivate = field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.PrivateKeyword);
-            var prefix = isPrivate ? "private " : "";
+            var prefix = "";
+            if (field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
+                prefix += "static ";
+            if (field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.PrivateKeyword))
+                prefix += "private ";
             foreach (string val in values)
                 result += $"{tabstr}{prefix}{val}\n";
             return result;
