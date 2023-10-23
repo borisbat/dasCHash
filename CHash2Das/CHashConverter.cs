@@ -850,25 +850,20 @@ namespace CHash2Das
 
         string onInterpolatedStringExpressionSyntax(InterpolatedStringExpressionSyntax iss)
         {
-            var result = "StringBuilder(";
-            var first = true;
+            var result = "\"";
             foreach (var content in iss.Contents)
             {
-                if (first)
-                    first = false;
-                else
-                    result += ", ";
                 switch (content)
                 {
                     case InterpolatedStringTextSyntax textSyntax:
-                        result += $"\"{content}\""; // TODO: print string better
+                        result += $"{content}"; // TODO: print string better
                         break;
                     case InterpolationSyntax interpolationSyntax:
-                        result += onExpressionSyntax(interpolationSyntax.Expression);
+                        result += $"{{{onExpressionSyntax(interpolationSyntax.Expression)}}}";
                         break;
                 }
             }
-            return $"{result})";
+            return result + "\"";
         }
 
         string onSyntaxToken(SyntaxToken token)
