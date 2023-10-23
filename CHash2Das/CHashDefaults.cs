@@ -21,27 +21,30 @@ namespace CHash2Das
 
     public class CHashDefaults
     {
-        static bool isSingleString(ArgumentListSyntax list)
-        {
-            if (list.Arguments.Count != 1)
-                return false;
-            var kind = (list.Arguments[0] as ArgumentSyntax).Expression.Kind();
-            return kind == SyntaxKind.StringLiteralExpression;
-        }
-
         static string das_WriteLine(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
-            var args = converter.onArgumentListSyntax(invocationExpression.ArgumentList);
-            return $"print(StringBuilder({args},\"\\n\"))";
+            var res = das_Write(converter, invocationExpression);
+            return res.Substring(0, res.Length - 2) + "\\n\")";
         }
 
         static string das_Write(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
-            var args = converter.onArgumentListSyntax(invocationExpression.ArgumentList);
-            if (!isSingleString(invocationExpression.ArgumentList))
-                return $"print(StringBuilder({args}))";
-            else
-                return $"print({args})";
+            var res = "print(\"";
+            var num = invocationExpression.ArgumentList.Arguments.Count;
+            var i = 0;
+            foreach (var arg in invocationExpression.ArgumentList.Arguments)
+            {
+                var argStr = converter.onExpressionSyntax((arg as ArgumentSyntax).Expression);
+                if (argStr.EndsWith("\""))
+                    res += argStr.Substring(1, argStr.Length - 2);
+                else
+                    res += $"{{{argStr}}}";
+                if (i < num - 1)
+                    res += " ";
+                i++;
+            }
+            res += "\")";
+            return res;
         }
         static string das_Add(CHashConverter converter, InvocationExpressionSyntax inv)
         {

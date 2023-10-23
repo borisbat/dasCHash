@@ -325,6 +325,7 @@ namespace HelloWorld
             var f2 = new SFoo() { a = 1 };
             var f3 = f1; // clone!
             f1 = default(SFoo);
+            f3 = f2;
             Console.WriteLine($"f1 = {f1} f2 = {f2.ToString()} f3 = {f3.a}");
         }
 

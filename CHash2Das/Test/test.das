@@ -27,7 +27,7 @@ class Foo
 		a = t
 
 	def farfar : void
-		print(StringBuilder("static method","\n"))
+		print("static method\n")
 
 
 struct SFoo
@@ -38,46 +38,46 @@ class HelloProgram
 	count : int = int(13)
 
 	def _main (args : array<string?> /*string[]*/) : void
-		print(StringBuilder("Hello, World!","\n"))
-		print(StringBuilder("Hello, World!","\n"))
-		print(StringBuilder("Hello, World!","\n"))
-
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 
-		print(StringBuilder("1", "2", "3"))
+		print("Hello, World!\n")
+		print("Hello, World!\n")
+		print("Hello, World!\n")
+
+		print("1 2 3")
 
 	def ifThenElse (cond : bool) : void
 		if cond
-			print(StringBuilder("if no-block","\n"))
+			print("if no-block\n")
 		if cond
-			print(StringBuilder("if block","\n"))
+			print("if block\n")
 		if cond
-			print(StringBuilder("if no block","\n"))
+			print("if no block\n")
 		else
-			print(StringBuilder("else no block","\n"))
+			print("else no block\n")
 		if cond
-			print(StringBuilder("if block","\n"))
+			print("if block\n")
 		else
-			print(StringBuilder("else no block","\n"))
+			print("else no block\n")
 		if cond
-			print(StringBuilder("if no block","\n"))
+			print("if no block\n")
 		else
-			print(StringBuilder("else block","\n"))
+			print("else block\n")
 		if cond
-			print(StringBuilder("if block","\n"))
+			print("if block\n")
 		else
-			print(StringBuilder("else block","\n"))
+			print("else block\n")
 		if cond
 			if cond
-				print(StringBuilder("if cond if cond","\n"))
+				print("if cond if cond\n")
 		if cond
-			print(StringBuilder("cond1","\n"))
+			print("cond1\n")
 		elif cond
-			print(StringBuilder("cond2","\n"))
+			print("cond2\n")
 		else
-			print(StringBuilder("cond-else","\n"))
+			print("cond-else\n")
 
 	def varDecl : void
 		var t : float
@@ -121,7 +121,7 @@ class HelloProgram
 		a |= a
 		a &= a
 		a ^= a
-		print(StringBuilder(c,"\n"))
+		print("{c}\n")
 
 	def allCasts : void
 		var i8 : int8 = int(0)
@@ -167,44 +167,44 @@ class HelloProgram
 
 	def forLoop : void
 		for i in range(int(0),int(10))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		// for
 		var i : int = int(0)
 		var j : int = int(12)
 		while ((i + j) < int(100))
-			print(StringBuilder(StringBuilder("i=", i, " j=", j),"\n"))
+			print("i={i} j={j}\n")
 			i++
 			j--
 		for i in range(int(0),int(10))
 			if (i == int(5))
 				break
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 
 		// for
 		var i = int(1)
 		while (i != int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 			i += int(2)
 		// for
 		var i = int(1)
 		while (i != int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 			i = (i + int(2))
 
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 		for i in range(int(1),int(3))
-			print(StringBuilder(i,"\n"))
+			print("{i}\n")
 
 	def doWhileLoop : void
 		var a = int(1)
@@ -231,7 +231,7 @@ class HelloProgram
 	def forEachLoop : void
 		var b : array<int> /*int[]*/ <- [{auto int(1); int(2); int(3); int(4)}]
 		for t in b
-			print(StringBuilder(t,"\n"))
+			print("{t}\n")
 
 	def switchCase : void
 		var i = int(13)
@@ -239,10 +239,10 @@ class HelloProgram
 		if _temp_3_switchcase_==0
 			pass
 		elif _temp_3_switchcase_==1 || _temp_3_switchcase_==2
-			print(StringBuilder("12","\n"))
+			print("12\n")
 		else
-			print(StringBuilder("anything","\n"))
-		print(StringBuilder("and thats that","\n"))
+			print("anything\n")
+		print("and thats that\n")
 		let _temp_4_switchcase_ = i
 		if _temp_4_switchcase_==1
 			i++
@@ -284,7 +284,8 @@ class HelloProgram
 		var f2 = [[SFoo() a = int(1), ]]
 		var f3 := f1
 		f1 := [[SFoo]]
-		print(StringBuilder(StringBuilder("f1 = ", f1, " f2 = ", f2->ToString(), " f3 = ", f3.a),"\n"))
+		f3 := f2
+		print("f1 = {f1} f2 = {f2->ToString()} f3 = {f3.a}\n")
 
 	def lists : void
 		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]
@@ -294,23 +295,23 @@ class HelloProgram
 		*a |> push(float(123), int(0))
 		*a |> erase(int(0), int(1))
 		var b = *a[int(0)]
-		print(StringBuilder(StringBuilder("a = ", (*a), " size: ", *a |> length()),"\n"))
-		print(StringBuilder(StringBuilder("b = ", b),"\n"))
+		print("a = {(*a)} size: {*a |> length()}\n")
+		print("b = {b}\n")
 		*a |> clear()
 		var sum = float(0f)
 		for i in *a
 			sum += i
 
-			print(StringBuilder(StringBuilder("i = ", i),"\n"))
-		print(StringBuilder(StringBuilder("sum = ", sum, " has 6 ", *a |> has_value(float(6)), ", 7 index ", *a |> find_index(float(7))),"\n"))
+			print("i = {i}\n")
+		print("sum = {sum} has 6 {*a |> has_value(float(6))}, 7 index {*a |> find_index(float(7))}\n")
 		*a |> sort()
 
 		var c <- new [{Foo? new [[Foo() a = int(1), ]]; new [[Foo() a = int(2), ]]; }]
 		*c |> push(new [[Foo() a = int(3), ]])
-		print(StringBuilder(StringBuilder("c = ", c),"\n"))
+		print("c = {c}\n")
 
 		var d <- new [{SFoo [[SFoo() a = int(1), ]]; [[SFoo() a = int(2), ]]; }]
 		*d |> push([[SFoo() a = int(3), ]])
-		print(StringBuilder(StringBuilder("d = ", (*d)),"\n"))
+		print("d = {(*d)}\n")
 
 
