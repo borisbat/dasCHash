@@ -290,7 +290,10 @@ class HelloProgram
 		var f3 := f1
 		f1 := [[SFoo]]
 		f3 := f2
-		print("f1 = {f1} f2 = {f2->ToString()} f3 = {f3.a}\n")
+		print("f1 = {f1} f2 = {f2} f3 = {f3.a}\n")
+		print("{f1}\n")
+		var f2Str <- "{f2}"
+		print("{f2Str}\n")
 
 	def lists : void
 		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]

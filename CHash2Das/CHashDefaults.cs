@@ -119,8 +119,12 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var deref = converter.isPointerType(artType.Type) ? "*" : "";
-            return $"({deref}{converter.onExpressionSyntax(ma.Expression)})"; // maybe string(*<arg>)
+            var deref = converter.isPointerType(artType.Type) ? "(*" : "";
+            var derefSuffix = converter.isPointerType(artType.Type) ? ")" : "";
+            if (inv.Parent.IsKind(SyntaxKind.Interpolation))
+                return $"{deref}{converter.onExpressionSyntax(ma.Expression)}{derefSuffix}";
+            else
+                return $"\"{{{deref}{converter.onExpressionSyntax(ma.Expression)}{derefSuffix}}}\"";
         }
         static string das_Count(CHashConverter converter, MemberAccessExpressionSyntax acc)
         {
@@ -148,8 +152,8 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Contains" }, das_Contains);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "IndexOf" }, das_IndexOf);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Sort" }, das_Sort);
-            converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "ToString" }, das_ToString);
             converter.addMemberAccess(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Count" }, das_Count);
+            converter.addObjectMethod("ToString", das_ToString);
         }
     }
 }

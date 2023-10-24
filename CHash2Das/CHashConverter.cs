@@ -147,6 +147,7 @@ namespace CHash2Das
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
+        Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, InvocationDelegate> methodInvExpr = new Dictionary<INamedTypeSymbolField, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, MemberAccessDelegate> memberAccessExpr = new Dictionary<INamedTypeSymbolField, MemberAccessDelegate>();
 
@@ -168,6 +169,15 @@ namespace CHash2Das
                 return;
             }
             methodInvExpr[typeWithMethod] = inv;
+        }
+        public void addObjectMethod(string member, InvocationDelegate inv)
+        {
+            if (objectInvExpr.ContainsKey(member))
+            {
+                Debug.Fail($"method Object.{member} is already declared");
+                return;
+            }
+            objectInvExpr[member] = inv;
         }
 
         public void addMemberAccess(INamedTypeSymbolField typeWithMethod, MemberAccessDelegate acc)
@@ -242,6 +252,10 @@ namespace CHash2Das
                             ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = ma.Name.Identifier.Text
                         }, out invExpr);
+                        if (invExpr == null)
+                        {
+                            objectInvExpr.TryGetValue(ma.Name.Identifier.Text, out invExpr);
+                        }
                         if (invExpr != null)
                             callText = invExpr(this, inv);
                         else
@@ -394,17 +408,16 @@ namespace CHash2Das
         {
             if (typeSymbol == null)
                 return false;
+            if (isPointerType(typeSymbol))
+                return true;
             switch (typeSymbol.TypeKind)
             {
                 case TypeKind.Array:
                 case TypeKind.Class:
                     return true;
                 default:
-                    if (isPointerType(typeSymbol))
-                        return true;
                     return false;
             }
-
         }
 
         public bool isCloneType(ITypeSymbol typeSymbol)
@@ -890,7 +903,6 @@ namespace CHash2Das
                 if (declarator.Initializer != null)
                 {
                     var itemTypeInfo = semanticModel.GetTypeInfo(declarator.Initializer.Value);
-                    Console.WriteLine($"token {declarator.Initializer} kind {declarator.Initializer.Kind()} type {itemTypeInfo.Type}");
                     var assign = "=";
                     if (isMoveType(typeInfo.Type))
                         assign = "<-";
