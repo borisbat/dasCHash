@@ -1065,10 +1065,11 @@ namespace CHash2Das
 
         string onForStatement(ForStatementSyntax fstmt)
         {
-            var tabstr = new string('\t', tabs);
             if (isRangeFor(fstmt, out string rangeExpr))
                 return $"{rangeExpr}\n{loopBlock(fstmt.Statement)}";
-            var result = "// for\n";
+            var result = $"if true // for loop\n";
+            tabs++;
+            var tabstr = new string('\t', tabs);
             var values = onVariableDeclarationSyntax(fstmt.Declaration);
             foreach (string val in values)
                 result += $"{tabstr}{val}\n";
@@ -1091,6 +1092,7 @@ namespace CHash2Das
             {
                 result += $"{tabstr}{onExpressionSyntax(i)}\n";
             }
+            tabs--;
             tabs--;
             return result;
         }

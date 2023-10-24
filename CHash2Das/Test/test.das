@@ -173,28 +173,28 @@ class HelloProgram
 	def static forLoop : void
 		for i in range(0,10)
 			print("{i}\n")
-		// for
-		var i : int = 0
-		var j : int = 12
-		while ((i + j) < 100)
-			print("i={i} j={j}\n")
-			i++
-			j--
+		if true // for loop
+			var i : int = 0
+			var j : int = 12
+			while ((i + j) < 100)
+				print("i={i} j={j}\n")
+				i++
+				j--
 		for i in range(0,10)
 			if (i == 5)
 				break
 			print("{i}\n")
 
-		// for
-		var i = 1
-		while (i != 3)
-			print("{i}\n")
-			i += 2
-		// for
-		var i = 1
-		while (i != 3)
-			print("{i}\n")
-			i = (i + 2)
+		if true // for loop
+			var i = 1
+			while (i != 3)
+				print("{i}\n")
+				i += 2
+		if true // for loop
+			var i = 1
+			while (i != 3)
+				print("{i}\n")
+				i = (i + 2)
 
 		for i in range(1,3)
 			print("{i}\n")
