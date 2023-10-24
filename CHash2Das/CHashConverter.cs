@@ -770,7 +770,7 @@ namespace CHash2Das
                     {
                         var binop = expression as AssignmentExpressionSyntax;
                         var typeInfo = semanticModel.GetTypeInfo(binop.Left);
-                        var assign = isMoveType(typeInfo.Type) ? "<-" : isStructType(typeInfo.Type) ? ":=" : "=";
+                        var assign = isMoveType(typeInfo.Type) ? "<-" : isCloneType(typeInfo.Type) ? ":=" : "=";
                         return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
                     }
                 case SyntaxKind.LeftShiftAssignmentExpression:
