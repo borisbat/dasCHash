@@ -178,23 +178,12 @@ namespace CHash2Das
             memberAccessExpr[typeWithMethod] = acc;
         }
 
-        public string onArgumentListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type, bool[] castArts)
+        public string onArgumentListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type)
         {
-            Debug.Assert(argumentList.Arguments.Count == castArts.Length);
-            var typeRank = getTypeRank(type);
             var res = new string[argumentList.Arguments.Count];
             var idx = 0;
             foreach (var arg in argumentList.Arguments)
             {
-                if (castArts[idx])
-                {
-                    int itemRank = getTypeRank(semanticModel.GetTypeInfo(arg.Expression).Type);
-                    if (itemRank != typeRank && typeRank != -1)
-                    {
-                        res[idx++] = $"{getDasCastName(typeRank)}({onExpressionSyntax(arg.Expression, typeRank)})";
-                        continue;
-                    }
-                }
                 res[idx++] = onExpressionSyntax(arg.Expression);
             }
             return string.Join(", ", res);
@@ -205,25 +194,13 @@ namespace CHash2Das
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
-        public string onArgumentReverseListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type, bool[] castArts)
+        public string onArgumentReverseListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type)
         {
-            Debug.Assert(argumentList.Arguments.Count == castArts.Length);
-            var typeRank = getTypeRank(type);
             var res = new string[argumentList.Arguments.Count];
             var idx = 0;
             var insertIdx = argumentList.Arguments.Count - 1;
             foreach (var arg in argumentList.Arguments)
             {
-                if (castArts[idx])
-                {
-                    int itemRank = getTypeRank(semanticModel.GetTypeInfo(arg.Expression).Type);
-                    if (itemRank != typeRank && typeRank != -1)
-                    {
-                        res[insertIdx--] = $"{getDasCastName(typeRank)}({onExpressionSyntax(arg.Expression, typeRank)})";
-                        idx++;
-                        continue;
-                    }
-                }
                 res[insertIdx--] = onExpressionSyntax(arg.Expression);
                 idx++;
             }
@@ -452,90 +429,14 @@ namespace CHash2Das
             return isStructType(typeSymbol);
         }
 
-        public int getTypeRank(ITypeSymbol ts, bool binOperator = false)
-        {
-            if (ts == null) return -1;
-            // double > float > uint64 > int64 > uint32 > int32
-            // any int bellow is going to int32
-            if (!binOperator)
-            {
-                if (isInt8(ts)) return 11;
-                if (isUInt8(ts)) return 10;
-                if (isInt16(ts)) return 9;
-                if (isUInt16(ts)) return 8;
-            }
-            if (isDouble(ts)) return 7;
-            if (isFloat(ts)) return 6;
-            if (isUInt64(ts)) return 5;
-            if (isInt64(ts)) return 4;
-            if (isUInt32(ts)) return 3;
-            if (isInt32(ts)) return 2;
-            // if (isBool(ts)) return 1;
-            // lowest rank
-            if (isLowBitsInteger(ts)) return 0;
-            return -1;
-        }
-
-        string getDasCastName(int rank)
-        {
-            switch (rank)
-            {
-                case 11: return "int8";
-                case 10: return "uint8";
-                case 9: return "int16";
-                case 8: return "uint16";
-                case 7: return "double";
-                case 6: return "float";
-                case 5: return "uint64";
-                case 4: return "int64";
-                case 3: return "uint";
-                case 2: return "int";
-                // case 1: return "bool";
-                case 0: return "int";
-            }
-            Fail("we should not be here. why cast?");
-            return "";
-        }
-
-        int getBinaryExpressionCastType(string op, int leftRank, int rightRank)
-        {
-            // TODO: make operator dependent type promotion
-            //  for example i32 + u32 is LONG
-            var maxRank = Math.Max(leftRank, rightRank);
-            if (maxRank == -1) return -1;
-            else if (maxRank == 0) return 2;
-            else return maxRank;
-        }
-
         string onBinaryExpressionSyntax(BinaryExpressionSyntax binop)
         {
             var leftType = semanticModel.GetTypeInfo(binop.Left);
             var rightType = semanticModel.GetTypeInfo(binop.Right);
-            var leftRank = getTypeRank(leftType.Type, true);
-            var rightRank = getTypeRank(rightType.Type, true);
-            var castRank = getBinaryExpressionCastType(binop.OperatorToken.Text, leftRank, rightRank);
             var result = "(";
-            if (leftRank != castRank && castRank != -1)
-            {
-                result += $"{getDasCastName(castRank)}(";
-                result += onExpressionSyntax(binop.Left, castRank);
-                result += ")";
-            }
-            else
-            {
-                result += onExpressionSyntax(binop.Left);
-            }
+            result += onExpressionSyntax(binop.Left);
             result += $" {binop.OperatorToken} ";
-            if (rightRank != castRank && castRank != -1)
-            {
-                result += $"{getDasCastName(castRank)}(";
-                result += onExpressionSyntax(binop.Right, castRank);
-                result += ")";
-            }
-            else
-            {
-                result += onExpressionSyntax(binop.Right);
-            }
+            result += onExpressionSyntax(binop.Right);
             return $"{result})";
         }
 
@@ -646,7 +547,6 @@ namespace CHash2Das
         private string onObjectCreationExpression_Array(ObjectCreationExpressionSyntax oce)
         {
             var itemTypeInfo = semanticModel.GetTypeInfo((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0]);
-            var itemRank = getTypeRank(itemTypeInfo.Type);
             var result = $"new [{{{onVarTypeSyntax((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0])} ";
             if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
             {
@@ -669,11 +569,7 @@ namespace CHash2Das
                     if (element.Kind() == SyntaxKind.NumericLiteralExpression)
                     {
                         var value = element as LiteralExpressionSyntax;
-                        var valueRank = getTypeRank(semanticModel.GetTypeInfo(element).Type);
-                        if (valueRank != itemRank && itemRank != -1)
-                            result += $"{getDasCastName(itemRank)}({onExpressionSyntax(value, itemRank)}); ";
-                        else
-                            result += $"{onExpressionSyntax(value)}; ";
+                        result += $"{onExpressionSyntax(value)}; ";
                     }
                     else if (element.Kind() == SyntaxKind.ObjectCreationExpression)
                     {
@@ -715,8 +611,33 @@ namespace CHash2Das
             return result;
         }
 
-        /// <param name="typeRankHint">Expression was casted to this type outside</param>
-        public string onExpressionSyntax(ExpressionSyntax expression, int typeRankHint = -1)
+        public string dasTypeName(ITypeSymbol typeInfo)
+        {
+            // TODO: support all sorts of types (arrays, pointers, etc)
+            if (isInt8(typeInfo)) return "int8";
+            else if (isInt16(typeInfo)) return "int16";
+            else if (isInt32(typeInfo)) return "int";
+            else if (isInt64(typeInfo)) return "int64";
+            else if (isUInt8(typeInfo)) return "uint8";
+            else if (isUInt16(typeInfo)) return "uint16";
+            else if (isUInt32(typeInfo)) return "uint";
+            else if (isUInt64(typeInfo)) return "uint64";
+            else if (isFloat(typeInfo)) return "float";
+            else if (isDouble(typeInfo)) return "double";
+            return "";
+        }
+
+        public string onExpressionSyntax(ExpressionSyntax expression)
+        {
+            var itemType = semanticModel.GetTypeInfo(expression);
+            if ( itemType.Type!=null && !itemType.Type.Equals(itemType.ConvertedType) )
+            {
+                return $"{dasTypeName(itemType.ConvertedType)}({onExpressionSyntax_(expression)})";
+            }
+            return onExpressionSyntax_(expression);
+        }
+
+        public string onExpressionSyntax_(ExpressionSyntax expression)
         {
             if (expression == null)
                 return "";
@@ -778,14 +699,7 @@ namespace CHash2Das
                 case SyntaxKind.OmittedArraySizeExpression:
                     return "";  // in int[], this is the portion between the brackets
                 case SyntaxKind.NumericLiteralExpression:
-                    if (typeRankHint != -1)
-                        return $"{expression}";
-                    var leftType = semanticModel.GetTypeInfo(expression);
-                    var typeRank = getTypeRank(leftType.Type);
-                    if (typeRank == -1)
-                        return $"{expression}";
-                    else
-                        return $"{getDasCastName(typeRank)}({expression})";
+                    return $"{expression}";
                 case SyntaxKind.StringLiteralExpression:
                     return onSyntaxToken((expression as LiteralExpressionSyntax).Token);
                 case SyntaxKind.SimpleMemberAccessExpression:
@@ -960,7 +874,6 @@ namespace CHash2Das
             var values = new List<string>();
             var tname = onVarTypeSyntax(vardecl.Type);
             var typeInfo = semanticModel.GetTypeInfo(vardecl.Type);
-            int castType = getTypeRank(typeInfo.Type);
             foreach (VariableDeclaratorSyntax declarator in vardecl.Variables)
             {
                 var result = needVar ? "var " : "";
@@ -971,15 +884,13 @@ namespace CHash2Das
                 {
                     var itemTypeInfo = semanticModel.GetTypeInfo(declarator.Initializer.Value);
                     Console.WriteLine($"token {declarator.Initializer} kind {declarator.Initializer.Kind()} type {itemTypeInfo.Type}");
-                    // always cast numeric literals
-                    int itemCastType = declarator.Initializer.Value.IsKind(SyntaxKind.NumericLiteralExpression) ? -1 : getTypeRank(typeInfo.Type);
                     var assign = "=";
                     if (isMoveType(typeInfo.Type))
                         assign = "<-";
                     else if (declarator.Initializer.Value.IsKind(SyntaxKind.IdentifierName) && isCloneType(typeInfo.Type))
                         assign = ":=";
-                    if (itemCastType != castType && castType != -1)
-                        result += $" {assign} {getDasCastName(castType)}({onExpressionSyntax(declarator.Initializer.Value, castType)})";
+                    if ( !typeInfo.Type.Equals(itemTypeInfo.ConvertedType) )
+                        result += $" {assign} {dasTypeName(typeInfo.Type)}({onExpressionSyntax(declarator.Initializer.Value)})";
                     else
                         result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
                 }

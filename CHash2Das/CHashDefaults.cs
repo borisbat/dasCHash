@@ -50,7 +50,7 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0]);
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
             var deref = converter.isPointerType(artType.Type) ? "*" : "";
             return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
@@ -59,7 +59,7 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var args = converter.onArgumentReverseListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { false, true });
+            var args = converter.onArgumentReverseListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0]);
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
             var deref = converter.isPointerType(artType.Type) ? "*" : "";
             return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> push({args})";
@@ -68,7 +68,7 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0]);
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
             var deref = converter.isPointerType(artType.Type) ? "*" : "";
             return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> has_value({args})";
@@ -77,7 +77,7 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0]);
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
             var deref = converter.isPointerType(artType.Type) ? "*" : "";
             return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> find_index({args})";
@@ -111,7 +111,7 @@ namespace CHash2Das
         {
             var ma = inv.Expression as MemberAccessExpressionSyntax;
             var contTypeInfo = converter.semanticModel.GetTypeInfo(ma.Expression);
-            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0], new bool[] { true });
+            var args = converter.onArgumentListSyntaxCast(inv.ArgumentList, (contTypeInfo.Type as INamedTypeSymbol).TypeArguments[0]);
             var artType = converter.semanticModel.GetTypeInfo(ma.Expression);
             var deref = converter.isPointerType(artType.Type) ? "*" : "";
             return $"{deref}{converter.onExpressionSyntax(ma.Expression)} |> remove_value({args})";
