@@ -129,18 +129,18 @@ class HelloProgram
 		print("{c}\n")
 
 	def static allCasts : void
-		var i8 : int8 = int(0)
-		var u8 : uint8 = int(0)
-		var i16 : int16 = int(0)
-		var u16 : uint16 = int(0)
+		var i8 : int8 = int8(0)
+		var u8 : uint8 = uint8(0)
+		var i16 : int16 = int16(0)
+		var u16 : uint16 = uint16(0)
 		var i32 : int = int(0)
-		var u32 : uint = int(0)
+		var u32 : uint = uint(0)
 		var i : int = int(0)
-		var u : uint = int(0)
-		var i64 : int64 = int(0)
-		var u64 : uint64 = int(0)
-		var f : float = int(0)
-		var d : double = int(0)
+		var u : uint = uint(0)
+		var i64 : int64 = int64(0)
+		var u64 : uint64 = uint64(0)
+		var f : float = float(0)
+		var d : double = double(0)
 
 		var i8i8 = (int(i8) + int(i8))
 		var i8u8 = (int(i8) + int(u8))
@@ -299,7 +299,7 @@ class HelloProgram
 		*a |> remove_value(float(2))
 		*a |> push(float(123), int(0))
 		*a |> erase(int(0), int(1))
-		var b = *a[int(0)]
+		var b = (*a)[int(0)]
 		print("a = {(*a)} size: {*a |> length()}\n")
 		print("b = {b}\n")
 		*a |> clear()
