@@ -25,7 +25,7 @@ namespace HelloWorld
             a = 123;
         }
 
-        public void bar(int t)
+        public void bar(in int t)
         {
             a = t;
         }

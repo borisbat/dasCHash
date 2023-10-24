@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using System.Text;
+using System.Runtime.CompilerServices;
+using System.Security.Policy;
 
 namespace CHash2Das
 {
@@ -835,6 +837,27 @@ namespace CHash2Das
             return result;
         }
 
+        bool IsConstantVariable(ISymbol symbol)
+        {
+            if (symbol is ILocalSymbol localSymbol)
+            {
+                return localSymbol.IsConst;
+            }
+            else if (symbol is IFieldSymbol fieldSymbol)
+            {
+                return fieldSymbol.IsConst;
+            }
+            return false;
+        }
+
+        string varPrefix(ParameterSyntax param)
+        {
+            if (param.Modifiers.Any(modifier => modifier.Kind() == SyntaxKind.InKeyword))
+                return "";
+            var paramType = semanticModel.GetTypeInfo(param);
+            return IsConstantVariable(paramType.Type) ? "" : "var ";
+        }
+
         string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
@@ -842,7 +865,7 @@ namespace CHash2Das
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
-                    .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
             result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
@@ -861,7 +884,7 @@ namespace CHash2Das
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
-                    .Select(param => $"{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
             result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
