@@ -51,7 +51,7 @@ class HelloProgram
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 
-		print("1 {("2")} {("3")}")
+		print("1 2 3")
 
 	def static ifThenElse (var cond : bool) : void
 		if cond
@@ -235,7 +235,7 @@ class HelloProgram
 
 	def static forEachLoop : void
 		var b : array<int> /*int[]*/ <- [{auto 1; 2; 3; 4}]
-		for t in (b)
+		for t in b
 			print("{t}\n")
 
 	def static switchCase : void

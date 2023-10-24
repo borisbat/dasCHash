@@ -634,7 +634,9 @@ namespace CHash2Das
             var itemType = semanticModel.GetTypeInfo(expression);
             if ( itemType.Type!=null && !itemType.Type.Equals(itemType.ConvertedType) )
             {
-                return $"{dasTypeName(itemType.ConvertedType)}({onExpressionSyntax_(expression)})";
+                var cast = dasTypeName(itemType.ConvertedType);
+                if (cast != "")
+                    return $"{cast}({onExpressionSyntax_(expression)})";
             }
             return onExpressionSyntax_(expression);
         }

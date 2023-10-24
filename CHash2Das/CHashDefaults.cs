@@ -36,7 +36,10 @@ namespace CHash2Das
             {
                 var argStr = converter.onExpressionSyntax((arg as ArgumentSyntax).Expression);
                 if (argStr.EndsWith("\""))
-                    res += argStr.Substring(1, argStr.Length - 2);
+                {
+                    var sub = argStr.Substring(1, argStr.Length - 2);
+                    res += sub;
+                }
                 else
                     res += $"{{{argStr}}}";
                 if (i < num - 1)
