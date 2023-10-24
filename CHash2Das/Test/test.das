@@ -113,7 +113,7 @@ class HelloProgram
 
 		var tt1 : bool = (t1 && t2)
 		var tt2 : bool = (t2 || t3)
-		var tt3 : bool = (t3 ^ t4)
+		var tt3 : bool = (t3 ^^ t4)
 
 		var b1 : int = (a & a)
 		var b2 : int = (a | a)

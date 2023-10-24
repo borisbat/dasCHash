@@ -1,4 +1,4 @@
-using static System.Console;
+﻿using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -414,11 +414,12 @@ namespace CHash2Das
 
         string onBinaryExpressionSyntax(BinaryExpressionSyntax binop)
         {
-            var leftType = semanticModel.GetTypeInfo(binop.Left);
-            var rightType = semanticModel.GetTypeInfo(binop.Right);
             var result = "(";
             result += onExpressionSyntax(binop.Left);
-            result += $" {binop.OperatorToken} ";
+            var token = binop.OperatorToken.ToString();
+            if (token == "^" && isBool(semanticModel.GetTypeInfo(binop.Left).Type))
+                token = "^^";
+            result += $" {token} ";
             result += onExpressionSyntax(binop.Right);
             return $"{result})";
         }
