@@ -624,6 +624,25 @@ namespace CHash2Das
             return "";
         }
 
+        public string derefExpr(ExpressionSyntax expr)
+        {
+            var typeInfo = semanticModel.GetTypeInfo(expr);
+            return derefExpr(onExpressionSyntax(expr), typeInfo, false);
+        }
+
+        public string safeDerefExpr(ExpressionSyntax expr)
+        {
+            var typeInfo = semanticModel.GetTypeInfo(expr);
+            return derefExpr(onExpressionSyntax(expr), typeInfo, true);
+        }
+
+        public string derefExpr(string res, TypeInfo typeInfo, bool safe)
+        {
+            if (isPointerType(typeInfo.Type))
+                return safe ? $"(*{res})" : $"*{res}";
+            return res;
+        }
+
         public string onExpressionSyntax(ExpressionSyntax expression)
         {
             var itemType = semanticModel.GetTypeInfo(expression);
@@ -741,10 +760,7 @@ namespace CHash2Das
                 case SyntaxKind.ElementAccessExpression:
                     {
                         var eae = expression as ElementAccessExpressionSyntax;
-                        var isClass = isPointerType(semanticModel.GetTypeInfo(eae.Expression).Type);
-                        var deref = isClass ? "(*" : "";
-                        var derefPostfix = isClass ? ")" : "";
-                        var result = $"{deref}{onExpressionSyntax(eae.Expression)}{derefPostfix}[";
+                        var result = $"{safeDerefExpr(eae.Expression)}[";
                         var first = true;
                         foreach (var arg in eae.ArgumentList.Arguments)
                         {
@@ -1142,9 +1158,7 @@ namespace CHash2Das
 
         string onForeachStatement(ForEachStatementSyntax fs)
         {
-            var isClass = isPointerType(semanticModel.GetTypeInfo(fs.Expression).Type);
-            var deref = isClass ? "*" : "";
-            return $"for {fs.Identifier.Text} in {deref}{onExpressionSyntax(fs.Expression)}\n{loopBlock(fs.Statement)}";
+            return $"for {fs.Identifier.Text} in {derefExpr(fs.Expression)}\n{loopBlock(fs.Statement)}";
         }
 
         string onSwitchStatement(SwitchStatementSyntax fs)

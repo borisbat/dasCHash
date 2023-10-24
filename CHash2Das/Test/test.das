@@ -303,7 +303,7 @@ class HelloProgram
 		*a |> push(float(123), 0)
 		*a |> erase(0, 1)
 		var b = (*a)[0]
-		print("a = {(*a)} size: {*a |> length()}\n")
+		print("a = {*a} size: {*a |> length()}\n")
 		print("b = {b}\n")
 		*a |> clear()
 		var sum = 0f
@@ -320,7 +320,7 @@ class HelloProgram
 
 		var d <- new [{SFoo [[SFoo() a = 1, ]]; [[SFoo() a = 2, ]]; }]
 		*d |> push([[SFoo() a = 3, ]])
-		print("d = {(*d)}\n")
+		print("d = {*d}\n")
 
 	def static_methods : void
 		var i = Foo`next()
