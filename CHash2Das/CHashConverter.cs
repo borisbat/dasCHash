@@ -147,6 +147,7 @@ namespace CHash2Das
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
+        Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, InvocationDelegate> methodInvExpr = new Dictionary<INamedTypeSymbolField, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, MemberAccessDelegate> memberAccessExpr = new Dictionary<INamedTypeSymbolField, MemberAccessDelegate>();
 
@@ -169,6 +170,15 @@ namespace CHash2Das
             }
             methodInvExpr[typeWithMethod] = inv;
         }
+        public void addObjectMethod(string member, InvocationDelegate inv)
+        {
+            if (objectInvExpr.ContainsKey(member))
+            {
+                Debug.Fail($"method Object.{member} is already declared");
+                return;
+            }
+            objectInvExpr[member] = inv;
+        }
 
         public void addMemberAccess(INamedTypeSymbolField typeWithMethod, MemberAccessDelegate acc)
         {
@@ -180,33 +190,14 @@ namespace CHash2Das
             memberAccessExpr[typeWithMethod] = acc;
         }
 
-        public string onArgumentListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type)
-        {
-            var res = new string[argumentList.Arguments.Count];
-            var idx = 0;
-            foreach (var arg in argumentList.Arguments)
-            {
-                res[idx++] = onExpressionSyntax(arg.Expression);
-            }
-            return string.Join(", ", res);
-        }
-
         public string onArgumentListSyntax(ArgumentListSyntax argumentList)
         {
             return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
-        public string onArgumentReverseListSyntaxCast(ArgumentListSyntax argumentList, ITypeSymbol type)
+        public string onArgumentReverseListSyntax(ArgumentListSyntax argumentList)
         {
-            var res = new string[argumentList.Arguments.Count];
-            var idx = 0;
-            var insertIdx = argumentList.Arguments.Count - 1;
-            foreach (var arg in argumentList.Arguments)
-            {
-                res[insertIdx--] = onExpressionSyntax(arg.Expression);
-                idx++;
-            }
-            return string.Join(", ", res);
+            return string.Join(", ", argumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
         }
 
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
@@ -261,6 +252,10 @@ namespace CHash2Das
                             ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = ma.Name.Identifier.Text
                         }, out invExpr);
+                        if (invExpr == null)
+                        {
+                            objectInvExpr.TryGetValue(ma.Name.Identifier.Text, out invExpr);
+                        }
                         if (invExpr != null)
                             callText = invExpr(this, inv);
                         else
@@ -413,17 +408,16 @@ namespace CHash2Das
         {
             if (typeSymbol == null)
                 return false;
+            if (isPointerType(typeSymbol))
+                return true;
             switch (typeSymbol.TypeKind)
             {
                 case TypeKind.Array:
                 case TypeKind.Class:
                     return true;
                 default:
-                    if (isPointerType(typeSymbol))
-                        return true;
                     return false;
             }
-
         }
 
         public bool isCloneType(ITypeSymbol typeSymbol)
@@ -433,11 +427,12 @@ namespace CHash2Das
 
         string onBinaryExpressionSyntax(BinaryExpressionSyntax binop)
         {
-            var leftType = semanticModel.GetTypeInfo(binop.Left);
-            var rightType = semanticModel.GetTypeInfo(binop.Right);
             var result = "(";
             result += onExpressionSyntax(binop.Left);
-            result += $" {binop.OperatorToken} ";
+            var token = binop.OperatorToken.ToString();
+            if (token == "^" && isBool(semanticModel.GetTypeInfo(binop.Left).Type))
+                token = "^^";
+            result += $" {token} ";
             result += onExpressionSyntax(binop.Right);
             return $"{result})";
         }
@@ -632,7 +627,7 @@ namespace CHash2Das
         public string onExpressionSyntax(ExpressionSyntax expression)
         {
             var itemType = semanticModel.GetTypeInfo(expression);
-            if ( itemType.Type!=null && !itemType.Type.Equals(itemType.ConvertedType) )
+            if (itemType.Type != null && !itemType.Type.Equals(itemType.ConvertedType))
             {
                 var cast = dasTypeName(itemType.ConvertedType);
                 if (cast != "")
@@ -908,13 +903,12 @@ namespace CHash2Das
                 if (declarator.Initializer != null)
                 {
                     var itemTypeInfo = semanticModel.GetTypeInfo(declarator.Initializer.Value);
-                    Console.WriteLine($"token {declarator.Initializer} kind {declarator.Initializer.Kind()} type {itemTypeInfo.Type}");
                     var assign = "=";
                     if (isMoveType(typeInfo.Type))
                         assign = "<-";
                     else if (declarator.Initializer.Value.IsKind(SyntaxKind.IdentifierName) && isCloneType(typeInfo.Type))
                         assign = ":=";
-                    if ( !typeInfo.Type.Equals(itemTypeInfo.ConvertedType) )
+                    if (!typeInfo.Type.Equals(itemTypeInfo.ConvertedType))
                         result += $" {assign} {dasTypeName(typeInfo.Type)}({onExpressionSyntax(declarator.Initializer.Value)})";
                     else
                         result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
