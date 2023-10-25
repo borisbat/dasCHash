@@ -10,6 +10,11 @@ using System.Collections.Generic;
 
 namespace HelloWorld
 {
+    struct TestStruct
+    {
+        public int x;
+    };
+
     class Foo
     {
         static int count = 13;
@@ -373,6 +378,23 @@ namespace HelloWorld
         {
             var i = Foo.next();
             Console.WriteLine($"i = {i}");
+        }
+
+        static void m_in ( in int a )
+        {
+            Console.WriteLine(a);
+        }
+
+        static void m_out ( out int a )
+        {
+            a = 13;
+        }
+
+        static void testInOut()
+        {
+            var a = 0;
+            m_out(out a);
+            m_in(a);
         }
     }
 }

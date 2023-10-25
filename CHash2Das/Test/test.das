@@ -9,6 +9,10 @@
 // using System.Collections.Generic
 
 // namespaced HelloWorld
+struct TestStruct
+	x : int
+
+
 class Foo
 	static count : int = 13
 
@@ -322,5 +326,16 @@ class HelloProgram
 	def static_methods : void
 		var i = Foo`next()
 		print("i = {i}\n")
+
+	def static m_in (a : int) : void
+		print("{a}\n")
+
+	def static m_out (var a : int&) : void
+		a = 13
+
+	def static testInOut : void
+		var a = 0
+		HelloProgram`m_out(a)
+		HelloProgram`m_in(a)
 
 

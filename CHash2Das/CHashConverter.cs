@@ -860,6 +860,11 @@ namespace CHash2Das
             return IsConstantVariable(paramType.Type) ? "" : "var ";
         }
 
+        string varSuffix(ParameterSyntax param)
+        {
+            return (param.Modifiers.Any(modifier => modifier.Kind() == SyntaxKind.OutKeyword)) ? "&" : "";
+        }
+
         string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
@@ -867,7 +872,7 @@ namespace CHash2Das
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
-                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
             result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
@@ -886,7 +891,7 @@ namespace CHash2Das
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
-                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}");
+                    .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
             result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
