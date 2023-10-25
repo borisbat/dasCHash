@@ -400,4 +400,34 @@ namespace HelloWorld
             m_in(a);
         }
     }
+
+    public class DefaultPerson
+    {
+        public string FirstName { get; set; }
+    }
+
+    public class DefaultPersonWithInit
+    {
+        public string FirstName { get; set; } = "blahblah";
+    }
+
+    public class Person
+    {
+        public string FirstName
+        {
+            get { return _firstName; }
+            set { _firstName = value; }
+        }
+        private string _firstName;
+    }
+
+    public class PersonWithArrows
+    {
+        public string FirstName
+        {
+            get => _firstName;
+            set => _firstName = value;
+        }
+        private string _firstName;
+    }
 }

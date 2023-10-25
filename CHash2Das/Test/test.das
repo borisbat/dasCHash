@@ -342,3 +342,39 @@ class HelloProgram
 		HelloProgram`m_in(a)
 
 
+class DefaultPerson
+	// property FirstName : string
+	def operator . FirstName : string
+		return FirstName`Storage
+	def operator . FirstName := ( value:string )
+		FirstName`Storage = value
+	private FirstName`Storage : string
+
+class DefaultPersonWithInit
+	// property FirstName : string
+	def operator . FirstName : string
+		return FirstName`Storage
+	def operator . FirstName := ( value:string )
+		FirstName`Storage = value
+	private FirstName`Storage : string = "blahblah"
+
+class Person
+	// property FirstName : string
+	def operator . FirstName : string
+			return _firstName
+	def operator . FirstName := ( value:string )
+			_firstName <- value
+
+	private _firstName : string?
+
+
+class PersonWithArrows
+	// property FirstName : string
+	def operator . FirstName : string
+		return _firstName
+	def operator . FirstName := ( value:string )
+		_firstName <- value
+
+	private _firstName : string?
+
+

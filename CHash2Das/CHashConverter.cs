@@ -1353,6 +1353,64 @@ namespace CHash2Das
             return result;
         }
 
+        string onAccessorDeclarationSyntrax(AccessorDeclarationSyntax accessor)
+        {
+            return "";
+        }
+
+        string onPropertyDeclaration(PropertyDeclarationSyntax propertySyntax)
+        {
+            var tabstr = new string('\t', tabs);
+            string ptype = onTypeSyntax(propertySyntax.Type);
+            string result = $"{tabstr}// property {propertySyntax.Identifier.Text} : {ptype}\n";
+            if (propertySyntax.AccessorList != null)
+            {
+                bool needStorage = false;
+                foreach (var accessor in propertySyntax.AccessorList.Accessors)
+                {
+                    if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.GetAccessorDeclaration)
+                    {
+                        result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
+                        tabs++;
+                        if (accessor.Body != null)
+                            result += onBlockSyntax(accessor.Body);
+                        else if (accessor.ExpressionBody != null)
+                            result += $"{tabstr}\treturn {onExpressionSyntax(accessor.ExpressionBody.Expression)}\n";
+                        else
+                        {
+                            needStorage = true;
+                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
+                        }
+                        tabs--;
+                    }
+                    else if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.SetAccessorDeclaration)
+                    {
+                        result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
+                        tabs++;
+                        if (accessor.Body != null)
+                            result += onBlockSyntax(accessor.Body);
+                        else if (accessor.ExpressionBody != null)
+                            result += $"{tabstr}\t{onExpressionSyntax(accessor.ExpressionBody.Expression)}\n";
+                        else
+                        {
+                            needStorage = true;
+                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";
+                        }
+                        tabs--;
+                    }
+                }
+                if (needStorage)
+                {
+                    result += $"{tabstr}private {propertySyntax.Identifier.Text}`Storage : {ptype}";
+                    if (propertySyntax.Initializer != null)
+                        // TODO: use correct assignment operator
+                        result += $" = {onExpressionSyntax(propertySyntax.Initializer.Value)}";
+                }
+            }
+
+            return result;
+        }
+
         string onMemberDeclaration(MemberDeclarationSyntax member)
         {
             switch (member.Kind())
@@ -1369,6 +1427,8 @@ namespace CHash2Das
                     return onConstructorDeclaration(member as ConstructorDeclarationSyntax);
                 case SyntaxKind.StructDeclaration:
                     return onStructDeclaration(member as StructDeclarationSyntax);
+                case SyntaxKind.PropertyDeclaration:
+                    return onPropertyDeclaration(member as PropertyDeclarationSyntax);
                 default:
                     Fail($"Unsupported member {member.Kind()}");
                     return $"{member}";
