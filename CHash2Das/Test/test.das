@@ -117,7 +117,7 @@ class HelloProgram
 
 		var tt1 : bool = (t1 && t2)
 		var tt2 : bool = (t2 || t3)
-		var tt3 : bool = (t3 ^ t4)
+		var tt3 : bool = (t3 ^^ t4)
 
 		var b1 : int = (a & a)
 		var b2 : int = (a | a)
@@ -294,7 +294,10 @@ class HelloProgram
 		var f3 := f1
 		f1 := [[SFoo]]
 		f3 := f2
-		print("f1 = {f1} f2 = {f2->ToString()} f3 = {f3.a}\n")
+		print("f1 = {f1} f2 = {f2} f3 = {f3.a}\n")
+		print("{f1}\n")
+		var f2Str <- "{f2}"
+		print("{f2Str}\n")
 
 	def lists : void
 		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]
@@ -304,7 +307,7 @@ class HelloProgram
 		*a |> push(float(123), 0)
 		*a |> erase(0, 1)
 		var b = (*a)[0]
-		print("a = {(*a)} size: {*a |> length()}\n")
+		print("a = {*a} size: {*a |> length()}\n")
 		print("b = {b}\n")
 		*a |> clear()
 		var sum = 0f
@@ -321,7 +324,7 @@ class HelloProgram
 
 		var d <- new [{SFoo [[SFoo() a = 1, ]]; [[SFoo() a = 2, ]]; }]
 		*d |> push([[SFoo() a = 3, ]])
-		print("d = {(*d)}\n")
+		print("d = {*d}\n")
 
 	def static_methods : void
 		var i = Foo`next()

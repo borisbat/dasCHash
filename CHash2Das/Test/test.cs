@@ -338,6 +338,9 @@ namespace HelloWorld
             f1 = default(SFoo);
             f3 = f2;
             Console.WriteLine($"f1 = {f1} f2 = {f2.ToString()} f3 = {f3.a}");
+            Console.WriteLine(f1.ToString());
+            var f2Str = f2.ToString();
+            Console.WriteLine(f2Str);
         }
 
         void lists()
