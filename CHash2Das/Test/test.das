@@ -378,3 +378,12 @@ class PersonWithArrows
 	private _firstName : string?
 
 
+class Goo
+	def static testProperty : void
+		var p <- new [[Person()]]
+		p.FirstName := "Test"
+		p.FirstName := p.FirstName + "Me"
+		if (p.FirstName == "TestMe")
+			print("{p.FirstName}\n")
+
+

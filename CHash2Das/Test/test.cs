@@ -430,4 +430,15 @@ namespace HelloWorld
         }
         private string _firstName;
     }
+
+    class Goo
+    {
+        static void testProperty()
+        {
+            var p = new Person();
+            p.FirstName = "Test";
+            p.FirstName += "Me";
+            if (p.FirstName == "TestMe") { Console.WriteLine(p.FirstName); }
+        }
+    }
 }

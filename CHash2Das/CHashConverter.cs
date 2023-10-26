@@ -655,6 +655,14 @@ namespace CHash2Das
             return onExpressionSyntax_(expression);
         }
 
+        bool isProperty(ExpressionSyntax expression)
+        {
+            if (expression.Kind()!=SyntaxKind.SimpleMemberAccessExpression) return false;
+            var memberAccess = expression as MemberAccessExpressionSyntax;
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            return (accessedSymbol is IPropertySymbol);
+        }
+
         public string onExpressionSyntax_(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -697,6 +705,7 @@ namespace CHash2Das
                         var binop = expression as AssignmentExpressionSyntax;
                         var typeInfo = semanticModel.GetTypeInfo(binop.Left);
                         var assign = isMoveType(typeInfo.Type) ? "<-" : isCloneType(typeInfo.Type) ? ":=" : "=";
+                        if (isProperty(binop.Left)) assign = ":=";
                         return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
                     }
                 case SyntaxKind.LeftShiftAssignmentExpression:
@@ -710,6 +719,12 @@ namespace CHash2Das
                 case SyntaxKind.DivideAssignmentExpression:
                     {
                         var binop = expression as AssignmentExpressionSyntax;
+                        if (isProperty(binop.Left))
+                        {
+                            var op = binop.OperatorToken.Text;
+                            var cutop = op.Substring(0, op.Length - 1);
+                            return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
+                        }
                         // TODO: convert operator token properly
                         // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
                         return $"{onExpressionSyntax(binop.Left)} {binop.OperatorToken} {onExpressionSyntax(binop.Right)}";
