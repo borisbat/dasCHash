@@ -1,4 +1,4 @@
-using static System.Console;
+﻿using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -1418,10 +1418,9 @@ namespace CHash2Das
                 bool needStorage = false;
                 foreach (var accessor in propertySyntax.AccessorList.Accessors)
                 {
-                    if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.GetAccessorDeclaration)
+                    if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
                     {
                         result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                        tabs++;
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1431,12 +1430,10 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
                         }
-                        tabs--;
                     }
-                    else if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.SetAccessorDeclaration)
+                    else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
                     {
                         result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                        tabs++;
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1446,7 +1443,6 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";
                         }
-                        tabs--;
                     }
                 }
                 if (needStorage)

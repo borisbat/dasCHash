@@ -361,9 +361,9 @@ class DefaultPersonWithInit
 class Person
 	// property FirstName : string
 	def operator . FirstName : string
-			return _firstName
+		return _firstName
 	def operator . FirstName := ( value:string )
-			_firstName = value
+		_firstName = value
 
 	private _firstName : string?
 
