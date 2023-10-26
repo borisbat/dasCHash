@@ -1,4 +1,4 @@
-﻿using static System.Console;
+using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -630,6 +630,36 @@ namespace CHash2Das
             else if (isDouble(typeInfo)) return "double";
             return "";
         }
+        public string dasTypePostfix(ITypeSymbol typeInfo)
+        {
+            // if (isInt8(typeInfo)) return "";
+            // else if (isInt16(typeInfo)) return "";
+            // else if (isInt32(typeInfo)) return "";
+            if (isInt64(typeInfo)) return "l";
+            else if (isUInt8(typeInfo)) return "u8";
+            // else if (isUInt16(typeInfo)) return "u16";
+            else if (isUInt32(typeInfo)) return "u";
+            else if (isUInt64(typeInfo)) return "ul";
+            else if (isFloat(typeInfo)) return "f";
+            else if (isDouble(typeInfo)) return "d";
+            return "";
+        }
+
+        public string castExpr(ExpressionSyntax expr, ITypeSymbol typeInfo)
+        {
+            if (expr.IsKind(SyntaxKind.NumericLiteralExpression))
+            {
+                if (isInt32(typeInfo))
+                    return onExpressionSyntax_(expr);
+                var postfix = dasTypePostfix(typeInfo);
+                if (postfix != "")
+                    return $"{onExpressionSyntax_(expr)}{postfix}";
+            }
+            var cast = dasTypeName(typeInfo);
+            if (cast != "")
+                return $"{cast}({onExpressionSyntax_(expr)})";
+            return onExpressionSyntax_(expr);
+        }
 
         public string derefExpr(ExpressionSyntax expr)
         {
@@ -655,9 +685,7 @@ namespace CHash2Das
             var itemType = semanticModel.GetTypeInfo(expression);
             if (itemType.Type != null && !itemType.Type.Equals(itemType.ConvertedType))
             {
-                var cast = dasTypeName(itemType.ConvertedType);
-                if (cast != "")
-                    return $"{cast}({onExpressionSyntax_(expression)})";
+                return $"{castExpr(expression, itemType.ConvertedType)}";
             }
             return onExpressionSyntax_(expression);
         }
@@ -952,7 +980,7 @@ namespace CHash2Das
                     else if (declarator.Initializer.Value.IsKind(SyntaxKind.IdentifierName) && isCloneType(typeInfo.Type))
                         assign = ":=";
                     if (!typeInfo.Type.Equals(itemTypeInfo.ConvertedType))
-                        result += $" {assign} {dasTypeName(typeInfo.Type)}({onExpressionSyntax(declarator.Initializer.Value)})";
+                        result += $" {assign} {castExpr(declarator.Initializer.Value, typeInfo.Type)}";
                     else
                         result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
                 }

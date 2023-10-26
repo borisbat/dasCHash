@@ -134,17 +134,17 @@ class HelloProgram
 
 	def static allCasts : void
 		var i8 : int8 = int8(0)
-		var u8 : uint8 = uint8(0)
+		var u8 : uint8 = 0u8
 		var i16 : int16 = int16(0)
 		var u16 : uint16 = uint16(0)
 		var i32 : int = 0
-		var u32 : uint = uint(0)
+		var u32 : uint = 0u
 		var i : int = 0
-		var u : uint = uint(0)
-		var i64 : int64 = int64(0)
-		var u64 : uint64 = uint64(0)
-		var f : float = float(0)
-		var d : double = double(0)
+		var u : uint = 0u
+		var i64 : int64 = 0l
+		var u64 : uint64 = 0ul
+		var f : float = 0f
+		var d : double = 0d
 
 		var i8i8 = (int(i8) + int(i8))
 		var i8u8 = (int(i8) + int(u8))
@@ -300,11 +300,11 @@ class HelloProgram
 		print("{f2Str}\n")
 
 	def lists : void
-		var a <- new [{float float(1); float(2); float(3); float(4); float(5); float(6); }]
-		*a |> push(float(7))
+		var a <- new [{float 1f; 2f; 3f; 4f; 5f; 6f; }]
+		*a |> push(7f)
 		*a |> erase(0)
-		*a |> remove_value(float(2))
-		*a |> push(float(123), 0)
+		*a |> remove_value(2.1f)
+		*a |> push(123f, 0)
 		*a |> erase(0, 1)
 		var b = (*a)[0]
 		print("a = {*a} size: {*a |> length()}\n")
@@ -315,7 +315,7 @@ class HelloProgram
 			sum += i
 
 			print("i = {i}\n")
-		print("sum = {sum} has 6 {*a |> has_value(float(6))}, 7 index {*a |> find_index(float(7))}\n")
+		print("sum = {sum} has 6 {*a |> has_value(6f)}, 7 index {*a |> find_index(7f)}\n")
 		*a |> sort()
 
 		var c <- new [{Foo? new [[Foo() a = 1, ]]; new [[Foo() a = 2, ]]; }]

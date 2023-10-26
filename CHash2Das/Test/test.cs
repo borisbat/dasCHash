@@ -349,9 +349,9 @@ namespace HelloWorld
             {
                 1, 2, 3, 4, 5, 6
             };
-            a.Add(7);
+            a.Add(7f);
             a.RemoveAt(0);
-            a.Remove(2);
+            a.Remove(2.1f);
             a.Insert(0, 123);
             a.RemoveRange(0, 1);
             var b = a[0];
