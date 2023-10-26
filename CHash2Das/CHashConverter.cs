@@ -267,6 +267,11 @@ namespace CHash2Das
             return callText;
         }
 
+        bool isString(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_String));
+        }
+
         bool isBool(ITypeSymbol ts)
         {
             return ts.Equals(compilation.GetSpecialType(SpecialType.System_Boolean));
@@ -407,6 +412,8 @@ namespace CHash2Das
         public bool isMoveType(ITypeSymbol typeSymbol)
         {
             if (typeSymbol == null)
+                return false;
+            if (isString(typeSymbol))
                 return false;
             if (isPointerType(typeSymbol))
                 return true;
@@ -623,6 +630,36 @@ namespace CHash2Das
             else if (isDouble(typeInfo)) return "double";
             return "";
         }
+        public string dasTypePostfix(ITypeSymbol typeInfo)
+        {
+            // if (isInt8(typeInfo)) return "";
+            // else if (isInt16(typeInfo)) return "";
+            // else if (isInt32(typeInfo)) return "";
+            if (isInt64(typeInfo)) return "l";
+            else if (isUInt8(typeInfo)) return "u8";
+            // else if (isUInt16(typeInfo)) return "u16";
+            else if (isUInt32(typeInfo)) return "u";
+            else if (isUInt64(typeInfo)) return "ul";
+            else if (isFloat(typeInfo)) return "f";
+            else if (isDouble(typeInfo)) return "d";
+            return "";
+        }
+
+        public string castExpr(ExpressionSyntax expr, ITypeSymbol typeInfo)
+        {
+            if (expr.IsKind(SyntaxKind.NumericLiteralExpression))
+            {
+                if (isInt32(typeInfo))
+                    return onExpressionSyntax_(expr);
+                var postfix = dasTypePostfix(typeInfo);
+                if (postfix != "")
+                    return $"{onExpressionSyntax_(expr)}{postfix}";
+            }
+            var cast = dasTypeName(typeInfo);
+            if (cast != "")
+                return $"{cast}({onExpressionSyntax_(expr)})";
+            return onExpressionSyntax_(expr);
+        }
 
         public string derefExpr(ExpressionSyntax expr)
         {
@@ -648,16 +685,14 @@ namespace CHash2Das
             var itemType = semanticModel.GetTypeInfo(expression);
             if (itemType.Type != null && !itemType.Type.Equals(itemType.ConvertedType))
             {
-                var cast = dasTypeName(itemType.ConvertedType);
-                if (cast != "")
-                    return $"{cast}({onExpressionSyntax_(expression)})";
+                return $"{castExpr(expression, itemType.ConvertedType)}";
             }
             return onExpressionSyntax_(expression);
         }
 
         bool isProperty(ExpressionSyntax expression)
         {
-            if (expression.Kind()!=SyntaxKind.SimpleMemberAccessExpression) return false;
+            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
             return (accessedSymbol is IPropertySymbol);
@@ -945,7 +980,7 @@ namespace CHash2Das
                     else if (declarator.Initializer.Value.IsKind(SyntaxKind.IdentifierName) && isCloneType(typeInfo.Type))
                         assign = ":=";
                     if (!typeInfo.Type.Equals(itemTypeInfo.ConvertedType))
-                        result += $" {assign} {dasTypeName(typeInfo.Type)}({onExpressionSyntax(declarator.Initializer.Value)})";
+                        result += $" {assign} {castExpr(declarator.Initializer.Value, typeInfo.Type)}";
                     else
                         result += $" {assign} {onExpressionSyntax(declarator.Initializer.Value)}";
                 }
@@ -1383,10 +1418,9 @@ namespace CHash2Das
                 bool needStorage = false;
                 foreach (var accessor in propertySyntax.AccessorList.Accessors)
                 {
-                    if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.GetAccessorDeclaration)
+                    if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
                     {
                         result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                        tabs++;
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1396,12 +1430,10 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
                         }
-                        tabs--;
                     }
-                    else if (accessor.Kind() == Microsoft.CodeAnalysis.CSharp.SyntaxKind.SetAccessorDeclaration)
+                    else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
                     {
                         result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                        tabs++;
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1411,7 +1443,6 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";
                         }
-                        tabs--;
                     }
                 }
                 if (needStorage)
