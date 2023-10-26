@@ -267,6 +267,11 @@ namespace CHash2Das
             return callText;
         }
 
+        bool isString(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_String));
+        }
+
         bool isBool(ITypeSymbol ts)
         {
             return ts.Equals(compilation.GetSpecialType(SpecialType.System_Boolean));
@@ -407,6 +412,8 @@ namespace CHash2Das
         public bool isMoveType(ITypeSymbol typeSymbol)
         {
             if (typeSymbol == null)
+                return false;
+            if (isString(typeSymbol))
                 return false;
             if (isPointerType(typeSymbol))
                 return true;
@@ -657,7 +664,7 @@ namespace CHash2Das
 
         bool isProperty(ExpressionSyntax expression)
         {
-            if (expression.Kind()!=SyntaxKind.SimpleMemberAccessExpression) return false;
+            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
             return (accessedSymbol is IPropertySymbol);

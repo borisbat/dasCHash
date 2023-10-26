@@ -296,7 +296,7 @@ class HelloProgram
 		f3 := f2
 		print("f1 = {f1} f2 = {f2} f3 = {f3.a}\n")
 		print("{f1}\n")
-		var f2Str <- "{f2}"
+		var f2Str = "{f2}"
 		print("{f2Str}\n")
 
 	def lists : void
@@ -363,7 +363,7 @@ class Person
 	def operator . FirstName : string
 			return _firstName
 	def operator . FirstName := ( value:string )
-			_firstName <- value
+			_firstName = value
 
 	private _firstName : string?
 
@@ -373,7 +373,7 @@ class PersonWithArrows
 	def operator . FirstName : string
 		return _firstName
 	def operator . FirstName := ( value:string )
-		_firstName <- value
+		_firstName = value
 
 	private _firstName : string?
 
