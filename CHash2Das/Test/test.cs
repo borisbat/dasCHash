@@ -187,6 +187,15 @@ namespace HelloWorld
             var u64u64 = u64 + u64; // ulong
             // var i64u64 = i64 + u64;  // ambiguity, does not compile
             var fd = f + d;   // goes to double
+
+            // casts
+            double dd = 10.0d;
+            float ff = 10.0f;
+            double df = 10.0f;
+            int ii8 = i8;
+            int iu8 = u8;
+            Int64 i64i = i;
+            float fi = i;
         }
 
         static void whileLoop()

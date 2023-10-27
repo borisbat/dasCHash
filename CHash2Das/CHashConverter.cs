@@ -647,18 +647,15 @@ namespace CHash2Das
 
         public string castExpr(ExpressionSyntax expr, ITypeSymbol typeInfo)
         {
-            if (expr.IsKind(SyntaxKind.NumericLiteralExpression))
+            var res = onExpressionSyntax_(expr);
+            if (expr.IsKind(SyntaxKind.NumericLiteralExpression) && !res.EndsWith("f"))
             {
-                if (isInt32(typeInfo))
-                    return onExpressionSyntax_(expr);
                 var postfix = dasTypePostfix(typeInfo);
                 if (postfix != "")
-                    return $"{onExpressionSyntax_(expr)}{postfix}";
+                    return $"{res}{postfix}";
             }
             var cast = dasTypeName(typeInfo);
-            if (cast != "")
-                return $"{cast}({onExpressionSyntax_(expr)})";
-            return onExpressionSyntax_(expr);
+            return cast != "" ? $"{cast}({res})" : res;
         }
 
         public string derefExpr(ExpressionSyntax expr)

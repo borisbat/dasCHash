@@ -160,6 +160,15 @@ class HelloProgram
 
 		var fd = (double(f) + d)
 
+
+		var dd : double = 10.0d
+		var ff : float = 10.0f
+		var df : double = double(10.0f)
+		var ii8 : int = int(i8)
+		var iu8 : int = int(u8)
+		var i64i : int64 = int64(i)
+		var fi : float = float(i)
+
 	def static whileLoop : void
 		var a = 1
 		while (a < 5)
