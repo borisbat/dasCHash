@@ -4,12 +4,14 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Text;
+// net using
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
 namespace HelloWorld
 {
+    // enum )
     struct TestStruct
     {
         public int x;
@@ -35,6 +37,7 @@ namespace HelloWorld
             a = t;
         }
 
+        // static method
         static void farfar()
         {
             Console.WriteLine("static method");
@@ -46,6 +49,7 @@ namespace HelloWorld
         }
     }
 
+    // struct - value type
     struct SFoo
     {
         public int a;
@@ -434,6 +438,7 @@ namespace HelloWorld
 
     public class PersonWithArrows
     {
+        // new style operator
         public string FirstName
         {
             get => _firstName;
@@ -447,7 +452,9 @@ namespace HelloWorld
         static void testProperty()
         {
             var p = new Person();
+            // set first name
             p.FirstName = "Test";
+            // concat
             p.FirstName += "Me";
             if (p.FirstName == "TestMe") { Console.WriteLine(p.FirstName); }
         }
