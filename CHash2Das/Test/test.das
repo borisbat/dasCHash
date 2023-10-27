@@ -4,11 +4,13 @@
 // using System.Collections
 // using System.Linq
 // using System.Text
+// net using
 // using System.Net
 // using System.Runtime.InteropServices
 // using System.Collections.Generic
 
 // namespaced HelloWorld
+// enum )
 struct TestStruct
 	x : int
 
@@ -31,14 +33,14 @@ class Foo
 
 	def bar (t : int) : void
 		a = t
-
+	// static method
 	def static farfar : void
 		print("static method\n")
 
 	def static next : int
 		return count++
 
-
+// struct - value type
 struct SFoo
 	a : int
 
@@ -96,35 +98,35 @@ class HelloProgram
 
 	def static allOperators (var a : int; var b : float) : void
 		a = a
-
+		// op1
 		var a1 : int = (+a)
 		var a2 : int = (-a)
 		var a3 : int = (~a)
 		var a4 : bool = (!((a == 0)))
-
+		// op2
 		var c : float = (float(a) + b)
 		var d : float = (float(a) - b)
 		var e : float = (float(a) * b)
 		var f : float = (float(a) / b)
 		var g : float = (float(a) % b)
-
+		// op2 bool
 		var t1 : bool = (a == a)
 		var t2 : bool = (a != a)
 		var t3 : bool = (a <= a)
 		var t4 : bool = (a >= a)
 		var t5 : bool = (a > a)
 		var t6 : bool = (a < a)
-
+		// more bool
 		var tt1 : bool = (t1 && t2)
 		var tt2 : bool = (t2 || t3)
 		var tt3 : bool = (t3 ^^ t4)
-
+		// binary
 		var b1 : int = (a & a)
 		var b2 : int = (a | a)
 		var b3 : int = (a ^ a)
 		var b4 : int = (a << 1)
 		var b5 : int = (a >> 1)
-
+		// assignmetn
 		a <<= 1
 		a >>= 1
 		a |= a
@@ -146,21 +148,21 @@ class HelloProgram
 		var f : float = 0f
 		var d : double = 0d
 
-		var i8i8 = (int(i8) + int(i8))
-		var i8u8 = (int(i8) + int(u8))
-		var i16i16 = (int(i16) + int(i16))
-		var i16u16 = (int(i16) + int(u16))
-		var ii = (i + i)
-		var uu = (u + u)
-		var ui = (int64(i) + int64(u))
-		var i32i32 = (i32 + i32)
-		var i32u32 = (int64(i32) + int64(u32))
-		var i64i64 = (i64 + i64)
-		var u64u64 = (u64 + u64)
+		var i8i8 = (int(i8) + int(i8))		// int
+		var i8u8 = (int(i8) + int(u8))		// int
+		var i16i16 = (int(i16) + int(i16))		// int
+		var i16u16 = (int(i16) + int(u16))		// int
+		var ii = (i + i)		// int
+		var uu = (u + u)		// uint
+		var ui = (int64(i) + int64(u))		// long
+		var i32i32 = (i32 + i32)		// int
+		var i32u32 = (int64(i32) + int64(u32))		// long
+		var i64i64 = (i64 + i64)		// long
+		var u64u64 = (u64 + u64)		// ulong
+		// var i64u64 = i64 + u64;  // ambiguity, does not compile
+		var fd = (double(f) + d)		// goes to double
 
-		var fd = (double(f) + d)
-
-
+		// casts
 		var dd : double = 10.0d
 		var ff : float = 10.0f
 		var df : double = double(10.0f)
@@ -268,7 +270,7 @@ class HelloProgram
 			i++
 		elif _temp_6_switchcase_==2
 			i--
-
+		// and the crazy case
 		let _temp_7_switchcase_ = i
 		while true
 			if _temp_7_switchcase_==1
@@ -281,7 +283,7 @@ class HelloProgram
 				i--
 				break
 			break
-
+		// default in the middle
 		let _temp_8_switchcase_ = i
 		if _temp_8_switchcase_==1
 			i++
@@ -302,7 +304,7 @@ class HelloProgram
 	def structures : void
 		var f1 = [[SFoo()]]
 		var f2 = [[SFoo() a = 1, ]]
-		var f3 := f1
+		var f3 := f1		// clone!
 		f1 := [[SFoo]]
 		f3 := f2
 		print("f1 = {f1} f2 = {f2} f3 = {f3.a}\n")
@@ -379,7 +381,7 @@ class Person
 	private _firstName : string
 
 
-class PersonWithArrows
+class PersonWithArrows	// new style operator
 	// property FirstName : string
 	def operator . FirstName : string
 		return _firstName
@@ -392,7 +394,9 @@ class PersonWithArrows
 class Goo
 	def static testProperty : void
 		var p <- new [[Person()]]
+		// set first name
 		p.FirstName := "Test"
+		// concat
 		p.FirstName := p.FirstName + "Me"
 		if (p.FirstName == "TestMe")
 			print("{p.FirstName}\n")

@@ -12,6 +12,7 @@ using System.Xml.Linq;
 using System.Text;
 using System.Runtime.CompilerServices;
 using System.Security.Policy;
+using Microsoft.CodeAnalysis.Text;
 
 namespace CHash2Das
 {
@@ -878,10 +879,13 @@ namespace CHash2Das
 
         string onNamespaceDeclaration(NamespaceDeclarationSyntax namespaceDeclaration)
         {
-            var result = $"// namespaced {namespaceDeclaration.Name}\n";
+            var result = $"// namespaced {namespaceDeclaration.Name}\n\n";
+            TextSpan prevSpan = new TextSpan(namespaceDeclaration.Span.Start, 1);
             foreach (MemberDeclarationSyntax memberDeclaration in namespaceDeclaration.Members)
             {
+                InsertComments(ref result, prevSpan, memberDeclaration.Span, memberDeclaration.SyntaxTree);
                 result += onMemberDeclaration(memberDeclaration) + "\n";
+                prevSpan = memberDeclaration.Span;
             }
             return result;
         }
@@ -890,9 +894,12 @@ namespace CHash2Das
         {
             var result = $"class {classDeclaration.Identifier}\n";
             tabs++;
+            TextSpan prevSpan = new TextSpan(classDeclaration.Span.Start, 1);
             foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
             {
+                InsertComments(ref result, prevSpan, membersDeclaration.Span, membersDeclaration.SyntaxTree);
                 result += onMemberDeclaration(membersDeclaration) + "\n";
+                prevSpan = membersDeclaration.Span;
             }
             tabs--;
             return result;
@@ -902,9 +909,12 @@ namespace CHash2Das
         {
             var result = $"struct {classDeclaration.Identifier}\n";
             tabs++;
+            TextSpan prevSpan = new TextSpan(classDeclaration.Span.Start, 1);
             foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
             {
+                InsertComments(ref result, prevSpan, membersDeclaration.Span, membersDeclaration.SyntaxTree);
                 result += onMemberDeclaration(membersDeclaration) + "\n";
+                prevSpan = membersDeclaration.Span;
             }
             tabs--;
             return result;
@@ -1296,7 +1306,8 @@ namespace CHash2Das
                 {
                     if (!simpleSwitchCase || !(ex is BreakStatementSyntax))
                     {
-                        result += InsertSpaces(prevExpr, ex);
+                        if (prevExpr != null)
+                            InsertSpacesAndComments(ref result, prevExpr.Span, ex.Span, ex.SyntaxTree);
                         result += $"{onStatementSyntax(ex)}";
                     }
                     prevExpr = ex;
@@ -1355,24 +1366,43 @@ namespace CHash2Das
             }
         }
 
-        string InsertSpaces(StatementSyntax prev, StatementSyntax current)
+        void InsertComments(ref string result, TextSpan prev, TextSpan current, SyntaxTree tree)
         {
-            if (prev == null || current == null)
-                return "";
-            var sourceText = prev.SyntaxTree.GetText();
-            var result = "";
-            var first = true;
-            for (var i = prev.Span.End; i < current.Span.Start; ++i)
+            InsertSpacesAndComments(ref result, prev, current, tree, false);
+        }
+        void InsertSpacesAndComments(ref string result, TextSpan prev, TextSpan current, SyntaxTree tree, bool insertNewLine = true)
+        {
+            if (result.EndsWith("\n"))
+                result = result.Substring(0, result.Length - 1);
+
+            var all = tree.GetRoot().DescendantTrivia(); //.Where(trivia => trivia.Kind() == SyntaxKind.SingleLineCommentTrivia);
+            var sourceText = tree.GetText();
+            string tabstr = new string('\t', tabs);
+            var newLines = 0;
+            for (var i = prev.End; i < current.Start; ++i)
             {
-                if (sourceText[i] == '\n')
+                var token = all.FirstOrDefault(trivia => trivia.Span.Start == i);
+                if (token.IsKind(SyntaxKind.SingleLineCommentTrivia))
                 {
-                    if (first)
-                        first = false;
-                    else
-                        result += "\n";
+                    result += $"{tabstr}{token}\n";
+                    newLines++;
+                    i = token.Span.End + 1;
+                }
+                else if (token.IsKind(SyntaxKind.MultiLineCommentTrivia))
+                {
+                    result += $"{tabstr}// {token}\n";
+                    newLines++;
+                    i = token.Span.End + 1;
+                }
+
+                if (insertNewLine && sourceText[i] == '\n')
+                {
+                    result += "\n";
+                    newLines++;
                 }
             }
-            return result;
+            if (newLines == 0) // restore new line if it was removed
+                result += "\n";
         }
 
         string onBlockSyntax(BlockSyntax block)
@@ -1389,7 +1419,8 @@ namespace CHash2Das
                 StatementSyntax prevExpr = null;
                 foreach (StatementSyntax expr in block.Statements)
                 {
-                    result += InsertSpaces(prevExpr, expr);
+                    if (prevExpr != null)
+                        InsertSpacesAndComments(ref result, prevExpr.Span, expr.Span, expr.SyntaxTree);
                     result += onStatementSyntax(expr);
                     prevExpr = expr;
                 }
@@ -1497,14 +1528,22 @@ namespace CHash2Das
             semanticModel = model;
 
             var result = "";
+            UsingDirectiveSyntax prevDirective = null;
             foreach (UsingDirectiveSyntax u in root.Usings)
             {
+                if (prevDirective != null)
+                    InsertSpacesAndComments(ref result, prevDirective.Span, u.Span, u.SyntaxTree);
                 result += onUsing(u);
+                prevDirective = u;
             }
             result += "\n";
+            MemberDeclarationSyntax prevMember = null;
             foreach (MemberDeclarationSyntax mem in root.Members)
             {
+                if (prevMember != null)
+                    InsertSpacesAndComments(ref result, prevMember.Span, mem.Span, mem.SyntaxTree);
                 result += onMemberDeclaration(mem);
+                prevMember = mem;
             }
             return result;
         }
