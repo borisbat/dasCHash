@@ -4,15 +4,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Linq.Expressions;
 using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
-using System.Text;
-using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using Microsoft.CodeAnalysis.Text;
+using System.Text.RegularExpressions;
 
 namespace CHash2Das
 {
@@ -260,7 +255,12 @@ namespace CHash2Das
                         if (invExpr != null)
                             callText = invExpr(this, inv);
                         else
-                            callText = $"{onExpressionSyntax(ma.Expression)}->{ma.Name.Identifier.Text}({onArgumentListSyntax(inv.ArgumentList)})";
+                        {
+                            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
+                            IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+                            var methodName = uniqueMethodName(methodSymbol);
+                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                        }
                     }
                 }
             }
@@ -960,6 +960,28 @@ namespace CHash2Das
             return result;
         }
 
+        bool classHasMethodWithTheSameName(IMethodSymbol methodSymbol)
+        {
+            if (methodSymbol == null)
+                return false;
+            INamedTypeSymbol containingType = methodSymbol.ContainingType;
+            string methodName = methodSymbol.Name;
+            return containingType.GetMembers(methodName).OfType<IMethodSymbol>().Count() > 1;
+        }
+
+        string uniqueMethodName(IMethodSymbol methodSymbol)
+        {
+            if (methodSymbol.IsStatic)
+                return methodSymbol.Name;
+            if (!classHasMethodWithTheSameName(methodSymbol))
+                return methodSymbol.Name;
+            var uniqueName = string.Join("`", methodSymbol.Parameters.Select(p => p.Type.ToString()));
+            uniqueName = Regex.Replace(uniqueName, "[<>,\\[\\]]", "_");
+            if (uniqueName.Length > 0)
+                uniqueName = $"`{uniqueName}";
+            return $"{methodSymbol.Name}{uniqueName}";
+        }
+
         string onMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
@@ -968,7 +990,8 @@ namespace CHash2Das
                 prefix += "private ";
             if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
                 prefix += "static ";
-            var result = $"{tabstr}def {prefix}{methodDeclaration.Identifier}";
+            IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
+            var result = $"{tabstr}def {prefix}{uniqueMethodName(methodSymbol)}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters

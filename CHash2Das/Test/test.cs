@@ -1,12 +1,5 @@
 ﻿using static System.Console;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System;
-using System.Collections;
-using System.Linq;
-using System.Text;
-// net using
-using System.Net;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
 namespace HelloWorld
@@ -459,4 +452,6 @@ namespace HelloWorld
             if (p.FirstName == "TestMe") { Console.WriteLine(p.FirstName); }
         }
     }
+
+
 }

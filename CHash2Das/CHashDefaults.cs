@@ -1,14 +1,6 @@
-﻿using static System.Console;
-using System.Linq;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Linq.Expressions;
-using System;
-
 
 namespace CHash2Das
 {
