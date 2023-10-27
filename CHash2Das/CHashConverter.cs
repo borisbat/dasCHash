@@ -449,7 +449,20 @@ namespace CHash2Das
 
         string onArrayCreationExpressionSyntax(ArrayCreationExpressionSyntax ac)
         {
-            var result = ac.Initializer != null ? "newInitArray(" : "newArray(";
+            var elemType = onTypeSyntax(ac.Type.ElementType);
+            if (ac.Initializer != null)
+                return onArrayInitializerExpressionSyntax(ac.Initializer, elemType);
+
+            var dim = 0;
+            foreach (ArrayRankSpecifierSyntax rank in ac.Type.RankSpecifiers)
+                dim += rank.Sizes.Count;
+            if (dim == 1)
+            {
+                var iter = makeTempVar("iter");
+                return $"[{{ for {iter} in range({onExpressionSyntax(ac.Type.RankSpecifiers[0].Sizes[0])}); {iter} }}]";
+            }
+
+            var result = "newArray(";
             var first = true;
             foreach (ArrayRankSpecifierSyntax rank in ac.Type.RankSpecifiers)
             {
@@ -462,15 +475,13 @@ namespace CHash2Das
                     else result += es;
                 }
             }
-            if (ac.Initializer != null)
-                result += $", {onArrayInitializerExpressionSyntax(ac.Initializer)}";
             result += ")";
             return result;
         }
 
-        string onArrayInitializerExpressionSyntax(InitializerExpressionSyntax ass)
+        string onArrayInitializerExpressionSyntax(InitializerExpressionSyntax ass, string elemType)
         {
-            return "[{auto " + string.Join("; ", ass.Expressions.Select(exp => onExpressionSyntax(exp))) + "}]";
+            return $"[{{{elemType} " + string.Join("; ", ass.Expressions.Select(exp => onExpressionSyntax(exp))) + "}]";
         }
 
         string onObjectCreationExpression(ObjectCreationExpressionSyntax oce)
@@ -553,7 +564,6 @@ namespace CHash2Das
 
         private string onObjectCreationExpression_Array(ObjectCreationExpressionSyntax oce)
         {
-            var itemTypeInfo = semanticModel.GetTypeInfo((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0]);
             var result = $"new [{{{onVarTypeSyntax((oce.Type as GenericNameSyntax).TypeArgumentList.Arguments[0])} ";
             if (oce.Initializer.Kind() == SyntaxKind.CollectionInitializerExpression)
             {
@@ -804,7 +814,7 @@ namespace CHash2Das
                 case SyntaxKind.ArrayCreationExpression:
                     return onArrayCreationExpressionSyntax(expression as ArrayCreationExpressionSyntax);
                 case SyntaxKind.ArrayInitializerExpression:
-                    return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax);
+                    return onArrayInitializerExpressionSyntax(expression as InitializerExpressionSyntax, "auto");
                 case SyntaxKind.ObjectCreationExpression:
                     return onObjectCreationExpression(expression as ObjectCreationExpressionSyntax);
                 case SyntaxKind.ElementAccessExpression:
