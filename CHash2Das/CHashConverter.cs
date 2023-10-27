@@ -378,6 +378,9 @@ namespace CHash2Das
             if (typeSymbol == null)
                 return false;
 
+            if (isString(typeSymbol))
+                return false;
+
             // Check if it's a built-in type (like int, double, etc.)
             if (typeSymbol.IsValueType && typeSymbol.SpecialType != SpecialType.None)
                 return false;

@@ -46,7 +46,7 @@ struct SFoo
 class HelloProgram
 	count : int = 13
 
-	def static _main (var args : array<string?> /*string[]*/) : void
+	def static _main (var args : array<string> /*string[]*/) : void
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
@@ -374,7 +374,7 @@ class Person
 	def operator . FirstName := ( value:string )
 		_firstName = value
 
-	private _firstName : string?
+	private _firstName : string
 
 
 class PersonWithArrows
@@ -384,7 +384,7 @@ class PersonWithArrows
 	def operator . FirstName := ( value:string )
 		_firstName = value
 
-	private _firstName : string?
+	private _firstName : string
 
 
 class Goo
