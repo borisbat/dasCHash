@@ -187,6 +187,15 @@ namespace HelloWorld
             var u64u64 = u64 + u64; // ulong
             // var i64u64 = i64 + u64;  // ambiguity, does not compile
             var fd = f + d;   // goes to double
+
+            // casts
+            double dd = 10.0d;
+            float ff = 10.0f;
+            double df = 10.0f;
+            int ii8 = i8;
+            int iu8 = u8;
+            Int64 i64i = i;
+            float fi = i;
         }
 
         static void whileLoop()
@@ -261,6 +270,8 @@ namespace HelloWorld
         static void arrayTypes()
         {
             int[] b = new int[10];
+            var s = 10;
+            int[] bs = new int[s];
             int[][] bb = new int[20][];
             int[,] c = new int[10, 20];
             int[] d = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -383,12 +394,12 @@ namespace HelloWorld
             Console.WriteLine($"i = {i}");
         }
 
-        static void m_in ( in int a )
+        static void m_in(in int a)
         {
             Console.WriteLine(a);
         }
 
-        static void m_out ( out int a )
+        static void m_out(out int a)
         {
             a = 13;
         }

@@ -46,7 +46,7 @@ struct SFoo
 class HelloProgram
 	count : int = 13
 
-	def static _main (var args : array<string?> /*string[]*/) : void
+	def static _main (var args : array<string> /*string[]*/) : void
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
@@ -160,6 +160,15 @@ class HelloProgram
 
 		var fd = (double(f) + d)
 
+
+		var dd : double = 10.0d
+		var ff : float = 10.0f
+		var df : double = double(10.0f)
+		var ii8 : int = int(i8)
+		var iu8 : int = int(u8)
+		var i64i : int64 = int64(i)
+		var fi : float = float(i)
+
 	def static whileLoop : void
 		var a = 1
 		while (a < 5)
@@ -231,11 +240,13 @@ class HelloProgram
 				_temp_2_doWhileCond_ = (a != 0)
 
 	def static arrayTypes : void
-		var b : array<int> /*int[]*/ <- newArray(10)
+		var b : array<int> /*int[]*/ <- [{ for _temp_3_iter_ in range(10); _temp_3_iter_ }]
+		var s = 10
+		var bs : array<int> /*int[]*/ <- [{ for _temp_4_iter_ in range(s); _temp_4_iter_ }]
 		var bb : array<array<int>> /*int[][]*/ <- newArray(20, -1)
 		var c : array<array<int>> /*int[,]*/ <- newArray(10, 20)
 		var d : array<int> /*int[]*/ <- [{auto 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10}]
-		var dd : array<int> /*int[]*/ <- newInitArray(-1, [{auto 0; 1; 2; 4; 5}])
+		var dd : array<int> /*int[]*/ <- [{int 0; 1; 2; 4; 5}]
 
 	def static forEachLoop : void
 		var b : array<int> /*int[]*/ <- [{auto 1; 2; 3; 4}]
@@ -244,37 +255,37 @@ class HelloProgram
 
 	def static switchCase : void
 		var i = 13
-		let _temp_3_switchcase_ = i
-		if _temp_3_switchcase_==0
+		let _temp_5_switchcase_ = i
+		if _temp_5_switchcase_==0
 			pass
-		elif _temp_3_switchcase_==1 || _temp_3_switchcase_==2
+		elif _temp_5_switchcase_==1 || _temp_5_switchcase_==2
 			print("12\n")
 		else
 			print("anything\n")
 		print("and thats that\n")
-		let _temp_4_switchcase_ = i
-		if _temp_4_switchcase_==1
+		let _temp_6_switchcase_ = i
+		if _temp_6_switchcase_==1
 			i++
-		elif _temp_4_switchcase_==2
+		elif _temp_6_switchcase_==2
 			i--
 
-		let _temp_5_switchcase_ = i
+		let _temp_7_switchcase_ = i
 		while true
-			if _temp_5_switchcase_==1
+			if _temp_7_switchcase_==1
 				if (i == 0)
 					break
 				else
 					i++
 					break
-			elif _temp_5_switchcase_==2
+			elif _temp_7_switchcase_==2
 				i--
 				break
 			break
 
-		let _temp_6_switchcase_ = i
-		if _temp_6_switchcase_==1
+		let _temp_8_switchcase_ = i
+		if _temp_8_switchcase_==1
 			i++
-		elif _temp_6_switchcase_==2
+		elif _temp_8_switchcase_==2
 			i--
 		else
 			pass
@@ -365,7 +376,7 @@ class Person
 	def operator . FirstName := ( value:string )
 		_firstName = value
 
-	private _firstName : string?
+	private _firstName : string
 
 
 class PersonWithArrows
@@ -375,7 +386,7 @@ class PersonWithArrows
 	def operator . FirstName := ( value:string )
 		_firstName = value
 
-	private _firstName : string?
+	private _firstName : string
 
 
 class Goo
