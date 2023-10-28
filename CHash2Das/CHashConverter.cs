@@ -219,9 +219,6 @@ namespace CHash2Das
         string onInvocationExpression(InvocationExpressionSyntax inv)
         {
             string key = inv.Expression.ToString();
-            onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
-            if (invExpr != null)
-                return invExpr(this, inv);
             var callText = "";
             if (IsCallingClassMethod(inv))
             {
@@ -247,7 +244,7 @@ namespace CHash2Das
                             MetadataName = exprTypeInfo.Type.MetadataName,
                             ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = ma.Name.Identifier.Text
-                        }, out invExpr);
+                        }, out var invExpr);
                         if (invExpr == null)
                         {
                             objectInvExpr.TryGetValue(ma.Name.Identifier.Text, out invExpr);
@@ -264,7 +261,17 @@ namespace CHash2Das
                     }
                 }
             }
-            if (callText == "") callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+            else
+            {
+                // static methods
+                onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
+                if (invExpr != null)
+                    return invExpr(this, inv);
+            }
+            if (callText == "")
+            {
+                callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+            }
             return callText;
         }
 
@@ -1409,13 +1416,13 @@ namespace CHash2Das
                 {
                     result += $"{tabstr}{token}\n";
                     newLines++;
-                    i = token.Span.End + 1;
+                    i = token.Span.End + 2;
                 }
                 else if (token.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
                     result += $"{tabstr}// {token}\n";
                     newLines++;
-                    i = token.Span.End + 1;
+                    i = token.Span.End + 2;
                 }
 
                 if (insertNewLine && sourceText[i] == '\n')
