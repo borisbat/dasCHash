@@ -331,6 +331,10 @@ class HelloProgram
 		*d |> push([[SFoo() a = 3, ]])
 		print("d = {*d}\n")
 
+	def conditional_expression : void
+		var a = 1
+		var b = (((a > 0) ? 1 : 0) * ((a < 0) ? 1 : 0))
+
 	def static_methods : void
 		var i = Foo`next()
 		print("i = {i}\n")

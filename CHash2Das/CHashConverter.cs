@@ -841,6 +841,11 @@ namespace CHash2Das
                     }
                 case SyntaxKind.DefaultExpression:
                     return $"[[{onVarTypeSyntax((expression as DefaultExpressionSyntax).Type)}]]";
+                case SyntaxKind.ConditionalExpression:
+                    {
+                        var ce = expression as ConditionalExpressionSyntax;
+                        return $"{onExpressionSyntax(ce.Condition)} ? {onExpressionSyntax(ce.WhenTrue)} : {onExpressionSyntax(ce.WhenFalse)}";
+                    }
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
