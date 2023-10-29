@@ -956,7 +956,12 @@ namespace CHash2Das
                     .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
-            result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
+            if (methodDeclaration.Body != null)
+                result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
+            else if ( methodDeclaration.ExpressionBody != null )
+                result += $"\n{tabstr}\t{onExpressionSyntax(methodDeclaration.ExpressionBody.Expression)}\n";
+            else
+                result += $"\n{tabstr}\tpass\n";
             return result;
         }
 
@@ -999,7 +1004,12 @@ namespace CHash2Das
                 result += $" ({string.Join("; ", parameters)})";
             }
             result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
-            result += onBlockSyntax(methodDeclaration.Body);
+            if (methodDeclaration.Body != null)
+                result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
+            else if (methodDeclaration.ExpressionBody != null)
+                result += $"\n{tabstr}\t{onExpressionSyntax(methodDeclaration.ExpressionBody.Expression)}\n";
+            else
+                result += $"\n{tabstr}\tpass\n";
             return result;
         }
 
@@ -1477,6 +1487,9 @@ namespace CHash2Das
             var tabstr = new string('\t', tabs);
             string ptype = onTypeSyntax(propertySyntax.Type);
             string result = $"{tabstr}// property {propertySyntax.Identifier.Text} : {ptype}\n";
+            bool isOverride = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.OverrideKeyword);
+            bool isAbstract = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.AbstractKeyword);
+            string abstractMod = isAbstract ? "abstract " : "";
             if (propertySyntax.AccessorList != null)
             {
                 bool needStorage = false;
@@ -1484,12 +1497,17 @@ namespace CHash2Das
                 {
                     if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
                     {
-                        result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
+                        if (!isOverride)
+                        {
+                            result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
+                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`property`get()\n";
+                        }
+                        result += $"{tabstr}def {abstractMod}{propertySyntax.Identifier.Text}`property`get : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
                             result += $"{tabstr}\treturn {onExpressionSyntax(accessor.ExpressionBody.Expression)}\n";
-                        else
+                        else if (!isAbstract)
                         {
                             needStorage = true;
                             result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
@@ -1497,12 +1515,17 @@ namespace CHash2Das
                     }
                     else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
                     {
-                        result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
+                        if (!isOverride)
+                        {
+                            result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
+                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`property`set(value)\n";
+                        }
+                        result += $"{tabstr}def {abstractMod}{propertySyntax.Identifier.Text}`property`set ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
                             result += $"{tabstr}\t{onExpressionSyntax(accessor.ExpressionBody.Expression)}\n";
-                        else
+                        else if (!isAbstract)
                         {
                             needStorage = true;
                             result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";

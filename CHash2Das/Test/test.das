@@ -22,15 +22,19 @@ class Foo
 		a = A
 
 	def bar : void
+
 		a = 123
 
 	def bar`int (t : int) : void
+
 		a = t
 	// static method
 	def static farfar : void
+
 		print("static method\n")
 
 	def static next : int
+
 		return count++
 
 // struct - value type
@@ -42,6 +46,7 @@ class HelloProgram
 	count : int = 13
 
 	def static _main (var args : array<string> /*string[]*/) : void
+
 		print("Hello, World!\n")
 		print("Hello, World!\n")
 		print("Hello, World!\n")
@@ -53,6 +58,7 @@ class HelloProgram
 		print("1 2 3")
 
 	def static ifThenElse (var cond : bool) : void
+
 		if cond
 			print("if no-block\n")
 		if cond
@@ -84,12 +90,14 @@ class HelloProgram
 			print("cond-else\n")
 
 	def static varDecl : void
+
 		var t : float
 		var x : int = 1
 		var y : int = 2
 		var z : int = 3
 
 	def static allOperators (var a : int; var b : float) : void
+
 		a = a
 		// op1
 
@@ -134,6 +142,7 @@ class HelloProgram
 		print("{c}\n")
 
 	def static allCasts : void
+
 		var i8 : int8 = int8(0)
 		var u8 : uint8 = 0u8
 		var i16 : int16 = int16(0)
@@ -185,6 +194,7 @@ class HelloProgram
 		var fi : float = float(i)
 
 	def static whileLoop : void
+
 		var a = 1
 		while (a < 5)
 			a++
@@ -199,6 +209,7 @@ class HelloProgram
 				continue
 
 	def static forLoop : void
+
 		for i in range(0,10)
 			print("{i}\n")
 		if true // for loop
@@ -240,6 +251,7 @@ class HelloProgram
 			print("{i}\n")
 
 	def static doWhileLoop : void
+
 		var a = 1
 		var _temp_1_doWhileCond_ = true
 		while _temp_1_doWhileCond_
@@ -255,6 +267,7 @@ class HelloProgram
 				_temp_2_doWhileCond_ = (a != 0)
 
 	def static arrayTypes : void
+
 		var b : array<int> /*int[]*/ <- [{ for _temp_3_iter_ in range(10); _temp_3_iter_ }]
 		var s = 10
 		var bs : array<int> /*int[]*/ <- [{ for _temp_4_iter_ in range(s); _temp_4_iter_ }]
@@ -264,11 +277,13 @@ class HelloProgram
 		var dd : array<int> /*int[]*/ <- [{int 0; 1; 2; 4; 5}]
 
 	def static forEachLoop : void
+
 		var b : array<int> /*int[]*/ <- [{auto 1; 2; 3; 4}]
 		for t in b
 			print("{t}\n")
 
 	def static switchCase : void
+
 		var i = 13
 		let _temp_5_switchcase_ = i
 		if _temp_5_switchcase_==0
@@ -310,6 +325,7 @@ class HelloProgram
 	static private POTToText : table<int; string>? <- new {{14 => "16K"; 15 => "32K"; 16 => "64K"; 17 => "128K"; 18 => "256K"; 19 => "512K"; 20 => "1M"; 21 => "2M"; 22 => "4M"; 23 => "8M"; 24 => "16M"; 25 => "32M"; 26 => "64M"; 27 => "128M"; 28 => "256M"; 29 => "512M"; 30 => "1B"; 31 => "2B"; 32 => "4B"; 33 => "8B"; 34 => "16B"; 35 => "32B"; 36 => "64B"; 37 => "128B"; 38 => "256B"; 39 => "512B"; 40 => "1024B"; }}
 
 	def objectInit : void
+
 		var epochStart : System::DateTime = [[System::DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc)]]
 		var t : Foo? <- new [[Foo()]]
 		var tt : Foo? <- new [[Foo(1)]]
@@ -317,6 +333,7 @@ class HelloProgram
 		t->bar`int(1)
 
 	def structures : void
+
 		var f1 = [[SFoo()]]
 		var f2 = [[SFoo() a = 1, ]]
 		var f3 := f1		// clone!
@@ -329,6 +346,7 @@ class HelloProgram
 		print("{f2Str}\n")
 
 	def lists : void
+
 		var a <- new [{float 1f; 2f; 3f; 4f; 5f; 6f; }]
 		*a |> push(7f)
 		*a |> erase(0)
@@ -356,16 +374,20 @@ class HelloProgram
 		print("d = {*d}\n")
 
 	def static_methods : void
+
 		var i = Foo`next()
 		print("i = {i}\n")
 
 	def static m_in (a : int) : void
+
 		print("{a}\n")
 
 	def static m_out (var a : int&) : void
+
 		a = 13
 
 	def static testInOut : void
+
 		var a = 0
 		HelloProgram`m_out(a)
 		HelloProgram`m_in(a)
@@ -374,24 +396,36 @@ class HelloProgram
 class DefaultPerson
 	// property FirstName : string
 	def operator . FirstName : string
+		return FirstName`property`get()
+	def FirstName`property`get : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
+		FirstName`property`set(value)
+	def FirstName`property`set ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string
 
 class DefaultPersonWithInit
 	// property FirstName : string
 	def operator . FirstName : string
+		return FirstName`property`get()
+	def FirstName`property`get : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
+		FirstName`property`set(value)
+	def FirstName`property`set ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string = "blahblah"
 
 class Person
 	// property FirstName : string
 	def operator . FirstName : string
+		return FirstName`property`get()
+	def FirstName`property`get : string
 		return _firstName
 	def operator . FirstName := ( value:string )
+		FirstName`property`set(value)
+	def FirstName`property`set ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -400,8 +434,12 @@ class Person
 class PersonWithArrows	// new style operator
 	// property FirstName : string
 	def operator . FirstName : string
+		return FirstName`property`get()
+	def FirstName`property`get : string
 		return _firstName
 	def operator . FirstName := ( value:string )
+		FirstName`property`set(value)
+	def FirstName`property`set ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -409,6 +447,7 @@ class PersonWithArrows	// new style operator
 
 class Goo
 	def static testProperty : void
+
 		var p <- new [[Person()]]
 		// set first name
 
@@ -418,5 +457,41 @@ class Goo
 		p.FirstName := p.FirstName + "Me"
 		if (p.FirstName == "TestMe")
 			print("{p.FirstName}\n")
+
+
+class Shape
+	// property Area : double
+	def operator . Area : double
+		return Area`property`get()
+	def abstract Area`property`get : double
+	def operator . Area := ( value:double )
+		Area`property`set(value)
+	def abstract Area`property`set ( value:double ) : void
+
+
+class Square
+	side : double
+	//constructor
+	def Square (var s : double)
+		side = s
+
+	// property Area : double
+	def Area`property`get : double
+		return (side * side)
+	def Area`property`set ( value:double ) : void
+		side = Math`Sqrt(value)
+
+
+class Cube
+	side : double
+	//constructor
+	def Cube (var s : double)
+		side = s
+
+	// property Area : double
+	def Area`property`get : double
+		return ((6d * side) * side)
+	def Area`property`set ( value:double ) : void
+		side = Math`Sqrt((value / 6d))
 
 
