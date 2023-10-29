@@ -385,6 +385,12 @@ namespace HelloWorld
             Console.WriteLine($"d = {d.ToString()}");
         }
 
+        void conditional_expression()
+        {
+            var a = 1;
+            var b = (a > 0 ? 1 : 0) * (a < 0 ? 1 : 0);
+        }
+
         void static_methods()
         {
             var i = Foo.next();

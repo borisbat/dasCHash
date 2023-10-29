@@ -108,6 +108,12 @@ namespace CHash2Das
             return $"{converter.derefExpr(acc.Expression)} |> length()";
         }
 
+        // Console.CapsLock
+        static string das_CapsLock(CHashConverter converter, MemberAccessExpressionSyntax acc)
+        {
+            return $"false // {converter.derefExpr(acc.Expression)} |> get_caps_lock()";
+        }
+
         public static void registerInvocations(CHashConverter converter)
         {
             const string CollectionGeneric = "System.Collections.Generic";
@@ -118,6 +124,9 @@ namespace CHash2Das
             converter.addInvocation("System.Console.Write", das_Write);
             converter.addInvocation("Console.Write", das_Write);
             converter.addInvocation("Write", das_Write);
+            // static member access
+            converter.addMemberAccess(new INamedTypeSymbolField() { MetadataName = "Console", ContainingNamespace = "<global namespace>", FieldName = "CapsLock" }, das_CapsLock);
+
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Add" }, das_Add);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "Clear" }, das_Clear);
             converter.addMethod(new INamedTypeSymbolField() { MetadataName = "List`1", ContainingNamespace = CollectionGeneric, FieldName = "RemoveAt" }, das_RemoveAt);
