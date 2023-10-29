@@ -31,7 +31,7 @@ class Foo
 	// static method
 	def static farfar : void
 
-		print("static method\n")
+		Console`WriteLine("static method")
 
 	def static next : int
 
@@ -47,47 +47,47 @@ class HelloProgram
 
 	def static _main (var args : array<string> /*string[]*/) : void
 
-		print("Hello, World!\n")
-		print("Hello, World!\n")
-		print("Hello, World!\n")
+		Console`WriteLine("Hello, World!")
+		Console`WriteLine("Hello, World!")
+		Console`WriteLine("Hello, World!")
 
-		print("Hello, World!\n")
-		print("Hello, World!\n")
-		print("Hello, World!\n")
+		Console`Write("Hello, World!\n")
+		Console`Write("Hello, World!\n")
+		Console`Write("Hello, World!\n")
 
-		print("1 2 3")
+		Console`Write("1", "2", "3")
 
 	def static ifThenElse (var cond : bool) : void
 
 		if cond
-			print("if no-block\n")
+			Console`WriteLine("if no-block")
 		if cond
-			print("if block\n")
+			Console`WriteLine("if block")
 		if cond
-			print("if no block\n")
+			Console`WriteLine("if no block")
 		else
-			print("else no block\n")
+			Console`WriteLine("else no block")
 		if cond
-			print("if block\n")
+			Console`WriteLine("if block")
 		else
-			print("else no block\n")
+			Console`WriteLine("else no block")
 		if cond
-			print("if no block\n")
+			Console`WriteLine("if no block")
 		else
-			print("else block\n")
+			Console`WriteLine("else block")
 		if cond
-			print("if block\n")
+			Console`WriteLine("if block")
 		else
-			print("else block\n")
+			Console`WriteLine("else block")
 		if cond
 			if cond
-				print("if cond if cond\n")
+				Console`WriteLine("if cond if cond")
 		if cond
-			print("cond1\n")
+			Console`WriteLine("cond1")
 		elif cond
-			print("cond2\n")
+			Console`WriteLine("cond2")
 		else
-			print("cond-else\n")
+			Console`WriteLine("cond-else")
 
 	def static varDecl : void
 
@@ -133,7 +133,7 @@ class HelloProgram
 		a |= a
 		a &= a
 		a ^= a
-		print("{c}\n")
+		Console`WriteLine(c)
 
 	def static allCasts : void
 
@@ -163,6 +163,7 @@ class HelloProgram
 		var u64u64 = (u64 + u64)		// ulong
 		// var i64u64 = i64 + u64;  // ambiguity, does not compile
 		var fd = (double(f) + d)		// goes to double
+
 		// casts
 		var dd : double = 10.0d
 		var ff : float = 10.0f
@@ -190,44 +191,44 @@ class HelloProgram
 	def static forLoop : void
 
 		for i in range(0,10)
-			print("{i}\n")
+			Console`WriteLine(i)
 		if true // for loop
 			var i : int = 0
 			var j : int = 12
 			while ((i + j) < 100)
-				print("i={i} j={j}\n")
+				Console`WriteLine("i={i} j={j}")
 				i++
 				j--
 		for i in range(0,10)
 			if (i == 5)
 				break
-			print("{i}\n")
+			Console`WriteLine(i)
 
 		if true // for loop
 			var i = 1
 			while (i != 3)
-				print("{i}\n")
+				Console`WriteLine(i)
 				i += 2
 		if true // for loop
 			var i = 1
 			while (i != 3)
-				print("{i}\n")
+				Console`WriteLine(i)
 				i = (i + 2)
 
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 		for i in range(1,3)
-			print("{i}\n")
+			Console`WriteLine(i)
 
 	def static doWhileLoop : void
 
@@ -259,7 +260,7 @@ class HelloProgram
 
 		var b : array<int> /*int[]*/ <- [{auto 1; 2; 3; 4}]
 		for t in b
-			print("{t}\n")
+			Console`WriteLine(t)
 
 	def static switchCase : void
 
@@ -268,10 +269,10 @@ class HelloProgram
 		if _temp_5_switchcase_==0
 			pass
 		elif _temp_5_switchcase_==1 || _temp_5_switchcase_==2
-			print("12\n")
+			Console`WriteLine("12")
 		else
-			print("anything\n")
-		print("and thats that\n")
+			Console`WriteLine("anything")
+		Console`WriteLine("and thats that")
 		let _temp_6_switchcase_ = i
 		if _temp_6_switchcase_==1
 			i++
@@ -316,10 +317,10 @@ class HelloProgram
 		var f3 := f1		// clone!
 		f1 := [[SFoo]]
 		f3 := f2
-		print("f1 = {f1} f2 = {f2} f3 = {f3.a}\n")
-		print("{f1}\n")
+		Console`WriteLine("f1 = {f1} f2 = {f2} f3 = {f3.a}")
+		Console`WriteLine("{f1}")
 		var f2Str = "{f2}"
-		print("{f2Str}\n")
+		Console`WriteLine(f2Str)
 
 	def lists : void
 
@@ -330,37 +331,38 @@ class HelloProgram
 		*a |> push(123f, 0)
 		*a |> erase(0, 1)
 		var b = (*a)[0]
-		print("a = {*a} size: {*a |> length()}\n")
-		print("b = {b}\n")
+		Console`WriteLine("a = {*a} size: {*a |> length()}")
+		Console`WriteLine("b = {b}")
 		*a |> clear()
 		var sum = 0f
 		for i in *a
 			sum += i
 
-			print("i = {i}\n")
-		print("sum = {sum} has 6 {*a |> has_value(6f)}, 7 index {*a |> find_index(7f)}\n")
+			Console`WriteLine("i = {i}")
+		Console`WriteLine("sum = {sum} has 6 {*a |> has_value(6f)}, 7 index {*a |> find_index(7f)}")
 		*a |> sort()
 
 		var c <- new [{Foo? new [[Foo() a = 1, ]]; new [[Foo() a = 2, ]]; }]
 		*c |> push(new [[Foo() a = 3, ]])
-		print("c = {c}\n")
+		Console`WriteLine("c = {c}")
 
 		var d <- new [{SFoo [[SFoo() a = 1, ]]; [[SFoo() a = 2, ]]; }]
 		*d |> push([[SFoo() a = 3, ]])
-		print("d = {*d}\n")
+		Console`WriteLine("d = {*d}")
 
 	def conditional_expression : void
+
 		var a = 1
 		var b = (((a > 0) ? 1 : 0) * ((a < 0) ? 1 : 0))
 
 	def static_methods : void
 
 		var i = Foo`next()
-		print("i = {i}\n")
+		Console`WriteLine("i = {i}")
 
 	def static m_in (a : int) : void
 
-		print("{a}\n")
+		Console`WriteLine(a)
 
 	def static m_out (var a : int&) : void
 
@@ -434,7 +436,7 @@ class Goo
 		// concat
 		p.FirstName := p.FirstName + "Me"
 		if (p.FirstName == "TestMe")
-			print("{p.FirstName}\n")
+			Console`WriteLine(p.FirstName)
 
 
 class Shape
