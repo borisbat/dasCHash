@@ -21,8 +21,9 @@ namespace Main
 
             // creating compilation and semantic model
             var compilation = CSharpCompilation.Create("HelloWorld")
-                .AddReferences(MetadataReference.CreateFromFile(
-                    typeof(string).Assembly.Location))
+                .AddReferences(
+                    MetadataReference.CreateFromFile(typeof(string).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location))
                 .AddSyntaxTrees(tree);
             SemanticModel model = compilation.GetSemanticModel(tree);
 
@@ -32,15 +33,12 @@ namespace Main
             var errors = diagnostics.Where(diag => diag.Severity == DiagnosticSeverity.Error);
             if (errors.Any())
             {
-                Console.WriteLine("Compilation errors:");
                 result += "// Compilation errors:\n";
                 foreach (var error in errors)
                 {
                     var error_text = $"{error.Id}: {error.GetMessage()} at {error.Location}";
-                    Console.WriteLine(error_text);
                     result += $"//{error_text}\n";
                 }
-                Console.WriteLine();
                 result += "\n";
             }
 
