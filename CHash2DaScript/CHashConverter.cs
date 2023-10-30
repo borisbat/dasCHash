@@ -265,6 +265,13 @@ namespace CHash2Das
                     }
                 }
             }
+            else
+            {
+                // in case of compilation error
+                onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
+                if (invExpr != null)
+                    return invExpr(this, inv);
+            }
             if (callText == "")
             {
                 callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";

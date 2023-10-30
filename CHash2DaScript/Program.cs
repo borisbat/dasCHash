@@ -26,10 +26,28 @@ namespace Main
                 .AddSyntaxTrees(tree);
             SemanticModel model = compilation.GetSemanticModel(tree);
 
+            string result = "";
+
+            var diagnostics = compilation.GetDiagnostics();
+            var errors = diagnostics.Where(diag => diag.Severity == DiagnosticSeverity.Error);
+            if (errors.Any())
+            {
+                Console.WriteLine("Compilation errors:");
+                result += "// Compilation errors:\n";
+                foreach (var error in errors)
+                {
+                    var error_text = $"{error.Id}: {error.GetMessage()} at {error.Location}";
+                    Console.WriteLine(error_text);
+                    result += $"//{error_text}\n";
+                }
+                Console.WriteLine();
+                result += "\n";
+            }
+
             CHashConverter hasher = new CHashConverter();
             CHashDefaults.registerInvocations(hasher);
 
-            var result = hasher.convert(compilation, model, root);
+            result += hasher.convert(compilation, model, root);
             Console.WriteLine(result);
             System.IO.File.WriteAllText(Path.Combine(OUTPUT_PATH, "test.das"), result);
         }

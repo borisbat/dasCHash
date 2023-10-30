@@ -1,3 +1,7 @@
 .vs/
 CHash2Das/bin/
 CHash2Das/obj/
+CHash2DaScript/bin/
+CHash2DaScript/obj/CHash2DaScript.csproj.nuget.dgspec.json
+CHash2DaScript/obj/CHash2DaScript.csproj.nuget.g.props
+CHash2DaScript/obj/
