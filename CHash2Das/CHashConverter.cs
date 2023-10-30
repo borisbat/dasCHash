@@ -224,6 +224,10 @@ namespace CHash2Das
             {
                 if (IsCallingStaticMethod(inv))
                 {
+                    // static methods
+                    onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
+                    if (invExpr != null)
+                        return invExpr(this, inv);
                     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                     IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
                     if (methodSymbol != null)
@@ -260,13 +264,6 @@ namespace CHash2Das
                         }
                     }
                 }
-            }
-            else
-            {
-                // static methods
-                onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
-                if (invExpr != null)
-                    return invExpr(this, inv);
             }
             if (callText == "")
             {
