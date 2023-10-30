@@ -1012,7 +1012,7 @@ namespace CHash2Das
                     .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
-            result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}\n";
+            result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}";
             if (methodDeclaration.Body != null)
                 result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
             else if (methodDeclaration.ExpressionBody != null)
