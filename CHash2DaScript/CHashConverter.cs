@@ -163,7 +163,7 @@ namespace CHash2Das
         {
             if (methodInvExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"method {typeWithMethod.MetadataName}.{typeWithMethod.FieldName} is already declared");
+                Debug.Fail($"method {typeWithMethod.TypeName}.{typeWithMethod.FieldName} is already declared");
                 return;
             }
             methodInvExpr[typeWithMethod] = inv;
@@ -182,7 +182,7 @@ namespace CHash2Das
         {
             if (memberAccessExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"member access {typeWithMethod.MetadataName}.{typeWithMethod.FieldName} is already declared");
+                Debug.Fail($"member access {typeWithMethod.TypeName}.{typeWithMethod.FieldName} is already declared");
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
@@ -247,8 +247,8 @@ namespace CHash2Das
                         var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
                         methodInvExpr.TryGetValue(new INamedTypeSymbolField()
                         {
-                            MetadataName = exprTypeInfo.Type.MetadataName,
-                            ContainingNamespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
+                            TypeName = exprTypeInfo.Type.MetadataName,
+                            Namespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = ma.Name.Identifier.Text
                         }, out var invExpr);
                         if (invExpr == null)
@@ -731,7 +731,7 @@ namespace CHash2Das
             if (accessedSymbol is IPropertySymbol)
             {
                 var smm = (IPropertySymbol)accessedSymbol;
-                if ( smm.IsStatic )
+                if (smm.IsStatic)
                 {
                     callPrefix = $"{smm.ContainingSymbol.Name}`{smm.Name}";
                     return true;
@@ -829,14 +829,14 @@ namespace CHash2Das
                         TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
                         if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
                         {
-                            MetadataName = typeInfo.Type.MetadataName,
-                            ContainingNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString(),
+                            TypeName = typeInfo.Type.MetadataName,
+                            Namespace = typeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = smm.Name.Identifier.Text
                         }, out MemberAccessDelegate acc))
                         {
                             return acc(this, smm);
                         }
-                        if ( isStaticProperty(smm, out string staticPropName) )
+                        if (isStaticProperty(smm, out string staticPropName))
                         {
                             return $"{staticPropName}`get()";
                         }
@@ -1009,7 +1009,7 @@ namespace CHash2Das
             }
             if (methodDeclaration.Body != null)
                 result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
-            else if ( methodDeclaration.ExpressionBody != null )
+            else if (methodDeclaration.ExpressionBody != null)
                 result += $"\n{tabstr}\t{onExpressionSyntax(methodDeclaration.ExpressionBody.Expression)}\n";
             else
                 result += $"\n{tabstr}\tpass\n";
