@@ -512,4 +512,19 @@ namespace HelloWorld
             Console.WriteLine(StaticPerson.FirstName);
         }
     }
+    enum Season
+    {
+        Spring,
+        Summer,
+        Autumn,
+        Winter
+    }
+
+    public enum ErrorCode : ushort
+    {
+        None = 0,
+        Unknown = 1,
+        ConnectionLost = 100,
+        OutlierReading = 200
+    }
 }

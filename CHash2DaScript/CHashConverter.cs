@@ -82,6 +82,8 @@ namespace CHash2Das
                             case "sbyte": return "int8";
                             case "byte": return "uint8";
                             case "uint": return "uint";
+                            case "short": return "int16";
+                            case "ushort": return "uint16";
                             default:
                                 Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";
@@ -731,7 +733,7 @@ namespace CHash2Das
                 var smm = (IPropertySymbol)accessedSymbol;
                 if ( smm.IsStatic )
                 {
-                    callPrefix = $"{smm.ContainingSymbol.Name}`{smm.Name}`property";
+                    callPrefix = $"{smm.ContainingSymbol.Name}`{smm.Name}";
                     return true;
                 }
             }
@@ -1551,9 +1553,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`property`get()\n";
+                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`get()\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`property`get : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`get : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1569,9 +1571,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`property`set(value)\n";
+                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`set(value)\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`property`set ( value:{ptype} ) : void\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`set ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1595,10 +1597,35 @@ namespace CHash2Das
             return result;
         }
 
+        string onEnumDeclaration(EnumDeclarationSyntax enu)
+        {
+            var tabstr = new string('\t', tabs + 1);
+            var result = $"enum ";
+            if (enu.Modifiers.Any(SyntaxKind.PublicKeyword))
+                result += "public ";
+            else if (enu.Modifiers.Any(SyntaxKind.PrivateKeyword))
+                result += "private ";
+            result += enu.Identifier.Text;
+            if (enu.BaseList != null && enu.BaseList.Types.Count > 0)
+                result += $" : {onTypeSyntax(enu.BaseList.Types[0].Type)}";
+            result += "\n";
+            foreach (var member in enu.Members)
+            {
+                var identifierName = member.Identifier.Text;
+                if (member.EqualsValue != null)
+                    result += $"{tabstr}{identifierName} = {onExpressionSyntax(member.EqualsValue.Value)}\n";
+                else
+                    result += $"{tabstr}{identifierName}\n";
+            }
+            return result;
+        }
+
         string onMemberDeclaration(MemberDeclarationSyntax member)
         {
             switch (member.Kind())
             {
+                case SyntaxKind.EnumDeclaration:
+                    return onEnumDeclaration(member as EnumDeclarationSyntax);
                 case SyntaxKind.NamespaceDeclaration:
                     return onNamespaceDeclaration(member as NamespaceDeclarationSyntax);
                 case SyntaxKind.ClassDeclaration:

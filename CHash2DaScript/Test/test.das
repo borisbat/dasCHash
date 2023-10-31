@@ -2,6 +2,8 @@
 //CS5001: Program does not contain a static 'Main' method suitable for an entry point at None
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([605..614))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([597..614))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13844..13853))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13836..13853))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([948..957))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([997..1006))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([989..1006))
@@ -12,8 +14,6 @@
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1136..1149))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1199..1204))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1184..1204))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13844..13853))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13836..13853))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1378..1387))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1370..1387))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([1467..1476))
@@ -457,36 +457,36 @@ class HelloProgram
 class DefaultPerson
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`property`get()
-	def FirstName`property`get : string
+		return FirstName`get()
+	def FirstName`get : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
-		FirstName`property`set(value)
-	def FirstName`property`set ( value:string ) : void
+		FirstName`set(value)
+	def FirstName`set ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string
 
 class DefaultPersonWithInit
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`property`get()
-	def FirstName`property`get : string
+		return FirstName`get()
+	def FirstName`get : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
-		FirstName`property`set(value)
-	def FirstName`property`set ( value:string ) : void
+		FirstName`set(value)
+	def FirstName`set ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string = "blahblah"
 
 class Person
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`property`get()
-	def FirstName`property`get : string
+		return FirstName`get()
+	def FirstName`get : string
 		return _firstName
 	def operator . FirstName := ( value:string )
-		FirstName`property`set(value)
-	def FirstName`property`set ( value:string ) : void
+		FirstName`set(value)
+	def FirstName`set ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -495,12 +495,12 @@ class Person
 class PersonWithArrows	// new style operator
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`property`get()
-	def FirstName`property`get : string
+		return FirstName`get()
+	def FirstName`get : string
 		return _firstName
 	def operator . FirstName := ( value:string )
-		FirstName`property`set(value)
-	def FirstName`property`set ( value:string ) : void
+		FirstName`set(value)
+	def FirstName`set ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -520,11 +520,11 @@ class Goo
 class Shape
 	// property Area : double
 	def operator . Area : double
-		return Area`property`get()
-	def abstract Area`property`get : double
+		return Area`get()
+	def abstract Area`get : double
 	def operator . Area := ( value:double )
-		Area`property`set(value)
-	def abstract Area`property`set ( value:double ) : void
+		Area`set(value)
+	def abstract Area`set ( value:double ) : void
 
 
 class Square
@@ -534,9 +534,9 @@ class Square
 		side = s
 
 	// property Area : double
-	def Area`property`get : double
+	def Area`get : double
 		return (side * side)
-	def Area`property`set ( value:double ) : void
+	def Area`set ( value:double ) : void
 		side = Math`Sqrt(value)
 
 
@@ -547,24 +547,36 @@ class Cube
 		side = s
 
 	// property Area : double
-	def Area`property`get : double
+	def Area`get : double
 		return ((6d * side) * side)
-	def Area`property`set ( value:double ) : void
+	def Area`set ( value:double ) : void
 		side = Math`Sqrt((value / 6d))
 
 
 class StaticPerson
 	// static property FirstName : string
-	def static FirstName`property`get : string
+	def static FirstName`get : string
 		return _firstName
-	def static FirstName`property`set ( value:string ) : void
+	def static FirstName`set ( value:string ) : void
 		_firstName = value
 
 	static private _firstName : string
 
 	def static foo : void
-		StaticPerson`FirstName`property`set("foo")
-		StaticPerson`FirstName`property`set(StaticPerson`FirstName`property`get() + "bar")
-		print("{StaticPerson`FirstName`property`get()}\n")
+		StaticPerson`FirstName`set("foo")
+		StaticPerson`FirstName`set(StaticPerson`FirstName`get() + "bar")
+		print("{StaticPerson`FirstName`get()}\n")
 
+
+enum Season
+	Spring
+	Summer
+	Autumn
+	Winter
+
+enum public ErrorCode : uint16
+	None = uint16(0)
+	Unknown = uint16(1)
+	ConnectionLost = uint16(100)
+	OutlierReading = uint16(200)
 
