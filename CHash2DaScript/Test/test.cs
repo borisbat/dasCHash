@@ -495,4 +495,21 @@ namespace HelloWorld
             set => side = System.Math.Sqrt(value / 6);
         }
     }
+
+    public class StaticPerson
+    {
+        public static string FirstName
+        {
+            get { return _firstName; }
+            set { _firstName = value; }
+        }
+        private static string _firstName;
+
+        static void foo()
+        {
+            StaticPerson.FirstName = "foo";
+            StaticPerson.FirstName += "bar";
+            Console.WriteLine(StaticPerson.FirstName);
+        }
+    }
 }

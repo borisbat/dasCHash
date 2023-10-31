@@ -720,6 +720,24 @@ namespace CHash2Das
             return (accessedSymbol is IPropertySymbol);
         }
 
+        bool isStaticProperty(ExpressionSyntax expression, out string callPrefix)
+        {
+            callPrefix = "";
+            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
+            var memberAccess = expression as MemberAccessExpressionSyntax;
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            if (accessedSymbol is IPropertySymbol)
+            {
+                var smm = (IPropertySymbol)accessedSymbol;
+                if ( smm.IsStatic )
+                {
+                    callPrefix = $"{smm.ContainingSymbol.Name}`{smm.Name}`property";
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public string onExpressionSyntax_(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -762,7 +780,15 @@ namespace CHash2Das
                         var binop = expression as AssignmentExpressionSyntax;
                         var typeInfo = semanticModel.GetTypeInfo(binop.Left);
                         var assign = isMoveType(typeInfo.Type) ? "<-" : isCloneType(typeInfo.Type) ? ":=" : "=";
-                        if (isProperty(binop.Left)) assign = ":=";
+                        if (isProperty(binop.Left))
+                        {
+                            if (isStaticProperty(binop.Left, out string propName))
+                            {
+                                return $"{propName}`set({onExpressionSyntax(binop.Right)})";
+                            }
+                            else
+                                assign = ":=";
+                        }
                         return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
                     }
                 case SyntaxKind.LeftShiftAssignmentExpression:
@@ -780,7 +806,10 @@ namespace CHash2Das
                         {
                             var op = binop.OperatorToken.Text;
                             var cutop = op.Substring(0, op.Length - 1);
-                            return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
+                            if (isStaticProperty(binop.Left, out string propName))
+                                return $"{propName}`set({propName}`get() {cutop} {onExpressionSyntax(binop.Right)})";
+                            else
+                                return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
                         }
                         // TODO: convert operator token properly
                         // WriteLine($"OP2 {binop.OperatorToken} // {expression.Kind()}\n");
@@ -804,6 +833,10 @@ namespace CHash2Das
                         }, out MemberAccessDelegate acc))
                         {
                             return acc(this, smm);
+                        }
+                        if ( isStaticProperty(smm, out string staticPropName) )
+                        {
+                            return $"{staticPropName}`get()";
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -1502,10 +1535,12 @@ namespace CHash2Das
         {
             var tabstr = new string('\t', tabs);
             string ptype = onTypeSyntax(propertySyntax.Type);
-            string result = $"{tabstr}// property {propertySyntax.Identifier.Text} : {ptype}\n";
             bool isOverride = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.OverrideKeyword);
             bool isAbstract = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.AbstractKeyword);
+            bool isStatic = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword);
             string abstractMod = isAbstract ? "abstract " : "";
+            string staticMod = isStatic ? "static " : "";
+            string result = $"{tabstr}// {staticMod}property {propertySyntax.Identifier.Text} : {ptype}\n";
             if (propertySyntax.AccessorList != null)
             {
                 bool needStorage = false;
@@ -1513,12 +1548,12 @@ namespace CHash2Das
                 {
                     if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
                     {
-                        if (!isOverride)
+                        if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
                             result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`property`get()\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{propertySyntax.Identifier.Text}`property`get : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`property`get : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1531,12 +1566,12 @@ namespace CHash2Das
                     }
                     else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
                     {
-                        if (!isOverride)
+                        if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
                             result += $"{tabstr}\t{propertySyntax.Identifier.Text}`property`set(value)\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{propertySyntax.Identifier.Text}`property`set ( value:{ptype} ) : void\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`property`set ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
