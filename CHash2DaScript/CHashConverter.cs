@@ -1,4 +1,4 @@
-using static System.Console;
+﻿using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -18,6 +18,7 @@ namespace CHash2Das
         int tempVars = 0;
         public SemanticModel semanticModel;
         CSharpCompilation compilation;
+        Dictionary<int, SyntaxTrivia> allComments = new Dictionary<int, SyntaxTrivia>();
 
         public void Fail(string message)
         {
@@ -835,6 +836,7 @@ namespace CHash2Das
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
                         TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
+                        // Console.WriteLine($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
                         if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
                         {
                             TypeName = typeInfo.Type.MetadataName,
@@ -1484,13 +1486,12 @@ namespace CHash2Das
             if (result.EndsWith("\n"))
                 result = result.Substring(0, result.Length - 1);
 
-            var all = tree.GetRoot().DescendantTrivia(); //.Where(trivia => trivia.Kind() == SyntaxKind.SingleLineCommentTrivia);
             var sourceText = tree.GetText();
             string tabstr = new string('\t', tabs);
             var newLines = 0;
             for (var i = prev.End; i < current.Start; ++i)
             {
-                var token = all.FirstOrDefault(trivia => trivia.Span.Start == i);
+                allComments.TryGetValue(i, out var token);
                 if (token.IsKind(SyntaxKind.SingleLineCommentTrivia))
                 {
                     result += $"{tabstr}{token}\n";
@@ -1675,6 +1676,11 @@ namespace CHash2Das
         {
             compilation = comp;
             semanticModel = model;
+            foreach (var token in root.DescendantTrivia())
+            {
+                if (token.IsKind(SyntaxKind.SingleLineCommentTrivia) || token.IsKind(SyntaxKind.MultiLineCommentTrivia))
+                    allComments.Add(token.Span.Start, token);
+            }
 
             var result = "";
             UsingDirectiveSyntax prevDirective = null;
