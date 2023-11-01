@@ -61,6 +61,7 @@ namespace HelloWorld
             Write("Hello, World!\\n");
             Console.Write("Hello, World!\\n");
             System.Console.Write("Hello, World!\\n");
+            return;
 
             Write("1", "2", "3");
         }

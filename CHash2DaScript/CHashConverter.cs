@@ -18,6 +18,7 @@ namespace CHash2Das
         int tempVars = 0;
         public SemanticModel semanticModel;
         CSharpCompilation compilation;
+        Dictionary<int, SyntaxTrivia> allComments = new Dictionary<int, SyntaxTrivia>();
 
         public void Fail(string message)
         {
@@ -25,6 +26,11 @@ namespace CHash2Das
                 Debug.Fail(message);
             else
                 Console.WriteLine(message);
+        }
+
+        public void Log(string message)
+        {
+            Console.WriteLine(message);
         }
 
         string onVarTypeSyntax(TypeSyntax ts)
@@ -228,9 +234,9 @@ namespace CHash2Das
             {
                 if (IsCallingStaticMethod(inv))
                 {
+                    // Log($"class static method {key}");
                     // static methods
-                    onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
-                    if (invExpr != null)
+                    if (onInvExpr.TryGetValue(key, out InvocationDelegate invExpr))
                         return invExpr(this, inv);
                     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                     IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
@@ -247,6 +253,7 @@ namespace CHash2Das
                     {
                         var ma = inv.Expression as MemberAccessExpressionSyntax;
                         var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
+                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
                         methodInvExpr.TryGetValue(new INamedTypeSymbolField()
                         {
                             TypeName = exprTypeInfo.Type.MetadataName,
@@ -272,8 +279,8 @@ namespace CHash2Das
             else
             {
                 // in case of compilation error
-                onInvExpr.TryGetValue(key, out InvocationDelegate invExpr);
-                if (invExpr != null)
+                // Log($"static method {key}");
+                if (onInvExpr.TryGetValue(key, out InvocationDelegate invExpr))
                     return invExpr(this, inv);
             }
             if (callText == "")
@@ -794,7 +801,7 @@ namespace CHash2Das
                         {
                             if (isStaticProperty(binop.Left, out string propName))
                             {
-                                return $"{propName}`set({onExpressionSyntax(binop.Right)})";
+                                return $"set__{propName}({onExpressionSyntax(binop.Right)})";
                             }
                             else
                                 assign = ":=";
@@ -817,7 +824,7 @@ namespace CHash2Das
                             var op = binop.OperatorToken.Text;
                             var cutop = op.Substring(0, op.Length - 1);
                             if (isStaticProperty(binop.Left, out string propName))
-                                return $"{propName}`set({propName}`get() {cutop} {onExpressionSyntax(binop.Right)})";
+                                return $"set__{propName}(get__{propName}() {cutop} {onExpressionSyntax(binop.Right)})";
                             else
                                 return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
                         }
@@ -835,6 +842,7 @@ namespace CHash2Das
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
                         TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
+                        // Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
                         if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
                         {
                             TypeName = typeInfo.Type.MetadataName,
@@ -846,7 +854,7 @@ namespace CHash2Das
                         }
                         if (isStaticProperty(smm, out string staticPropName))
                         {
-                            return $"{staticPropName}`get()";
+                            return $"get__{staticPropName}()";
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -1122,7 +1130,6 @@ namespace CHash2Das
 
         SyntaxNode getEnclosingStatement(BreakStatementSyntax breakStatement)
         {
-            Console.WriteLine("here");
             var enclosingStatement = breakStatement.Ancestors()
                                           .FirstOrDefault(a => a is ForStatementSyntax ||
                                                                a is WhileStatementSyntax ||
@@ -1438,7 +1445,11 @@ namespace CHash2Das
                 case SyntaxKind.ExpressionStatement:
                     return $"{tabstr}{onExpressionSyntax((statement as ExpressionStatementSyntax).Expression)}\n";
                 case SyntaxKind.ReturnStatement:
-                    return $"{tabstr}return {onExpressionSyntax((statement as ReturnStatementSyntax).Expression)}\n";
+                    var expr = (statement as ReturnStatementSyntax).Expression;
+                    if (expr == null)
+                        return $"{tabstr}return\n";
+                    else
+                        return $"{tabstr}return {onExpressionSyntax(expr)}\n";
                 case SyntaxKind.LocalDeclarationStatement:
                     {
                         var values = onVariableDeclarationSyntax((statement as LocalDeclarationStatementSyntax).Declaration);
@@ -1480,13 +1491,12 @@ namespace CHash2Das
             if (result.EndsWith("\n"))
                 result = result.Substring(0, result.Length - 1);
 
-            var all = tree.GetRoot().DescendantTrivia(); //.Where(trivia => trivia.Kind() == SyntaxKind.SingleLineCommentTrivia);
             var sourceText = tree.GetText();
             string tabstr = new string('\t', tabs);
             var newLines = 0;
             for (var i = prev.End; i < current.Start; ++i)
             {
-                var token = all.FirstOrDefault(trivia => trivia.Span.Start == i);
+                allComments.TryGetValue(i, out var token);
                 if (token.IsKind(SyntaxKind.SingleLineCommentTrivia))
                 {
                     result += $"{tabstr}{token}\n";
@@ -1574,9 +1584,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`get()\n";
+                            result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`get : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1592,9 +1602,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`set(value)\n";
+                            result += $"{tabstr}\tset__{propertySyntax.Identifier.Text}(value)\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`set ( value:{ptype} ) : void\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}set__{propertySyntax.Identifier.Text} ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1671,6 +1681,11 @@ namespace CHash2Das
         {
             compilation = comp;
             semanticModel = model;
+            foreach (var token in root.DescendantTrivia())
+            {
+                if (token.IsKind(SyntaxKind.SingleLineCommentTrivia) || token.IsKind(SyntaxKind.MultiLineCommentTrivia))
+                    allComments.Add(token.Span.Start, token);
+            }
 
             var result = "";
             UsingDirectiveSyntax prevDirective = null;
