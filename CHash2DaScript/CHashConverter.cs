@@ -1,4 +1,4 @@
-﻿using static System.Console;
+using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -1438,7 +1438,11 @@ namespace CHash2Das
                 case SyntaxKind.ExpressionStatement:
                     return $"{tabstr}{onExpressionSyntax((statement as ExpressionStatementSyntax).Expression)}\n";
                 case SyntaxKind.ReturnStatement:
-                    return $"{tabstr}return {onExpressionSyntax((statement as ReturnStatementSyntax).Expression)}\n";
+                    var expr = (statement as ReturnStatementSyntax).Expression;
+                    if (expr == null)
+                        return $"{tabstr}return\n";
+                    else
+                        return $"{tabstr}return {onExpressionSyntax(expr)}\n";
                 case SyntaxKind.LocalDeclarationStatement:
                     {
                         var values = onVariableDeclarationSyntax((statement as LocalDeclarationStatementSyntax).Declaration);
