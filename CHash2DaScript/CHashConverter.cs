@@ -801,7 +801,7 @@ namespace CHash2Das
                         {
                             if (isStaticProperty(binop.Left, out string propName))
                             {
-                                return $"{propName}`set({onExpressionSyntax(binop.Right)})";
+                                return $"set__{propName}({onExpressionSyntax(binop.Right)})";
                             }
                             else
                                 assign = ":=";
@@ -824,7 +824,7 @@ namespace CHash2Das
                             var op = binop.OperatorToken.Text;
                             var cutop = op.Substring(0, op.Length - 1);
                             if (isStaticProperty(binop.Left, out string propName))
-                                return $"{propName}`set({propName}`get() {cutop} {onExpressionSyntax(binop.Right)})";
+                                return $"set__{propName}(get__{propName}() {cutop} {onExpressionSyntax(binop.Right)})";
                             else
                                 return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
                         }
@@ -854,7 +854,7 @@ namespace CHash2Das
                         }
                         if (isStaticProperty(smm, out string staticPropName))
                         {
-                            return $"{staticPropName}`get()";
+                            return $"get__{staticPropName}()";
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -1584,9 +1584,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`get()\n";
+                            result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`get : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1602,9 +1602,9 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`set(value)\n";
+                            result += $"{tabstr}\tset__{propertySyntax.Identifier.Text}(value)\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}{propertySyntax.Identifier.Text}`set ( value:{ptype} ) : void\n";
+                        result += $"{tabstr}def {abstractMod}{staticMod}set__{propertySyntax.Identifier.Text} ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)

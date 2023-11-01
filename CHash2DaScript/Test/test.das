@@ -465,36 +465,36 @@ class HelloProgram
 class DefaultPerson
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`get()
-	def FirstName`get : string
+		return get__FirstName()
+	def get__FirstName : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
-		FirstName`set(value)
-	def FirstName`set ( value:string ) : void
+		set__FirstName(value)
+	def set__FirstName ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string
 
 class DefaultPersonWithInit
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`get()
-	def FirstName`get : string
+		return get__FirstName()
+	def get__FirstName : string
 		return FirstName`Storage
 	def operator . FirstName := ( value:string )
-		FirstName`set(value)
-	def FirstName`set ( value:string ) : void
+		set__FirstName(value)
+	def set__FirstName ( value:string ) : void
 		FirstName`Storage = value
 	private FirstName`Storage : string = "blahblah"
 
 class Person
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`get()
-	def FirstName`get : string
+		return get__FirstName()
+	def get__FirstName : string
 		return _firstName
 	def operator . FirstName := ( value:string )
-		FirstName`set(value)
-	def FirstName`set ( value:string ) : void
+		set__FirstName(value)
+	def set__FirstName ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -503,12 +503,12 @@ class Person
 class PersonWithArrows	// new style operator
 	// property FirstName : string
 	def operator . FirstName : string
-		return FirstName`get()
-	def FirstName`get : string
+		return get__FirstName()
+	def get__FirstName : string
 		return _firstName
 	def operator . FirstName := ( value:string )
-		FirstName`set(value)
-	def FirstName`set ( value:string ) : void
+		set__FirstName(value)
+	def set__FirstName ( value:string ) : void
 		_firstName = value
 
 	private _firstName : string
@@ -530,11 +530,11 @@ class Goo
 class Shape
 	// property Area : double
 	def operator . Area : double
-		return Area`get()
-	def abstract Area`get : double
+		return get__Area()
+	def abstract get__Area : double
 	def operator . Area := ( value:double )
-		Area`set(value)
-	def abstract Area`set ( value:double ) : void
+		set__Area(value)
+	def abstract set__Area ( value:double ) : void
 
 
 class Square
@@ -544,9 +544,9 @@ class Square
 		side = s
 
 	// property Area : double
-	def Area`get : double
+	def get__Area : double
 		return (side * side)
-	def Area`set ( value:double ) : void
+	def set__Area ( value:double ) : void
 		side = math::sqrt(value)
 
 
@@ -557,25 +557,25 @@ class Cube
 		side = s
 
 	// property Area : double
-	def Area`get : double
+	def get__Area : double
 		return ((6d * side) * side)
-	def Area`set ( value:double ) : void
+	def set__Area ( value:double ) : void
 		side = math::sqrt((value / 6d))
 
 
 class StaticPerson
 	// static property FirstName : string
-	def static FirstName`get : string
+	def static get__FirstName : string
 		return _firstName
-	def static FirstName`set ( value:string ) : void
+	def static set__FirstName ( value:string ) : void
 		_firstName = value
 
 	static private _firstName : string
 
 	def static foo : void
-		StaticPerson`FirstName`set("foo")
-		StaticPerson`FirstName`set(StaticPerson`FirstName`get() + "bar")
-		print("{StaticPerson`FirstName`get()}\n")
+		set__StaticPerson`FirstName("foo")
+		set__StaticPerson`FirstName(get__StaticPerson`FirstName() + "bar")
+		print("{get__StaticPerson`FirstName()}\n")
 
 
 enum Season
