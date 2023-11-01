@@ -113,6 +113,8 @@ namespace HelloWorld
             float t;
             int x = 1;
             int y = 2, z = 3;
+            
+
         }
 
         static void allOperators(int a, float b)
@@ -154,6 +156,9 @@ namespace HelloWorld
             a &= a;
             a ^= a;
             Console.WriteLine(c);
+            // true and false
+            a4 = true;
+            a4 = false;
         }
 
         static void allCasts()
@@ -193,6 +198,11 @@ namespace HelloWorld
             int iu8 = u8;
             Int64 i64i = i;
             float fi = i;
+
+            // long promotions
+            long _score = 0;
+            int levelTargetScore = 13;
+            float progress = (float)_score / (float)levelTargetScore;
         }
 
         static void whileLoop()
@@ -456,6 +466,8 @@ namespace HelloWorld
             // concat
             p.FirstName += "Me";
             if (p.FirstName == "TestMe") { Console.WriteLine(p.FirstName); }
+            // also null keyword
+            p = null;
         }
     }
 
@@ -527,4 +539,20 @@ namespace HelloWorld
         ConnectionLost = 100,
         OutlierReading = 200
     }
+
+    public class Employee
+    {
+        private string alias;
+        private string name;
+
+        public Employee(string name, string alias)
+        {
+            // Use this to qualify the members of the class
+            // instead of the constructor parameters.
+            this.name = name;
+            this.alias = alias;
+        }
+    }
+
+
 }

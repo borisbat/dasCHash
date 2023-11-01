@@ -84,6 +84,8 @@ namespace CHash2Das
                             case "uint": return "uint";
                             case "short": return "int16";
                             case "ushort": return "uint16";
+                            case "long": return "int64";
+                            case "ulong": return "uint64";
                             default:
                                 Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";
@@ -740,6 +742,11 @@ namespace CHash2Das
             return false;
         }
 
+        bool isNullExpression(ExpressionSyntax expr)
+        {
+            return expr.Kind() == SyntaxKind.NullLiteralExpression;
+        }
+
         public string onExpressionSyntax_(ExpressionSyntax expression)
         {
             if (expression == null)
@@ -782,6 +789,7 @@ namespace CHash2Das
                         var binop = expression as AssignmentExpressionSyntax;
                         var typeInfo = semanticModel.GetTypeInfo(binop.Left);
                         var assign = isMoveType(typeInfo.Type) ? "<-" : isCloneType(typeInfo.Type) ? ":=" : "=";
+                        if (isNullExpression(binop.Right)) assign = "=";
                         if (isProperty(binop.Left))
                         {
                             if (isStaticProperty(binop.Left, out string propName))
@@ -885,6 +893,19 @@ namespace CHash2Das
                         var ce = expression as ConditionalExpressionSyntax;
                         return $"{onExpressionSyntax(ce.Condition)} ? {onExpressionSyntax(ce.WhenTrue)} : {onExpressionSyntax(ce.WhenFalse)}";
                     }
+                case SyntaxKind.CastExpression:
+                    {
+                        var ce = expression as CastExpressionSyntax;
+                        return $"{onTypeSyntax(ce.Type)}({onExpressionSyntax(ce.Expression)})";
+                    }
+                case SyntaxKind.TrueLiteralExpression:
+                    return "true";
+                case SyntaxKind.FalseLiteralExpression:
+                    return "false";
+                case SyntaxKind.NullLiteralExpression:
+                    return "null";
+                case SyntaxKind.ThisExpression:
+                    return "self";
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
