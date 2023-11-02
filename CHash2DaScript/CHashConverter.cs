@@ -1,4 +1,4 @@
-﻿using static System.Console;
+using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -739,8 +739,7 @@ namespace CHash2Das
         {
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
-            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            return (accessedSymbol is IPropertySymbol);
+            return true;
         }
 
         bool isStaticProperty(ExpressionSyntax expression, string prefix, out string callPrefix)
@@ -749,14 +748,11 @@ namespace CHash2Das
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            if (accessedSymbol is IPropertySymbol)
+
+            if (accessedSymbol.IsStatic)
             {
-                var smm = (IPropertySymbol)accessedSymbol;
-                if (smm.IsStatic)
-                {
-                    callPrefix = $"{smm.ContainingSymbol.Name}`{prefix}{smm.Name}";
-                    return true;
-                }
+                callPrefix = $"{accessedSymbol.ContainingSymbol.Name}`{prefix}{accessedSymbol.Name}";
+                return true;
             }
             return false;
         }
