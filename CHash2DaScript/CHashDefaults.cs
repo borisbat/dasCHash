@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -193,7 +194,7 @@ namespace CHash2Das
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
             converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = SystemNS, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = nameof(Console), Namespace = SystemNS, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Add" }, das_method("push"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Clear" }, das_method("clear"));
@@ -205,8 +206,10 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "IndexOf" }, das_method("find_index"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Sort" }, das_method_noargs("sort"));
             converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Count" }, das_raw_member(" |> length()"));
+
             converter.addObjectMethod("ToString", das_ToString);
-            converter.addObjectMethod("Invoke", das_method("invoke"));
+
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = nameof(Delegate), Namespace = SystemNS, FieldName = "Invoke" }, das_method("invoke"));
         }
     }
 }

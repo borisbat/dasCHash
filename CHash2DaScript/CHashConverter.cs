@@ -193,6 +193,27 @@ namespace CHash2Das
             }
             methodInvExpr[typeWithMethod] = inv;
         }
+
+        public bool getMethod(TypeInfo ti, string name, out InvocationDelegate inv)
+        {
+            var curType = ti.Type;
+            while (curType != null)
+            {
+                if (methodInvExpr.TryGetValue(new INamedTypeSymbolField()
+                {
+                    TypeName = curType.MetadataName,
+                    Namespace = curType.ContainingNamespace?.ToDisplayString(),
+                    FieldName = name
+                }, out inv))
+                {
+                    return true;
+                }
+                curType = curType.BaseType;
+            }
+            inv = default;
+            return false;
+        }
+
         public void addObjectMethod(string member, InvocationDelegate inv)
         {
             if (objectInvExpr.ContainsKey(member))
@@ -211,6 +232,26 @@ namespace CHash2Das
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
+        }
+
+        public bool getMemberAccess(TypeInfo ti, string name, out MemberAccessDelegate acc)
+        {
+            var curType = ti.Type;
+            while (curType != null)
+            {
+                if (memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
+                {
+                    TypeName = curType.MetadataName,
+                    Namespace = curType.ContainingNamespace?.ToDisplayString(),
+                    FieldName = name
+                }, out acc))
+                {
+                    return true;
+                }
+                curType = curType.BaseType;
+            }
+            acc = default;
+            return false;
         }
 
         public void addObjectMemberAccess(string name, MemberAccessDelegate acc)
@@ -281,13 +322,8 @@ namespace CHash2Das
                     {
                         var ma = inv.Expression as MemberAccessExpressionSyntax;
                         var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
-                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
-                        methodInvExpr.TryGetValue(new INamedTypeSymbolField()
-                        {
-                            TypeName = exprTypeInfo.Type.MetadataName,
-                            Namespace = exprTypeInfo.Type.ContainingNamespace?.ToDisplayString(),
-                            FieldName = ma.Name.Identifier.Text
-                        }, out var invExpr);
+                        Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
+                        getMethod(exprTypeInfo, ma.Name.Identifier.Text, out var invExpr);
                         if (invExpr == null)
                         {
                             objectInvExpr.TryGetValue(ma.Name.Identifier.Text, out invExpr);
@@ -884,15 +920,10 @@ namespace CHash2Das
                 case SyntaxKind.SimpleMemberAccessExpression:
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
-                        TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
+                        var typeInfo = semanticModel.GetTypeInfo(smm.Expression);
                         // if (typeInfo.Type != null)
                         //     Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
-                        if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
-                        {
-                            TypeName = typeInfo.Type.MetadataName,
-                            Namespace = typeInfo.Type.ContainingNamespace?.ToDisplayString(),
-                            FieldName = smm.Name.Identifier.Text
-                        }, out MemberAccessDelegate acc))
+                        if (getMemberAccess(typeInfo, smm.Name.Identifier.Text, out MemberAccessDelegate acc))
                         {
                             return acc(this, smm);
                         }
