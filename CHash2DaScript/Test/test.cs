@@ -552,12 +552,27 @@ namespace HelloWorld
         private string alias;
         private string name;
 
-        public Employee(string name, string alias)
+        void invokeMe(Action action)
+        {
+            action.Invoke();
+        }
+
+        public Employee(string name_, string alias_)
         {
             // Use this to qualify the members of the class
             // instead of the constructor parameters.
-            this.name = name;
-            this.alias = alias;
+            var a = delegate ()
+            {
+                this.name = name_;
+                this.alias = alias_;
+            };
+            a.Invoke();
+
+            invokeMe(delegate ()
+            {
+                this.name = name_;
+                this.alias = alias_;
+            });
         }
     }
 

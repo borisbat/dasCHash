@@ -1,4 +1,4 @@
-using static System.Console;
+﻿using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -455,6 +455,7 @@ namespace CHash2Das
             {
                 case TypeKind.Array:
                 case TypeKind.Class:
+                case TypeKind.Delegate:
                     return true;
                 default:
                     return false;
@@ -925,6 +926,26 @@ namespace CHash2Das
                     return "null";
                 case SyntaxKind.ThisExpression:
                     return "self";
+                case SyntaxKind.AnonymousMethodExpression:
+                    {
+                        var ame = expression as AnonymousMethodExpressionSyntax;
+                        var result = expression.Parent.IsKind(SyntaxKind.EqualsValueClause) ? "@ <| (" : "@(";
+                        var first = true;
+                        foreach (var param in ame.ParameterList.Parameters)
+                        {
+                            if (first) first = false;
+                            else result += ", ";
+                            result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
+                        }
+                        result += ")";
+                        if (ame.Block != null)
+                            result += $"\n{onBlockSyntax(ame.Block)}";
+                        else if (ame.ExpressionBody != null)
+                            result += $"\n\t{onExpressionSyntax(ame.ExpressionBody)}\n";
+                        else
+                            result += $"\n\tpass\n";
+                        return result;
+                    }
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
