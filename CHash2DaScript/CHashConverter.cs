@@ -170,8 +170,8 @@ namespace CHash2Das
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
-        Dictionary<INamedTypeSymbolField, InvocationDelegate> methodInvExpr = new Dictionary<INamedTypeSymbolField, InvocationDelegate>();
-        Dictionary<INamedTypeSymbolField, MemberAccessDelegate> memberAccessExpr = new Dictionary<INamedTypeSymbolField, MemberAccessDelegate>();
+        Dictionary<TypeField, InvocationDelegate> methodInvExpr = new Dictionary<TypeField, InvocationDelegate>();
+        Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
 
         public void addInvocation(string key, InvocationDelegate inv)
@@ -184,26 +184,34 @@ namespace CHash2Das
             onInvExpr[key] = inv;
         }
 
-        public void addMethod(INamedTypeSymbolField typeWithMethod, InvocationDelegate inv)
+        public void addMethod(TypeField typeWithMethod, InvocationDelegate inv)
         {
             if (methodInvExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"method {typeWithMethod.TypeName}.{typeWithMethod.FieldName} is already declared");
+                Debug.Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             methodInvExpr[typeWithMethod] = inv;
         }
 
+        public bool getMethod(IMethodSymbol mti, out InvocationDelegate inv)
+        {
+            return getMethod(mti.ContainingType, mti.Name, out inv);
+        }
         public bool getMethod(TypeInfo ti, string name, out InvocationDelegate inv)
         {
-            var curType = ti.Type;
+            return getMethod(ti.Type, name, out inv);
+        }
+        public bool getMethod(ITypeSymbol? ti, string name, out InvocationDelegate inv)
+        {
+            var curType = ti;
             while (curType != null)
             {
-                if (methodInvExpr.TryGetValue(new INamedTypeSymbolField()
+                if (methodInvExpr.TryGetValue(new TypeField()
                 {
-                    TypeName = curType.MetadataName,
-                    Namespace = curType.ContainingNamespace?.ToDisplayString(),
-                    FieldName = name
+                    type = curType.MetadataName,
+                    ns = curType.ContainingNamespace?.ToDisplayString(),
+                    field = name
                 }, out inv))
                 {
                     return true;
@@ -224,26 +232,26 @@ namespace CHash2Das
             objectInvExpr[member] = inv;
         }
 
-        public void addMemberAccess(INamedTypeSymbolField typeWithMethod, MemberAccessDelegate acc)
+        public void addField(TypeField typeWithMethod, MemberAccessDelegate acc)
         {
             if (memberAccessExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"member access {typeWithMethod.TypeName}.{typeWithMethod.FieldName} is already declared");
+                Debug.Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
         }
 
-        public bool getMemberAccess(TypeInfo ti, string name, out MemberAccessDelegate acc)
+        public bool getField(TypeInfo ti, string name, out MemberAccessDelegate acc)
         {
             var curType = ti.Type;
             while (curType != null)
             {
-                if (memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
+                if (memberAccessExpr.TryGetValue(new TypeField()
                 {
-                    TypeName = curType.MetadataName,
-                    Namespace = curType.ContainingNamespace?.ToDisplayString(),
-                    FieldName = name
+                    type = curType.MetadataName,
+                    ns = curType.ContainingNamespace?.ToDisplayString(),
+                    field = name
                 }, out acc))
                 {
                     return true;
@@ -264,56 +272,83 @@ namespace CHash2Das
             objectMemberAccessExpr[name] = acc;
         }
 
-        public string onArgumentListSyntax(ArgumentListSyntax argumentList)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv)
         {
-            return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+            if (inv.ArgumentList.Arguments.Count > 0)
+            {
+                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                {
+                    if (isDelegate(methodSymbol.Parameters.Last().Type))
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
+                        return $"({args}) <| {lastArg}";
+                    }
+                }
+            }
+            {
+                var args = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+                return $"({args})";
+            }
         }
 
-        public string onArgumentReverseListSyntax(ArgumentListSyntax argumentList)
+        public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv)
         {
-            return string.Join(", ", argumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+            if (inv.ArgumentList.Arguments.Count > 0)
+            {
+                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                {
+                    if (isDelegate(methodSymbol.Parameters.First().Type))
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
+                        return $"({args}) <| {lastArg}";
+                    }
+                }
+            }
+            {
+                var args = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                return $"({args})";
+            }
         }
 
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
         {
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-            if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
-            {
-                return true;
-                // return methodSymbol.ContainingType.TypeKind == TypeKind.Class;
-            }
-            return false;
+            return symbolInfo.Symbol is IMethodSymbol;
         }
 
         bool IsCallingStaticMethod(InvocationExpressionSyntax invocation)
         {
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-            if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
-            {
-                return methodSymbol.IsStatic;
-            }
-            return false;
+            return symbolInfo.Symbol?.IsStatic ?? false;
         }
 
         string onInvocationExpression(InvocationExpressionSyntax inv)
         {
-            string key = inv.Expression.ToString();
             var callText = "";
             if (IsCallingClassMethod(inv))
             {
                 if (IsCallingStaticMethod(inv))
                 {
-                    // Log($"class static method {key}");
-                    // static methods
-                    if (onInvExpr.TryGetValue(key, out InvocationDelegate invExpr))
-                        return invExpr(this, inv);
                     SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                     IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+
+                    // Log($"class static method {key} {symbolInfo.Symbol}");
                     if (methodSymbol != null)
                     {
-                        string methodName = methodSymbol.Name; // Name of the method
-                        string className = methodSymbol.ContainingType.Name; // Name of the class containing the method
-                        callText = $"{className}`{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                        if (getMethod(methodSymbol, out var invExpr2))
+                        {
+                            callText = invExpr2(this, inv);
+                        }
+                        else
+                        {
+                            string methodName = methodSymbol.Name; // Name of the method
+                            string className = methodSymbol.ContainingType.Name; // Name of the class containing the method
+                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
+                        }
                     }
                 }
                 else
@@ -322,34 +357,37 @@ namespace CHash2Das
                     {
                         var ma = inv.Expression as MemberAccessExpressionSyntax;
                         var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
-                        Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
+                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
                         getMethod(exprTypeInfo, ma.Name.Identifier.Text, out var invExpr);
                         if (invExpr == null)
                         {
                             objectInvExpr.TryGetValue(ma.Name.Identifier.Text, out invExpr);
                         }
                         if (invExpr != null)
+                        {
                             callText = invExpr(this, inv);
+                        }
                         else
                         {
                             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                             IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
                 }
             }
             else
             {
-                // in case of compilation error
-                // Log($"static method {key}");
+                // in case of compilation error or unknown function call (nameof for example)
+                string key = inv.Expression.ToString();
+                // Log($"unknown function call {key}");
                 if (onInvExpr.TryGetValue(key, out InvocationDelegate invExpr))
                     return invExpr(this, inv);
             }
             if (callText == "")
             {
-                callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv)}";
             }
             return callText;
         }
@@ -497,6 +535,11 @@ namespace CHash2Das
                 default:
                     return false;
             }
+        }
+
+        public bool isDelegate(ITypeSymbol? typeSymbol)
+        {
+            return typeSymbol != null && typeSymbol.TypeKind == TypeKind.Delegate;
         }
 
         public bool isMoveType(ITypeSymbol typeSymbol)
@@ -924,7 +967,7 @@ namespace CHash2Das
                         var typeInfo = semanticModel.GetTypeInfo(smm.Expression);
                         // if (typeInfo.Type != null)
                         //     Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
-                        if (getMemberAccess(typeInfo, smm.Name.Identifier.Text, out MemberAccessDelegate acc))
+                        if (getField(typeInfo, smm.Name.Identifier.Text, out MemberAccessDelegate acc))
                         {
                             return acc(this, smm);
                         }
@@ -1840,6 +1883,27 @@ namespace CHash2Das
             }
         }
 
+        public static string ProcessBackspaces(string source)
+        {
+            char[] buffer = new char[source.Length];
+            int idx = 0;
+
+            foreach (char c in source)
+            {
+                if (c != '\b')
+                {
+                    buffer[idx] = c;
+                    idx++;
+                }
+                else if (idx > 0)
+                {
+                    idx--;
+                }
+            }
+
+            return new string(buffer, 0, idx);
+        }
+
         public string convert(CSharpCompilation comp, SemanticModel model, CompilationUnitSyntax root)
         {
             compilation = comp;
@@ -1878,7 +1942,7 @@ namespace CHash2Das
                 var topLevelStr = string.Join("\n", topLevel);
                 result = $"{topLevelStr}\n\n{result}";
             }
-            return result;
+            return ProcessBackspaces(result);
         }
     }
 
