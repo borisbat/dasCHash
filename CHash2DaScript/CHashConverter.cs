@@ -1092,10 +1092,10 @@ namespace CHash2Das
                 return methodSymbol.Name;
             if (!classHasMethodWithTheSameName(methodSymbol))
                 return methodSymbol.Name;
-            var uniqueName = string.Join("`", methodSymbol.Parameters.Select(p => p.Type.ToString()));
+            var uniqueName = string.Join("_", methodSymbol.Parameters.Select(p => p.Type.ToString()));
             uniqueName = Regex.Replace(uniqueName, "[<>,\\[\\]]", "_");
             if (uniqueName.Length > 0)
-                uniqueName = $"`{uniqueName}";
+                uniqueName = $"_{uniqueName}";
             return $"{methodSymbol.Name}{uniqueName}";
         }
 
