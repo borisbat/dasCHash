@@ -164,6 +164,7 @@ namespace CHash2Das
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, InvocationDelegate> methodInvExpr = new Dictionary<INamedTypeSymbolField, InvocationDelegate>();
         Dictionary<INamedTypeSymbolField, MemberAccessDelegate> memberAccessExpr = new Dictionary<INamedTypeSymbolField, MemberAccessDelegate>();
+        Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
 
         public void addInvocation(string key, InvocationDelegate inv)
         {
@@ -202,6 +203,16 @@ namespace CHash2Das
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
+        }
+
+        public void addObjectMemberAccess(string name, MemberAccessDelegate acc)
+        {
+            if (objectMemberAccessExpr.ContainsKey(name))
+            {
+                Debug.Fail($"object member access {name} is already declared");
+                return;
+            }
+            objectMemberAccessExpr[name] = acc;
         }
 
         public string onArgumentListSyntax(ArgumentListSyntax argumentList)
@@ -749,8 +760,8 @@ namespace CHash2Das
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            return (accessedSymbol.Kind == SymbolKind.Field 
-                && accessedSymbol.ContainingType is INamedTypeSymbol namedType 
+            return (accessedSymbol != null && accessedSymbol.Kind == SymbolKind.Field
+                && accessedSymbol.ContainingType is INamedTypeSymbol namedType
                 && namedType.TypeKind == TypeKind.Enum);
         }
 
@@ -790,7 +801,7 @@ namespace CHash2Das
                 case SyntaxKind.LogicalNotExpression:
                     {
                         var unop = expression as PrefixUnaryExpressionSyntax;
-                        return $"({unop.OperatorToken}{onExpressionSyntax(unop.Operand)})";
+                        return $"{unop.OperatorToken}{onExpressionSyntax(unop.Operand)}";
                     }
                 case SyntaxKind.AddExpression:
                 case SyntaxKind.SubtractExpression:
@@ -872,6 +883,10 @@ namespace CHash2Das
                             Namespace = typeInfo.Type.ContainingNamespace?.ToDisplayString(),
                             FieldName = smm.Name.Identifier.Text
                         }, out MemberAccessDelegate acc))
+                        {
+                            return acc(this, smm);
+                        }
+                        if (objectMemberAccessExpr.TryGetValue(smm.Name.Identifier.Text, out acc))
                         {
                             return acc(this, smm);
                         }
