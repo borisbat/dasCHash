@@ -50,6 +50,9 @@ namespace HelloWorld
 
     class HelloProgram
     {
+        /*
+          multiline comment
+        */
         int count = 13;
 
         static void _main(string[] args)
@@ -114,7 +117,7 @@ namespace HelloWorld
             float t;
             int x = 1;
             int y = 2, z = 3;
-            
+
 
         }
 
@@ -226,6 +229,9 @@ namespace HelloWorld
             }
         }
 
+        /*
+          multiline comment 2
+        */
         static void forLoop()
         {
             for (var i = 0; i < 10; ++i)

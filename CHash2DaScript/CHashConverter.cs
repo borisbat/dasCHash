@@ -1520,7 +1520,7 @@ namespace CHash2Das
                 }
                 else if (token.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
-                    result += $"{tabstr}// {token}\n";
+                    result += $"\n{tabstr}{token}\n";
                     newLines++;
                     i = token.Span.End + 2;
                 }
