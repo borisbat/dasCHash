@@ -100,6 +100,10 @@
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([11389..11398))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([11381..11398))
 
+module test
+
+require math
+
 // using System.Console
 // using System
 // using System.Collections.Generic
@@ -573,9 +577,9 @@ class StaticPerson
 	static private _firstName : string
 
 	def static foo : void
-		set__StaticPerson`FirstName("foo")
-		set__StaticPerson`FirstName(get__StaticPerson`FirstName() + "bar")
-		print("{get__StaticPerson`FirstName()}\n")
+		StaticPerson`set__FirstName("foo")
+		StaticPerson`set__FirstName(StaticPerson`get__FirstName() + "bar")
+		print("{StaticPerson`get__FirstName()}\n")
 
 
 enum Season

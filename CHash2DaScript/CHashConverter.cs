@@ -20,6 +20,14 @@ namespace CHash2Das
         CSharpCompilation compilation;
         Dictionary<int, SyntaxTrivia> allComments = new Dictionary<int, SyntaxTrivia>();
 
+        List<string> requirements = new List<string>();
+
+        public void addRequirement(string module_name)
+        {
+            if (!requirements.Contains(module_name))
+                requirements.Add(module_name);
+        }
+
         public void Fail(string message)
         {
             if (failToDebug)
@@ -731,7 +739,7 @@ namespace CHash2Das
             return (accessedSymbol is IPropertySymbol);
         }
 
-        bool isStaticProperty(ExpressionSyntax expression, out string callPrefix)
+        bool isStaticProperty(ExpressionSyntax expression, string prefix, out string callPrefix)
         {
             callPrefix = "";
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
@@ -742,7 +750,7 @@ namespace CHash2Das
                 var smm = (IPropertySymbol)accessedSymbol;
                 if (smm.IsStatic)
                 {
-                    callPrefix = $"{smm.ContainingSymbol.Name}`{smm.Name}";
+                    callPrefix = $"{smm.ContainingSymbol.Name}`{prefix}{smm.Name}";
                     return true;
                 }
             }
@@ -799,9 +807,9 @@ namespace CHash2Das
                         if (isNullExpression(binop.Right)) assign = "=";
                         if (isProperty(binop.Left))
                         {
-                            if (isStaticProperty(binop.Left, out string propName))
+                            if (isStaticProperty(binop.Left, "set__", out string propName))
                             {
-                                return $"set__{propName}({onExpressionSyntax(binop.Right)})";
+                                return $"{propName}({onExpressionSyntax(binop.Right)})";
                             }
                             else
                                 assign = ":=";
@@ -823,8 +831,11 @@ namespace CHash2Das
                         {
                             var op = binop.OperatorToken.Text;
                             var cutop = op.Substring(0, op.Length - 1);
-                            if (isStaticProperty(binop.Left, out string propName))
-                                return $"set__{propName}(get__{propName}() {cutop} {onExpressionSyntax(binop.Right)})";
+                            if (isStaticProperty(binop.Left, "set__", out string propName))
+                            {
+                                isStaticProperty(binop.Left, "get__", out string getPropName);
+                                return $"{propName}({getPropName}() {cutop} {onExpressionSyntax(binop.Right)})";
+                            }
                             else
                                 return $"{onExpressionSyntax(binop.Left)} := {onExpressionSyntax(binop.Left)} {cutop} {onExpressionSyntax(binop.Right)}";
                         }
@@ -852,9 +863,9 @@ namespace CHash2Das
                         {
                             return acc(this, smm);
                         }
-                        if (isStaticProperty(smm, out string staticPropName))
+                        if (isStaticProperty(smm, "get__", out string staticPropName))
                         {
-                            return $"get__{staticPropName}()";
+                            return $"{staticPropName}()";
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -1704,6 +1715,11 @@ namespace CHash2Das
                     InsertSpacesAndComments(ref result, prevMember.Span, mem.Span, mem.SyntaxTree);
                 result += onMemberDeclaration(mem);
                 prevMember = mem;
+            }
+            if (requirements.Count > 0)
+            {
+                var requirementsStr = string.Join("\nrequire ", requirements);
+                result = $"require {requirementsStr}\n\n{result}";
             }
             return result;
         }

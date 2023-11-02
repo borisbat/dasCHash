@@ -13,7 +13,8 @@ namespace Main
         const string OUTPUT_PATH = "../../../Test";
         static void Main(string[] args)
         {
-            string programText = System.IO.File.ReadAllText(Path.Combine(OUTPUT_PATH, "test.cs"));
+            string path = Path.Combine(OUTPUT_PATH, "test.cs");
+            string programText = System.IO.File.ReadAllText(path);
 
             // creating syntax tree
             SyntaxTree tree = CSharpSyntaxTree.ParseText(programText);
@@ -41,6 +42,8 @@ namespace Main
                 }
                 result += "\n";
             }
+
+            result += $"module {Path.GetFileNameWithoutExtension(path)}\n\n";
 
             CHashConverter hasher = new CHashConverter();
             CHashDefaults.registerInvocations(hasher);
