@@ -11,8 +11,11 @@ namespace CHash2Das
         public string FieldName;
     }
 
-    public class CHashDefaults
+    public partial class CHashDefaults
     {
+        const string CollectionGeneric = "System.Collections.Generic";
+        const string GlobalNamespace = "System";
+
         static string das_WriteLineError(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
             return das_Write(converter, invocationExpression, "error", true);
@@ -149,7 +152,11 @@ namespace CHash2Das
                 return $"\"{{{converter.derefExpr(ma.Expression)}}}\"";
         }
 
-        static CHashConverter.MemberAccessDelegate das_member(string value, bool doDeref = true)
+        /// <summary>
+        /// Returns a member access delegate that returns a raw member access string,
+        /// useful for static member access. Be careful with this one, pass actual member name with the dot.
+        /// </summary>
+        static CHashConverter.MemberAccessDelegate das_raw_member(string value, bool doDeref = true)
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
             {
@@ -169,8 +176,6 @@ namespace CHash2Das
 
         public static void registerInvocations(CHashConverter converter)
         {
-            const string CollectionGeneric = "System.Collections.Generic";
-            const string GlobalNamespace = "System";
             converter.addInvocation("System.Console.WriteLine", das_WriteLine);
             converter.addInvocation("Console.WriteLine", das_WriteLine);
             converter.addInvocation("WriteLine", das_WriteLine);
@@ -187,7 +192,7 @@ namespace CHash2Das
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
             converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_member(" |> get_caps_lock()", false));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Add" }, das_method("push"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Clear" }, das_method("clear"));
@@ -198,7 +203,7 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Contains" }, das_method("has_value"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "IndexOf" }, das_method("find_index"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Sort" }, das_method_noargs("sort"));
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_member(" |> length()"));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_raw_member(" |> length()"));
             converter.addObjectMethod("ToString", das_ToString);
             converter.addObjectMethod("Invoke", das_method("invoke"));
         }
