@@ -20,6 +20,14 @@ namespace CHash2Das
         CSharpCompilation compilation;
         Dictionary<int, SyntaxTrivia> allComments = new Dictionary<int, SyntaxTrivia>();
 
+        List<string> requirements = new List<string>();
+
+        public void addRequirement(string module_name)
+        {
+            if (!requirements.Contains(module_name))
+                requirements.Add(module_name);
+        }
+
         public void Fail(string message)
         {
             if (failToDebug)
@@ -1707,6 +1715,11 @@ namespace CHash2Das
                     InsertSpacesAndComments(ref result, prevMember.Span, mem.Span, mem.SyntaxTree);
                 result += onMemberDeclaration(mem);
                 prevMember = mem;
+            }
+            if (requirements.Count > 0)
+            {
+                var requirementsStr = string.Join("\nrequire ", requirements);
+                result = $"require {requirementsStr}\n\n{result}";
             }
             return result;
         }

@@ -48,6 +48,26 @@ namespace CHash2Das
             return res;
         }
 
+        static CHashConverter.InvocationDelegate req(CHashConverter.InvocationDelegate sub, string module_name)
+        {
+            CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
+            {
+                converter.addRequirement(module_name);
+                return sub(converter, inv);
+            };
+            return res;
+        }
+
+        static CHashConverter.MemberAccessDelegate req(CHashConverter.MemberAccessDelegate sub, string module_name)
+        {
+            CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax inv)
+            {
+                converter.addRequirement(module_name);
+                return sub(converter, inv);
+            };
+            return res;
+        }
+
         static CHashConverter.InvocationDelegate das_fn(string fnName)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
@@ -144,9 +164,9 @@ namespace CHash2Das
             converter.addInvocation("Console.Write", das_Write);
             converter.addInvocation("Write", das_Write);
 
-            // TODO: add `require math`
-            converter.addInvocation("System.Math.Sqrt", das_fn("math::sqrt"));
-            converter.addInvocation("Math.Sqrt", das_fn("math::sqrt"));
+            var mathSqrt = req(das_fn("math::sqrt"), "math");
+            converter.addInvocation("System.Math.Sqrt", mathSqrt);
+            converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
             converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_static_member("false // |> get_caps_lock()"));
 
