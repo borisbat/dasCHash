@@ -50,6 +50,9 @@ namespace HelloWorld
 
     class HelloProgram
     {
+        /*
+          multiline comment
+        */
         int count = 13;
 
         static void _main(string[] args)
@@ -114,7 +117,7 @@ namespace HelloWorld
             float t;
             int x = 1;
             int y = 2, z = 3;
-            
+
 
         }
 
@@ -226,6 +229,9 @@ namespace HelloWorld
             }
         }
 
+        /*
+          multiline comment 2
+        */
         static void forLoop()
         {
             for (var i = 0; i < 10; ++i)
@@ -546,12 +552,27 @@ namespace HelloWorld
         private string alias;
         private string name;
 
-        public Employee(string name, string alias)
+        void invokeMe(Action action)
+        {
+            action.Invoke();
+        }
+
+        public Employee(string name_, string alias_)
         {
             // Use this to qualify the members of the class
             // instead of the constructor parameters.
-            this.name = name;
-            this.alias = alias;
+            var a = delegate ()
+            {
+                this.name = name_;
+                this.alias = alias_;
+            };
+            a.Invoke();
+
+            invokeMe(delegate ()
+            {
+                this.name = name_;
+                this.alias = alias_;
+            });
         }
     }
 

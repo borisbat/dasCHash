@@ -455,6 +455,7 @@ namespace CHash2Das
             {
                 case TypeKind.Array:
                 case TypeKind.Class:
+                case TypeKind.Delegate:
                     return true;
                 default:
                     return false;
@@ -546,13 +547,17 @@ namespace CHash2Das
             }
             if (init.Length > 0)
                 init += " ";
-            var arguments = oce.ArgumentList.Arguments
-                .Select(arg => onExpressionSyntax(arg.Expression));
             var newCall = isPointerType(resType.Type) ? "new " : "";
-            if (arguments.Count() == 0)
-                return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
-            var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-            return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
+            if (oce.ArgumentList != null)
+            {
+                var arguments = oce.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression));
+                if (arguments.Count() != 0)
+                {
+                    var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
+                    return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
+                }
+            }
+            return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -736,7 +741,7 @@ namespace CHash2Das
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            return (accessedSymbol is IPropertySymbol);
+            return accessedSymbol is IPropertySymbol;
         }
 
         bool isStaticProperty(ExpressionSyntax expression, string prefix, out string callPrefix)
@@ -745,14 +750,11 @@ namespace CHash2Das
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
-            if (accessedSymbol is IPropertySymbol)
+
+            if (accessedSymbol != null && accessedSymbol.IsStatic)
             {
-                var smm = (IPropertySymbol)accessedSymbol;
-                if (smm.IsStatic)
-                {
-                    callPrefix = $"{smm.ContainingSymbol.Name}`{prefix}{smm.Name}";
-                    return true;
-                }
+                callPrefix = $"{accessedSymbol.ContainingSymbol.Name}`{prefix}{accessedSymbol.Name}";
+                return true;
             }
             return false;
         }
@@ -863,9 +865,12 @@ namespace CHash2Das
                         {
                             return acc(this, smm);
                         }
-                        if (isStaticProperty(smm, "get__", out string staticPropName))
+                        if (isProperty(smm))
                         {
-                            return $"{staticPropName}()";
+                            if (isStaticProperty(smm, "get__", out string staticPropName))
+                            {
+                                return $"{staticPropName}()";
+                            }
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -925,6 +930,24 @@ namespace CHash2Das
                     return "null";
                 case SyntaxKind.ThisExpression:
                     return "self";
+                case SyntaxKind.AnonymousMethodExpression:
+                    {
+                        var ame = expression as AnonymousMethodExpressionSyntax;
+                        var result = expression.Parent.IsKind(SyntaxKind.EqualsValueClause) ? "@ <| (" : "@(";
+                        var first = true;
+                        foreach (var param in ame.ParameterList.Parameters)
+                        {
+                            if (first) first = false;
+                            else result += ", ";
+                            result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
+                        }
+                        result += ")";
+                        if (ame.Block != null)
+                            result += $"\n{onBlockSyntax(ame.Block)}";
+                        else
+                            result += $"\n\tpass\n";
+                        return result;
+                    }
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
@@ -1071,10 +1094,10 @@ namespace CHash2Das
                 return methodSymbol.Name;
             if (!classHasMethodWithTheSameName(methodSymbol))
                 return methodSymbol.Name;
-            var uniqueName = string.Join("`", methodSymbol.Parameters.Select(p => p.Type.ToString()));
+            var uniqueName = string.Join("_", methodSymbol.Parameters.Select(p => p.Type.ToString()));
             uniqueName = Regex.Replace(uniqueName, "[<>,\\[\\]]", "_");
             if (uniqueName.Length > 0)
-                uniqueName = $"`{uniqueName}";
+                uniqueName = $"_{uniqueName}";
             return $"{methodSymbol.Name}{uniqueName}";
         }
 
@@ -1516,7 +1539,7 @@ namespace CHash2Das
                 }
                 else if (token.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
-                    result += $"{tabstr}// {token}\n";
+                    result += $"\n{tabstr}{token}\n";
                     newLines++;
                     i = token.Span.End + 2;
                 }
