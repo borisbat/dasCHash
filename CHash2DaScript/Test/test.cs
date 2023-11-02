@@ -586,7 +586,7 @@ namespace HelloWorld
                 this.alias = alias_;
             });
 
-            var str = invokeMyAction((int val) => { return val.ToString(); });
+            var str = invokeMyAction((val) => { return val.ToString(); });
             Console.WriteLine(str);
         }
     }
