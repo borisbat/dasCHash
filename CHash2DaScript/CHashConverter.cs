@@ -885,8 +885,8 @@ namespace CHash2Das
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
                         TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
-                        if (typeInfo.Type != null)
-                            Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
+                        // if (typeInfo.Type != null)
+                        //     Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
                         if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
                         {
                             TypeName = typeInfo.Type.MetadataName,
