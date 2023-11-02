@@ -58,6 +58,11 @@ namespace CHash2Das
             return res;
         }
 
+        static string das_NameOf(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
+        {
+            return $"\"{invocationExpression.ArgumentList.Arguments[0].Expression}\"";
+        }
+
         static CHashConverter.InvocationDelegate req(CHashConverter.InvocationDelegate sub, string module_name)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
@@ -173,6 +178,8 @@ namespace CHash2Das
             converter.addInvocation("System.Console.Write", das_Write);
             converter.addInvocation("Console.Write", das_Write);
             converter.addInvocation("Write", das_Write);
+
+            converter.addInvocation("nameof", das_NameOf);
 
             converter.addInvocation("Debug.Fail", das_WriteError);
 

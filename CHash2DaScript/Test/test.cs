@@ -412,7 +412,7 @@ namespace HelloWorld
         void static_methods()
         {
             var i = Foo.next();
-            Console.WriteLine($"i = {i}");
+            Console.WriteLine($"{nameof(i)} = {i}");
         }
 
         static void m_in(in int a)
