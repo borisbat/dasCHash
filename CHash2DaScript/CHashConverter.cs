@@ -985,8 +985,15 @@ namespace CHash2Das
                                 result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
                         }
                         result += ")";
-                        if (ame.Block != null)
-                            result += $"\n{onBlockSyntax(ame.Block)}";
+                        if (ame.Body is BlockSyntax bs)
+                        {
+                            result += $"\n{onBlockSyntax(bs)}";
+                        }
+                        else if (ame.Body is InvocationExpressionSyntax invEx)
+                        {
+                            var tabstr = new string('\t', tabs);
+                            result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
+                        }
                         else
                             result += $"\n\tpass\n";
                         return result;
@@ -1008,7 +1015,14 @@ namespace CHash2Das
                         }
                         result += ")";
                         if (ame.Body is BlockSyntax bs)
+                        {
                             result += $"\n{onBlockSyntax(bs)}";
+                        }
+                        else if (ame.Body is InvocationExpressionSyntax invEx)
+                        {
+                            var tabstr = new string('\t', tabs);
+                            result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
+                        }
                         else
                             result += $"\n\tpass\n";
                         return result;
