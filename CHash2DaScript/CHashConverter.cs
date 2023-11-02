@@ -1007,8 +1007,8 @@ namespace CHash2Das
                                 result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
                         }
                         result += ")";
-                        if (ame.Block != null)
-                            result += $"\n{onBlockSyntax(ame.Block)}";
+                        if (ame.Body is BlockSyntax bs)
+                            result += $"\n{onBlockSyntax(bs)}";
                         else
                             result += $"\n\tpass\n";
                         return result;
