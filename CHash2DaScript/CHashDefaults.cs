@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CHash2Das
 {
-    public struct INamedTypeSymbolField
+    public struct TypeField
     {
-        public string TypeName;
-        public string Namespace;
-        public string FieldName;
+        public string type;
+        public string ns;
+        public string field;
     }
 
     public partial class CHashDefaults
@@ -178,38 +179,30 @@ namespace CHash2Das
 
         public static void registerInvocations(CHashConverter converter)
         {
-            converter.addInvocation("System.Console.WriteLine", das_WriteLine);
-            converter.addInvocation("Console.WriteLine", das_WriteLine);
-            converter.addInvocation("WriteLine", das_WriteLine);
-
-            converter.addInvocation("System.Console.Write", das_Write);
-            converter.addInvocation("Console.Write", das_Write);
-            converter.addInvocation("Write", das_Write);
+            converter.addMethod(new TypeField() { type = nameof(Console), ns = SystemNS, field = nameof(Console.Write) }, das_Write);
+            converter.addMethod(new TypeField() { type = nameof(Console), ns = SystemNS, field = nameof(Console.WriteLine) }, das_WriteLine);
+            converter.addMethod(new TypeField() { type = nameof(Debug), ns = SystemNS, field = nameof(Debug.Fail) }, das_WriteError);
 
             converter.addInvocation("nameof", das_NameOf);
 
-            converter.addInvocation("Debug.Fail", das_WriteError);
-
-            var mathSqrt = req(das_fn("math::sqrt"), "math");
-            converter.addInvocation("System.Math.Sqrt", mathSqrt);
-            converter.addInvocation("Math.Sqrt", mathSqrt);
+            converter.addMethod(new TypeField() { type = nameof(Math), ns = SystemNS, field = nameof(Math.Sqrt) }, req(das_fn("math::sqrt"), "math"));
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = nameof(Console), Namespace = SystemNS, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
+            converter.addField(new TypeField() { type = nameof(Console), ns = SystemNS, field = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Add" }, das_method("push"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Clear" }, das_method("clear"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "RemoveAt" }, das_method("erase"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "RemoveRange" }, das_method("erase"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Remove" }, das_method("remove_value"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Insert" }, das_method_reverse_args("push"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Contains" }, das_method("has_value"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "IndexOf" }, das_method("find_index"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Sort" }, das_method_noargs("sort"));
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Count" }, das_raw_member(" |> length()"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Add" }, das_method("push"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Clear" }, das_method("clear"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveAt" }, das_method("erase"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveRange" }, das_method("erase"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Remove" }, das_method("remove_value"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Insert" }, das_method_reverse_args("push"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Contains" }, das_method("has_value"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "IndexOf" }, das_method("find_index"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Sort" }, das_method_noargs("sort"));
+            converter.addField(new TypeField() { type = "List`1", ns = CollectionNS, field = "Count" }, das_raw_member(" |> length()"));
 
             converter.addObjectMethod("ToString", das_ToString);
 
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = nameof(Delegate), Namespace = SystemNS, FieldName = "Invoke" }, das_method("invoke"));
+            converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
         }
     }
 }
