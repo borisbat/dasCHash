@@ -13,8 +13,9 @@ namespace CHash2Das
 
     public partial class CHashDefaults
     {
-        const string CollectionGeneric = "System.Collections.Generic";
-        const string GlobalNamespace = "System";
+        const string GlobalNS = "<global namespace>";
+        const string SystemNS = "System";
+        const string CollectionNS = "System.Collections.Generic";
 
         static string das_WriteLineError(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
@@ -192,18 +193,18 @@ namespace CHash2Das
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
             converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = SystemNS, FieldName = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Add" }, das_method("push"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Clear" }, das_method("clear"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "RemoveAt" }, das_method("erase"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "RemoveRange" }, das_method("erase"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Remove" }, das_method("remove_value"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Insert" }, das_method_reverse_args("push"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Contains" }, das_method("has_value"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "IndexOf" }, das_method("find_index"));
-            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Sort" }, das_method_noargs("sort"));
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_raw_member(" |> length()"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Add" }, das_method("push"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Clear" }, das_method("clear"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "RemoveAt" }, das_method("erase"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "RemoveRange" }, das_method("erase"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Remove" }, das_method("remove_value"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Insert" }, das_method_reverse_args("push"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Contains" }, das_method("has_value"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "IndexOf" }, das_method("find_index"));
+            converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Sort" }, das_method_noargs("sort"));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionNS, FieldName = "Count" }, das_raw_member(" |> length()"));
             converter.addObjectMethod("ToString", das_ToString);
             converter.addObjectMethod("Invoke", das_method("invoke"));
         }
