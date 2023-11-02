@@ -1840,6 +1840,27 @@ namespace CHash2Das
             }
         }
 
+        public static string ProcessBackspaces(string source)
+        {
+            char[] buffer = new char[source.Length];
+            int idx = 0;
+
+            foreach (char c in source)
+            {
+                if (c != '\b')
+                {
+                    buffer[idx] = c;
+                    idx++;
+                }
+                else if (idx > 0)
+                {
+                    idx--;
+                }
+            }
+
+            return new string(buffer, 0, idx);
+        }
+
         public string convert(CSharpCompilation comp, SemanticModel model, CompilationUnitSyntax root)
         {
             compilation = comp;
@@ -1878,7 +1899,7 @@ namespace CHash2Das
                 var topLevelStr = string.Join("\n", topLevel);
                 result = $"{topLevelStr}\n\n{result}";
             }
-            return result;
+            return ProcessBackspaces(result);
         }
     }
 
