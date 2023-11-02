@@ -13,19 +13,29 @@ namespace CHash2Das
 
     public class CHashDefaults
     {
+        static string das_WriteLineError(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
+        {
+            return das_Write(converter, invocationExpression, "error", true);
+        }
+
+        static string das_WriteError(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
+        {
+            return das_Write(converter, invocationExpression, "error", false);
+        }
+
         static string das_WriteLine(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
-            return das_Write(converter, invocationExpression, true);
+            return das_Write(converter, invocationExpression, "print", true);
         }
 
         static string das_Write(CHashConverter converter, InvocationExpressionSyntax invocationExpression)
         {
-            return das_Write(converter, invocationExpression, false);
+            return das_Write(converter, invocationExpression, "print", false);
         }
 
-        static string das_Write(CHashConverter converter, InvocationExpressionSyntax invocationExpression, bool newLine)
+        static string das_Write(CHashConverter converter, InvocationExpressionSyntax invocationExpression, string function_name, bool newLine)
         {
-            var res = "print(\"";
+            var res = $"{function_name}(\"";
             var num = invocationExpression.ArgumentList.Arguments.Count;
             var i = 0;
             foreach (var arg in invocationExpression.ArgumentList.Arguments)
@@ -163,6 +173,8 @@ namespace CHash2Das
             converter.addInvocation("System.Console.Write", das_Write);
             converter.addInvocation("Console.Write", das_Write);
             converter.addInvocation("Write", das_Write);
+
+            converter.addInvocation("Debug.Fail", das_WriteError);
 
             var mathSqrt = req(das_fn("math::sqrt"), "math");
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
