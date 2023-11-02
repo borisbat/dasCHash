@@ -740,7 +740,8 @@ namespace CHash2Das
         {
             if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
             var memberAccess = expression as MemberAccessExpressionSyntax;
-            return true;
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            return accessedSymbol is IPropertySymbol;
         }
 
         bool isStaticProperty(ExpressionSyntax expression, string prefix, out string callPrefix)
@@ -750,7 +751,7 @@ namespace CHash2Das
             var memberAccess = expression as MemberAccessExpressionSyntax;
             ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
 
-            if (accessedSymbol.IsStatic)
+            if (accessedSymbol != null && accessedSymbol.IsStatic)
             {
                 callPrefix = $"{accessedSymbol.ContainingSymbol.Name}`{prefix}{accessedSymbol.Name}";
                 return true;
@@ -864,9 +865,12 @@ namespace CHash2Das
                         {
                             return acc(this, smm);
                         }
-                        if (isStaticProperty(smm, "get__", out string staticPropName))
+                        if (isProperty(smm))
                         {
-                            return $"{staticPropName}()";
+                            if (isStaticProperty(smm, "get__", out string staticPropName))
+                            {
+                                return $"{staticPropName}()";
+                            }
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -940,8 +944,6 @@ namespace CHash2Das
                         result += ")";
                         if (ame.Block != null)
                             result += $"\n{onBlockSyntax(ame.Block)}";
-                        else if (ame.ExpressionBody != null)
-                            result += $"\n\t{onExpressionSyntax(ame.ExpressionBody)}\n";
                         else
                             result += $"\n\tpass\n";
                         return result;
