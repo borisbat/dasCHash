@@ -718,21 +718,21 @@ namespace CHash2Das
             return cast != "" ? $"{cast}({res})" : res;
         }
 
-        public string derefExpr(ExpressionSyntax expr)
+        public string derefExpr(ExpressionSyntax expr, bool doDeref = true)
         {
             var typeInfo = semanticModel.GetTypeInfo(expr);
-            return derefExpr(onExpressionSyntax(expr), typeInfo, false);
+            return derefExpr(onExpressionSyntax(expr), typeInfo, doDeref, false);
         }
 
-        public string safeDerefExpr(ExpressionSyntax expr)
+        public string safeDerefExpr(ExpressionSyntax expr, bool doDeref = true)
         {
             var typeInfo = semanticModel.GetTypeInfo(expr);
-            return derefExpr(onExpressionSyntax(expr), typeInfo, true);
+            return derefExpr(onExpressionSyntax(expr), typeInfo, doDeref, true);
         }
 
-        public string derefExpr(string res, TypeInfo typeInfo, bool safe)
+        public string derefExpr(string res, TypeInfo typeInfo, bool doDeref, bool safe)
         {
-            if (isPointerType(typeInfo.Type))
+            if (doDeref && isPointerType(typeInfo.Type))
                 return safe ? $"(*{res})" : $"*{res}";
             return res;
         }
@@ -876,7 +876,8 @@ namespace CHash2Das
                     {
                         var smm = expression as MemberAccessExpressionSyntax;
                         TypeInfo typeInfo = semanticModel.GetTypeInfo(smm.Expression);
-                        // Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
+                        if (typeInfo.Type != null)
+                            Log($"type name : {typeInfo.Type.MetadataName}, namespace : {typeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {smm.Name.Identifier.Text}");
                         if (typeInfo.Type != null && memberAccessExpr.TryGetValue(new INamedTypeSymbolField()
                         {
                             TypeName = typeInfo.Type.MetadataName,

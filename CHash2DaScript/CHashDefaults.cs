@@ -101,36 +101,36 @@ namespace CHash2Das
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method(string fnName)
+        static CHashConverter.InvocationDelegate das_method(string fnName, bool doDeref = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
                 var args = converter.onArgumentListSyntax(inv.ArgumentList);
-                return $"{converter.derefExpr(ma.Expression)} |> {fnName}({args})";
+                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}({args})";
             };
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method_reverse_args(string fnName)
+        static CHashConverter.InvocationDelegate das_method_reverse_args(string fnName, bool doDeref = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
                 var args = converter.onArgumentReverseListSyntax(inv.ArgumentList);
-                return $"{converter.derefExpr(ma.Expression)} |> {fnName}({args})";
+                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}({args})";
             };
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method_noargs(string fnName)
+        static CHashConverter.InvocationDelegate das_method_noargs(string fnName, bool doDeref = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
                 if (inv.ArgumentList.Arguments.Count != 0)
                     converter.Fail($"{fnName} with comparer not supported");
-                return $"{converter.derefExpr(ma.Expression)} |> {fnName}()";
+                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}()";
             };
             return res;
         }
@@ -144,16 +144,16 @@ namespace CHash2Das
                 return $"\"{{{converter.derefExpr(ma.Expression)}}}\"";
         }
 
-        static CHashConverter.MemberAccessDelegate das_member(string value)
+        static CHashConverter.MemberAccessDelegate das_member(string value, bool doDeref = true)
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
             {
-                return $"{converter.derefExpr(acc.Expression)} |> {value}";
+                return $"{converter.derefExpr(acc.Expression, doDeref)}{value}";
             };
             return res;
         }
 
-        static CHashConverter.MemberAccessDelegate das_static_member(string value)
+        static CHashConverter.MemberAccessDelegate das_static(string value)
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
             {
@@ -165,7 +165,7 @@ namespace CHash2Das
         public static void registerInvocations(CHashConverter converter)
         {
             const string CollectionGeneric = "System.Collections.Generic";
-            const string GlobalNamespace = "<global namespace>";
+            const string GlobalNamespace = "System";
             converter.addInvocation("System.Console.WriteLine", das_WriteLine);
             converter.addInvocation("Console.WriteLine", das_WriteLine);
             converter.addInvocation("WriteLine", das_WriteLine);
@@ -180,7 +180,7 @@ namespace CHash2Das
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
             converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_static_member("false // |> get_caps_lock()"));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_member(" |> get_caps_lock()"));
 
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Add" }, das_method("push"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Clear" }, das_method("clear"));
@@ -191,7 +191,7 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Contains" }, das_method("has_value"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "IndexOf" }, das_method("find_index"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Sort" }, das_method_noargs("sort"));
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_member("length()"));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_member(" |> length()"));
             converter.addObjectMethod("ToString", das_ToString);
         }
     }

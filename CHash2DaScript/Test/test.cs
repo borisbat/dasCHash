@@ -400,6 +400,7 @@ namespace HelloWorld
             var d = new List<SFoo>() { new SFoo() { a = 1 }, new SFoo() { a = 2 } };
             d.Add(new SFoo() { a = 3 });
             Console.WriteLine($"d = {d.ToString()}");
+            bool consoleCapsLock = Console.CapsLock;
         }
 
         void conditional_expression()
