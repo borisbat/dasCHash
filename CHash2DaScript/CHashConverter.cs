@@ -21,11 +21,17 @@ namespace CHash2Das
         Dictionary<int, SyntaxTrivia> allComments = new Dictionary<int, SyntaxTrivia>();
 
         List<string> requirements = new List<string>();
+        List<string> topLevel = new List<string>();
 
         public void addRequirement(string module_name)
         {
             if (!requirements.Contains(module_name))
                 requirements.Add(module_name);
+        }
+
+        public void addTopLevel(string code)
+        {
+            topLevel.Add(code);
         }
 
         public void Fail(string message)
@@ -43,6 +49,8 @@ namespace CHash2Das
 
         string onVarTypeSyntax(TypeSyntax ts)
         {
+            if (ts == null)
+                return "var"; // unknown (auto) type
             var tt = semanticModel.GetTypeInfo(ts);
             var txt = onTypeSyntax(ts);
             if (isPointerType(tt.Type)) txt += "?";
@@ -230,7 +238,8 @@ namespace CHash2Das
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
             if (symbolInfo.Symbol is IMethodSymbol methodSymbol)
             {
-                return methodSymbol.ContainingType.TypeKind == TypeKind.Class;
+                return true;
+                // return methodSymbol.ContainingType.TypeKind == TypeKind.Class;
             }
             return false;
         }
@@ -969,7 +978,33 @@ namespace CHash2Das
                         {
                             if (first) first = false;
                             else result += ", ";
-                            result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
+                            string v = onVarTypeSyntax(param.Type);
+                            if (v == "var" || v == "var?")
+                                result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
+                            else
+                                result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
+                        }
+                        result += ")";
+                        if (ame.Block != null)
+                            result += $"\n{onBlockSyntax(ame.Block)}";
+                        else
+                            result += $"\n\tpass\n";
+                        return result;
+                    }
+                case SyntaxKind.ParenthesizedLambdaExpression:
+                    {
+                        var ame = expression as ParenthesizedLambdaExpressionSyntax;
+                        var result = expression.Parent.IsKind(SyntaxKind.EqualsValueClause) ? "@ <| (" : "@(";
+                        var first = true;
+                        foreach (var param in ame.ParameterList.Parameters)
+                        {
+                            if (first) first = false;
+                            else result += ", ";
+                            string v = onVarTypeSyntax(param.Type);
+                            if (v == "var" || v == "var?")
+                                result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
+                            else
+                                result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
                         }
                         result += ")";
                         if (ame.Block != null)
@@ -1692,6 +1727,21 @@ namespace CHash2Das
             return result;
         }
 
+        string onDelegateDeclaration(DelegateDeclarationSyntax member)
+        {
+            var tabstr = new string('\t', tabs);
+            var result = $"typedef {member.Identifier.Text} = lambda<(";
+            var first = true;
+            foreach (var param in member.ParameterList.Parameters)
+            {
+                if (first) first = false;
+                else result += ", ";
+                result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
+            }
+            result += $") : {onVarTypeSyntax(member.ReturnType)}>";
+            return result;
+        }
+
         string onEnumDeclaration(EnumDeclarationSyntax enu)
         {
             var tabstr = new string('\t', tabs + 1);
@@ -1735,6 +1785,9 @@ namespace CHash2Das
                     return onStructDeclaration(member as StructDeclarationSyntax);
                 case SyntaxKind.PropertyDeclaration:
                     return onPropertyDeclaration(member as PropertyDeclarationSyntax);
+                case SyntaxKind.DelegateDeclaration:
+                    addTopLevel(onDelegateDeclaration(member as DelegateDeclarationSyntax));
+                    return "";
                 default:
                     Fail($"Unsupported member {member.Kind()}");
                     return $"{member}";
@@ -1773,6 +1826,11 @@ namespace CHash2Das
             {
                 var requirementsStr = string.Join("\nrequire ", requirements);
                 result = $"require {requirementsStr}\n\n{result}";
+            }
+            if (topLevel.Count > 0)
+            {
+                var topLevelStr = string.Join("\n", topLevel);
+                result = $"{topLevelStr}\n\n{result}";
             }
             return result;
         }

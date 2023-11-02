@@ -555,12 +555,18 @@ namespace HelloWorld
 
     public class Employee
     {
+        public delegate string MyAction(int value);
         private string alias;
         private string name;
 
         void invokeMe(Action action)
         {
             action.Invoke();
+        }
+
+        string invokeMyAction(MyAction action)
+        {
+            return action.Invoke(10);
         }
 
         public Employee(string name_, string alias_)
@@ -579,6 +585,9 @@ namespace HelloWorld
                 this.name = name_;
                 this.alias = alias_;
             });
+
+            var str = invokeMyAction((int val) => { return val.ToString(); });
+            Console.WriteLine(str);
         }
     }
 

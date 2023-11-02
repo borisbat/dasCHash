@@ -187,7 +187,7 @@ namespace CHash2Das
             converter.addInvocation("System.Math.Sqrt", mathSqrt);
             converter.addInvocation("Math.Sqrt", mathSqrt);
             // static member access
-            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_member(" |> get_caps_lock()"));
+            converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "Console", Namespace = GlobalNamespace, FieldName = "CapsLock" }, das_member(" |> get_caps_lock()", false));
 
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Add" }, das_method("push"));
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Clear" }, das_method("clear"));
@@ -200,6 +200,7 @@ namespace CHash2Das
             converter.addMethod(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Sort" }, das_method_noargs("sort"));
             converter.addMemberAccess(new INamedTypeSymbolField() { TypeName = "List`1", Namespace = CollectionGeneric, FieldName = "Count" }, das_member(" |> length()"));
             converter.addObjectMethod("ToString", das_ToString);
+            converter.addObjectMethod("Invoke", das_method("invoke"));
         }
     }
 }
