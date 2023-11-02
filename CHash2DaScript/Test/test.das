@@ -573,9 +573,9 @@ class StaticPerson
 	static private _firstName : string
 
 	def static foo : void
-		set__StaticPerson`FirstName("foo")
-		set__StaticPerson`FirstName(get__StaticPerson`FirstName() + "bar")
-		print("{get__StaticPerson`FirstName()}\n")
+		StaticPerson`set__FirstName("foo")
+		StaticPerson`set__FirstName(StaticPerson`get__FirstName() + "bar")
+		print("{StaticPerson`get__FirstName()}\n")
 
 
 enum Season
