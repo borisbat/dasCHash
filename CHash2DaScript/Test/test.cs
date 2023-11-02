@@ -547,6 +547,11 @@ namespace HelloWorld
         OutlierReading = 200
     }
 
+    class EnumTester
+    {
+        static ErrorCode code = ErrorCode.Unknown;
+    }
+
     public class Employee
     {
         private string alias;

@@ -744,6 +744,16 @@ namespace CHash2Das
             return accessedSymbol is IPropertySymbol;
         }
 
+        bool isEnumerationConstant(ExpressionSyntax expression)
+        {
+            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
+            var memberAccess = expression as MemberAccessExpressionSyntax;
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            return (accessedSymbol.Kind == SymbolKind.Field 
+                && accessedSymbol.ContainingType is INamedTypeSymbol namedType 
+                && namedType.TypeKind == TypeKind.Enum);
+        }
+
         bool isStaticProperty(ExpressionSyntax expression, string prefix, out string callPrefix)
         {
             callPrefix = "";
@@ -871,6 +881,10 @@ namespace CHash2Das
                             {
                                 return $"{staticPropName}()";
                             }
+                        }
+                        if (isEnumerationConstant(smm))
+                        {
+                            return $"{onExpressionSyntax(smm.Expression)} {smm.Name.Identifier.Text}";
                         }
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
