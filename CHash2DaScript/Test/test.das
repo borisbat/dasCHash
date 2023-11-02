@@ -628,14 +628,14 @@ class Employee
 
 		a |> invoke()
 
-		invokeMe(@()
+		invokeMe() <| @()
 			self.name = name_
 			self.alias = alias_
-)
 
-		var str = invokeMyAction(@(var val)
+
+		var str = invokeMyAction() <| @(var val)
 			return "{val}"
-)
+
 		print("{str}\n")
 
 

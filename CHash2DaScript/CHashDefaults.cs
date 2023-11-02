@@ -93,8 +93,8 @@ namespace CHash2Das
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentListSyntax(inv.ArgumentList);
-                return $"{fnName}({args})";
+                var args = converter.onArgumentListSyntax(inv);
+                return $"{fnName}{args}";
             };
             return res;
         }
@@ -116,8 +116,8 @@ namespace CHash2Das
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentListSyntax(inv.ArgumentList);
-                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}({args})";
+                var args = converter.onArgumentListSyntax(inv);
+                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
             };
             return res;
         }
@@ -127,8 +127,8 @@ namespace CHash2Das
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentReverseListSyntax(inv.ArgumentList);
-                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}({args})";
+                var args = converter.onArgumentReverseListSyntax(inv);
+                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
             };
             return res;
         }

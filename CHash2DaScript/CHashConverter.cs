@@ -264,14 +264,46 @@ namespace CHash2Das
             objectMemberAccessExpr[name] = acc;
         }
 
-        public string onArgumentListSyntax(ArgumentListSyntax argumentList)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv)
         {
-            return string.Join(", ", argumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+            if (inv.ArgumentList.Arguments.Count > 0)
+            {
+                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                {
+                    if (isDelegate(methodSymbol.Parameters.Last().Type))
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
+                        return $"({args}) <| {lastArg}";
+                    }
+                }
+            }
+            {
+                var args = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+                return $"({args})";
+            }
         }
 
-        public string onArgumentReverseListSyntax(ArgumentListSyntax argumentList)
+        public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv)
         {
-            return string.Join(", ", argumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+            if (inv.ArgumentList.Arguments.Count > 0)
+            {
+                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                {
+                    if (isDelegate(methodSymbol.Parameters.First().Type))
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
+                        return $"({args}) <| {lastArg}";
+                    }
+                }
+            }
+            {
+                var args = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                return $"({args})";
+            }
         }
 
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
@@ -313,7 +345,7 @@ namespace CHash2Das
                     {
                         string methodName = methodSymbol.Name; // Name of the method
                         string className = methodSymbol.ContainingType.Name; // Name of the class containing the method
-                        callText = $"{className}`{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                        callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
                     }
                 }
                 else
@@ -322,7 +354,7 @@ namespace CHash2Das
                     {
                         var ma = inv.Expression as MemberAccessExpressionSyntax;
                         var exprTypeInfo = semanticModel.GetTypeInfo(ma.Expression);
-                        Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
+                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ma.Name.Identifier.Text}");
                         getMethod(exprTypeInfo, ma.Name.Identifier.Text, out var invExpr);
                         if (invExpr == null)
                         {
@@ -335,7 +367,7 @@ namespace CHash2Das
                             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                             IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}({onArgumentListSyntax(inv.ArgumentList)})";
+                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
                 }
@@ -349,7 +381,7 @@ namespace CHash2Das
             }
             if (callText == "")
             {
-                callText = $"{onExpressionSyntax(inv.Expression)}({onArgumentListSyntax(inv.ArgumentList)})";
+                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv)}";
             }
             return callText;
         }
@@ -497,6 +529,11 @@ namespace CHash2Das
                 default:
                     return false;
             }
+        }
+
+        public bool isDelegate(ITypeSymbol? typeSymbol)
+        {
+            return typeSymbol != null && typeSymbol.TypeKind == TypeKind.Delegate;
         }
 
         public bool isMoveType(ITypeSymbol typeSymbol)
