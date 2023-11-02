@@ -537,17 +537,18 @@ namespace CHash2Das
 
         string onArrayCreationExpressionSyntax(ArrayCreationExpressionSyntax ac)
         {
-            var elemType = onTypeSyntax(ac.Type.ElementType);
             if (ac.Initializer != null)
+            {
+                var elemType = onTypeSyntax(ac.Type.ElementType);
                 return onArrayInitializerExpressionSyntax(ac.Initializer, elemType);
+            }
 
             var dim = 0;
             foreach (ArrayRankSpecifierSyntax rank in ac.Type.RankSpecifiers)
                 dim += rank.Sizes.Count;
             if (dim == 1)
             {
-                var iter = makeTempVar("iter");
-                return $"[{{ for {iter} in range({onExpressionSyntax(ac.Type.RankSpecifiers[0].Sizes[0])}); {iter} }}]";
+                return $"[{{ for _ in range({onExpressionSyntax(ac.Type.RankSpecifiers[0].Sizes[0])}); [[{onVarTypeSyntax(ac.Type.ElementType)}]] }}]";
             }
 
             var result = "newArray(";
