@@ -546,13 +546,17 @@ namespace CHash2Das
             }
             if (init.Length > 0)
                 init += " ";
-            var arguments = oce.ArgumentList.Arguments
-                .Select(arg => onExpressionSyntax(arg.Expression));
             var newCall = isPointerType(resType.Type) ? "new " : "";
-            if (arguments.Count() == 0)
-                return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
-            var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-            return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
+            if (oce.ArgumentList != null)
+            {
+                var arguments = oce.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression));
+                if (arguments.Count() != 0)
+                {
+                    var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
+                    return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
+                }
+            }
+            return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
