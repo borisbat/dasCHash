@@ -1153,8 +1153,11 @@ namespace CHash2Das
                         return $"{des.Identifier.Text}";
                     }
                 default:
-                    Fail($"unsupported ExpressionSyntax {expression.Kind()}");
-                    return $"{expression.ToString()}";
+                    {
+                        Fail($"unsupported ExpressionSyntax {expression.Kind()}");
+                        var tabstr = new string('\t', tabs);
+                        return $"{tabstr}{expression.ToString()}";
+                    }
             }
         }
 
