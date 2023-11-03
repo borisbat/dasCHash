@@ -585,12 +585,9 @@ namespace CHash2Das
                 return false;
             if (isString(typeSymbol))
                 return false;
-            if (isPointerType(typeSymbol))
-                return true;
             switch (typeSymbol.TypeKind)
             {
                 case TypeKind.Array:
-                case TypeKind.Class:
                 case TypeKind.Delegate:
                     return true;
                 default:
