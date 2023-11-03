@@ -580,6 +580,29 @@ namespace HelloWorld
             });
         }
     }
+    
+    class AsIsTester
+    {
+        static void testit()
+        {
+            var p = new Cube(13);
+            if (p is Cube)
+                Console.WriteLine(p as Cube);
+        }
+    }
 
+    class TestDeclarationExpression
+    {
+        static int set13(out int t)
+        {
+            t = 13;
+            return 13;
+        }
 
+        static void testit()
+        {
+            var z = set13(out int t) + set13(out int q);
+            Console.WriteLine($"{t} - {q}");
+        }
+    }
 }

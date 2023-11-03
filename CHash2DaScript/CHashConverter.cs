@@ -962,6 +962,22 @@ namespace CHash2Das
                             result += $"\n\tpass\n";
                         return result;
                     }
+                case SyntaxKind.IsExpression:
+                case SyntaxKind.AsExpression:
+                    {
+                        var ise = expression as BinaryExpressionSyntax;
+                        var isr = ise.Right as IdentifierNameSyntax;
+                        var op = expression.Kind() == SyntaxKind.IsExpression ? "is" : "as";
+                        return $"({onExpressionSyntax(ise.Left)} {op} {isr.Identifier.Text})";
+                    }
+                case SyntaxKind.DeclarationExpression:
+                    {
+                        var decs = expression as DeclarationExpressionSyntax;
+                        var des = decs.Designation as SingleVariableDesignationSyntax;
+                        var tabstr = new string('\t', tabs);
+                        appendDecl($"{tabstr}var {des.Identifier.Text} : {onTypeSyntax(decs.Type)}\n");
+                        return $"{des.Identifier.Text}";
+                    }
                 default:
                     Fail($"unsupported ExpressionSyntax {expression.Kind()}");
                     return $"{expression.ToString()}";
@@ -1568,6 +1584,28 @@ namespace CHash2Das
                 result += "\n";
         }
 
+        List<string> declarationPrefix = new List<string>();
+
+        void pushDecl()
+        {
+            declarationPrefix.Insert(0, "");
+        }
+
+        void appendDecl(string text)
+        {
+            declarationPrefix[0] += text;
+        }
+
+        string getDecl()
+        {
+            return declarationPrefix[0];
+        }
+
+        void popDecl()
+        {
+            declarationPrefix.RemoveAt(0);
+        }
+
         string onBlockSyntax(BlockSyntax block)
         {
             var result = "";
@@ -1584,7 +1622,11 @@ namespace CHash2Das
                 {
                     if (prevExpr != null)
                         InsertSpacesAndComments(ref result, prevExpr.Span, expr.Span, expr.SyntaxTree);
-                    result += onStatementSyntax(expr);
+                    pushDecl();
+                    var text = onStatementSyntax(expr);
+                    result += getDecl();
+                    result += text;
+                    popDecl();
                     prevExpr = expr;
                 }
             }
