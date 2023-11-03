@@ -400,6 +400,7 @@ namespace HelloWorld
             var d = new List<SFoo>() { new SFoo() { a = 1 }, new SFoo() { a = 2 } };
             d.Add(new SFoo() { a = 3 });
             Console.WriteLine($"d = {d.ToString()}");
+            bool consoleCapsLock = Console.CapsLock;
         }
 
         void conditional_expression()
@@ -411,7 +412,7 @@ namespace HelloWorld
         void static_methods()
         {
             var i = Foo.next();
-            Console.WriteLine($"i = {i}");
+            Console.WriteLine($"{nameof(i)} = {i}");
         }
 
         static void m_in(in int a)
@@ -554,12 +555,18 @@ namespace HelloWorld
 
     public class Employee
     {
+        public delegate string MyAction(int value);
         private string alias;
         private string name;
 
         void invokeMe(Action action)
         {
             action.Invoke();
+        }
+
+        string invokeMyAction(MyAction action)
+        {
+            return action.Invoke(10);
         }
 
         public Employee(string name_, string alias_)
@@ -578,6 +585,9 @@ namespace HelloWorld
                 this.name = name_;
                 this.alias = alias_;
             });
+
+            var str = invokeMyAction((val) => { return val.ToString(); });
+            Console.WriteLine(str);
         }
     }
     
