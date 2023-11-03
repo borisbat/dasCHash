@@ -64,6 +64,16 @@ namespace CHash2Das
                 return "void";
             }
 
+            var td = new TypeData()
+            {
+                type = type.ToString(),
+                ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString()
+            };
+            if (typesRename.TryGetValue(td, out var rename))
+            {
+                return rename(this, td);
+            }
+
             switch (type.Kind())
             {
                 case SyntaxKind.ArrayType:
@@ -167,12 +177,14 @@ namespace CHash2Das
 
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
+        public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<TypeField, InvocationDelegate> methodInvExpr = new Dictionary<TypeField, InvocationDelegate>();
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
+        Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
 
         public void addInvocation(string key, InvocationDelegate inv)
         {
@@ -262,6 +274,31 @@ namespace CHash2Das
             return false;
         }
 
+        public void renameType(TypeData type, TypeRenameDelegate acc)
+        {
+            if (typesRename.ContainsKey(type))
+            {
+                Debug.Fail($"type rename for {type.type} is already declared");
+                return;
+            }
+            typesRename[type] = acc;
+        }
+
+        public string getTypeName(INamedTypeSymbol ts)
+        {
+            var className = ts.Name;
+            var td = new TypeData()
+            {
+                type = className,
+                ns = ts.ContainingNamespace?.ToDisplayString()
+            };
+            if (typesRename.TryGetValue(td, out var rename))
+            {
+                className = rename(this, td);
+            }
+            return className;
+        }
+
         public void addObjectMemberAccess(string name, MemberAccessDelegate acc)
         {
             if (objectMemberAccessExpr.ContainsKey(name))
@@ -346,7 +383,7 @@ namespace CHash2Das
                         else
                         {
                             string methodName = methodSymbol.Name; // Name of the method
-                            string className = methodSymbol.ContainingType.Name; // Name of the class containing the method
+                            string className = getTypeName(methodSymbol.ContainingType);
                             callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
@@ -645,19 +682,19 @@ namespace CHash2Das
                     init += $" {onExpressionSyntax(initExpr)},";
                 }
             }
-            if (init.Length > 0)
-                init += " ";
             var newCall = isPointerType(resType.Type) ? "new " : "";
-            if (oce.ArgumentList != null)
+            if (oce.ArgumentList != null && oce.ArgumentList.Arguments.Count > 0)
             {
-                var arguments = oce.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression));
-                if (arguments.Count() != 0)
-                {
-                    var arguments2 = arguments.Aggregate((current, next) => $"{current}, {next}");
-                    return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments2}){init}]]";
-                }
+                var arguments = oce.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)).Aggregate((current, next) => $"{current}, {next}");
+                if (init.Length > 0)
+                    return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments}){init} ]]";
+                else
+                    return $"{newCall}{onTypeSyntax(oce.Type)}({arguments})";
             }
-            return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init}]]";
+            if (init.Length > 0)
+                return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init} ]]";
+            else
+                return $"{newCall}{onTypeSyntax(oce.Type)}()";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -863,7 +900,7 @@ namespace CHash2Das
 
             if (accessedSymbol != null && accessedSymbol.IsStatic)
             {
-                callPrefix = $"{accessedSymbol.ContainingSymbol.Name}`{prefix}{accessedSymbol.Name}";
+                callPrefix = $"{getTypeName(accessedSymbol.ContainingType)}`{prefix}{accessedSymbol.Name}";
                 return true;
             }
             return false;
@@ -1860,7 +1897,6 @@ namespace CHash2Das
 
         string onDelegateDeclaration(DelegateDeclarationSyntax member)
         {
-            var tabstr = new string('\t', tabs);
             var result = $"typedef {member.Identifier.Text} = lambda<(";
             var first = true;
             foreach (var param in member.ParameterList.Parameters)
