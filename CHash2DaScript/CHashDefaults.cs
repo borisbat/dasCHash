@@ -6,6 +6,12 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CHash2Das
 {
+    public struct TypeData
+    {
+        public string type;
+        public string ns;
+    }
+
     public struct TypeField
     {
         public string type;
@@ -171,6 +177,15 @@ namespace CHash2Das
         static CHashConverter.MemberAccessDelegate das_static(string value)
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
+            {
+                return value;
+            };
+            return res;
+        }
+
+        static CHashConverter.TypeRenameDelegate das_type_name(string value)
+        {
+            CHashConverter.TypeRenameDelegate res = delegate (CHashConverter converter, TypeData type)
             {
                 return value;
             };
