@@ -1153,8 +1153,11 @@ namespace CHash2Das
                         return $"{des.Identifier.Text}";
                     }
                 default:
-                    Fail($"unsupported ExpressionSyntax {expression.Kind()}");
-                    return $"{expression.ToString()}";
+                    {
+                        Fail($"unsupported ExpressionSyntax {expression.Kind()}");
+                        var tabstr = new string('\t', tabs);
+                        return $"{tabstr}{expression.ToString()}";
+                    }
             }
         }
 
@@ -1210,7 +1213,9 @@ namespace CHash2Das
 
         string onClassDeclaration(ClassDeclarationSyntax classDeclaration)
         {
-            var result = $"class {classDeclaration.Identifier}\n";
+            BaseListSyntax? baseList = classDeclaration.BaseList;
+            var parent = baseList != null ? $" : {baseList.Types[0]}" : "";
+            var result = $"class {classDeclaration.Identifier}{parent}\n";
             tabs++;
             TextSpan prevSpan = new TextSpan(classDeclaration.Span.Start, 1);
             foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
@@ -1837,6 +1842,7 @@ namespace CHash2Das
             bool isStatic = propertySyntax.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword);
             string abstractMod = isAbstract ? "abstract " : "";
             string staticMod = isStatic ? "static " : "";
+            string overrideMod = isOverride ? "override " : "";
             string result = $"{tabstr}// {staticMod}property {propertySyntax.Identifier.Text} : {ptype}\n";
             if (propertySyntax.AccessorList != null)
             {
@@ -1850,7 +1856,7 @@ namespace CHash2Das
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
                             result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
@@ -1868,7 +1874,7 @@ namespace CHash2Das
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
                             result += $"{tabstr}\tset__{propertySyntax.Identifier.Text}(value)\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{staticMod}set__{propertySyntax.Identifier.Text} ( value:{ptype} ) : void\n";
+                        result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}set__{propertySyntax.Identifier.Text} ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)
