@@ -1322,14 +1322,22 @@ namespace CHash2Das
             if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
                 prefix += "static ";
             IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
-            var result = $"{tabstr}def {prefix}{uniqueMethodName(methodSymbol)}";
+            var resType = onVarTypeSyntax(methodDeclaration.ReturnType);
+            var annotations = "";
+            if (resType == "iterator" || resType.StartsWith("iterator<"))
+            {
+                annotations = "[coroutine] ";
+                resType = resType == "iterator" ? "void" : resType.Substring(9, resType.Length - 10);
+                addRequirement("daslib/coroutines");
+            }
+            var result = $"{tabstr}{annotations}def {prefix}{uniqueMethodName(methodSymbol)}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
                     .Select(param => $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}");
                 result += $" ({string.Join("; ", parameters)})";
             }
-            result += $" : {onVarTypeSyntax(methodDeclaration.ReturnType)}";
+            result += $" : {resType}";
             if (methodDeclaration.Body != null)
                 result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
             else if (methodDeclaration.ExpressionBody != null)
