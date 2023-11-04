@@ -135,7 +135,7 @@ namespace CHash2Das
                             case "Int64": return "int64";
                             case "UInt64": return "uint64";
                             case "var": return "var";       // huh?
-                            case "IEnumerator" : return "iterator";
+                            case "IEnumerator": return "iterator";
 
                             default:
                                 // Fail($"unknown identifier type {itype.Identifier.Text}");
@@ -181,6 +181,7 @@ namespace CHash2Das
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
+        public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
@@ -188,6 +189,7 @@ namespace CHash2Das
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
+        Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
 
         public void addInvocation(string key, InvocationDelegate inv)
         {
@@ -277,14 +279,14 @@ namespace CHash2Das
             return false;
         }
 
-        public void renameType(TypeData type, TypeRenameDelegate acc)
+        public void renameType(TypeData type, TypeRenameDelegate tr)
         {
             if (typesRename.ContainsKey(type))
             {
                 Debug.Fail($"type rename for {type.type} is already declared");
                 return;
             }
-            typesRename[type] = acc;
+            typesRename[type] = tr;
         }
 
         public string getTypeName(INamedTypeSymbol ts)
@@ -300,6 +302,16 @@ namespace CHash2Das
                 className = rename(this, td);
             }
             return className;
+        }
+
+        public void renameUsing(string usingName, UsingRenameDelegate ur)
+        {
+            if (usingRename.ContainsKey(key: usingName))
+            {
+                Debug.Fail($"using {usingName} is already declared");
+                return;
+            }
+            usingRename[usingName] = ur;
         }
 
         public void addObjectMemberAccess(string name, MemberAccessDelegate acc)
@@ -1198,7 +1210,9 @@ namespace CHash2Das
 
         string onUsing(UsingDirectiveSyntax u)
         {
-            return $"// using {u.Name}\n";
+            if (usingRename.TryGetValue(u.Name.ToString(), out UsingRenameDelegate rename))
+                return $"require {rename.Invoke(this, u.Name.ToString())}\n";
+            return $"// using {u.Name}\n"; // TODO:
         }
 
         string onNamespaceDeclaration(NamespaceDeclarationSyntax namespaceDeclaration)
