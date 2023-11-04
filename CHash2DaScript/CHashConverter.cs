@@ -135,6 +135,7 @@ namespace CHash2Das
                             case "Int64": return "int64";
                             case "UInt64": return "uint64";
                             case "var": return "var";       // huh?
+                            case "IEnumerator" : return "iterator";
 
                             default:
                                 // Fail($"unknown identifier type {itype.Identifier.Text}");
@@ -160,6 +161,8 @@ namespace CHash2Das
                                     return $"array<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}>";
                                 }
                                 break;
+                            case "IEnumerator":
+                                return $"iterator<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}>";
                         }
                         Fail($"unsupported TypeSyntax {genn}");
                         return $"{type}";
@@ -1719,6 +1722,10 @@ namespace CHash2Das
                     return $"{tabstr}{onForeachStatement(statement as ForEachStatementSyntax)}";
                 case SyntaxKind.SwitchStatement:
                     return $"{tabstr}{onSwitchStatement(statement as SwitchStatementSyntax)}";
+                case SyntaxKind.YieldBreakStatement:
+                    return $"{tabstr}return false\n";
+                case SyntaxKind.YieldReturnStatement:
+                    return $"{tabstr}yield {onExpressionSyntax((statement as YieldStatementSyntax).Expression)}\n";
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
