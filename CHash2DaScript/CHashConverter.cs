@@ -135,7 +135,7 @@ namespace CHash2Das
                             case "Int64": return "int64";
                             case "UInt64": return "uint64";
                             case "var": return "var";       // huh?
-                            case "IEnumerator" : return "iterator";
+                            case "IEnumerator": return "iterator";
 
                             default:
                                 // Fail($"unknown identifier type {itype.Identifier.Text}");
@@ -181,6 +181,7 @@ namespace CHash2Das
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
+        public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
@@ -188,10 +189,11 @@ namespace CHash2Das
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
+        Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
 
-        public void addInvocation(string key, InvocationDelegate inv)
+        public void addInvocation(string key, InvocationDelegate inv, bool override_ = false)
         {
-            if (onInvExpr.ContainsKey(key))
+            if (!override_ && onInvExpr.ContainsKey(key))
             {
                 Debug.Fail("invocation expression {key} is already declared");
                 return;
@@ -199,9 +201,9 @@ namespace CHash2Das
             onInvExpr[key] = inv;
         }
 
-        public void addMethod(TypeField typeWithMethod, InvocationDelegate inv)
+        public void addMethod(TypeField typeWithMethod, InvocationDelegate inv, bool override_ = false)
         {
-            if (methodInvExpr.ContainsKey(typeWithMethod))
+            if (!override_ && methodInvExpr.ContainsKey(typeWithMethod))
             {
                 Debug.Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
@@ -237,9 +239,9 @@ namespace CHash2Das
             return false;
         }
 
-        public void addObjectMethod(string member, InvocationDelegate inv)
+        public void addObjectMethod(string member, InvocationDelegate inv, bool override_ = false)
         {
-            if (objectInvExpr.ContainsKey(member))
+            if (!override_ && objectInvExpr.ContainsKey(member))
             {
                 Debug.Fail($"method Object.{member} is already declared");
                 return;
@@ -247,9 +249,9 @@ namespace CHash2Das
             objectInvExpr[member] = inv;
         }
 
-        public void addField(TypeField typeWithMethod, MemberAccessDelegate acc)
+        public void addField(TypeField typeWithMethod, MemberAccessDelegate acc, bool override_ = false)
         {
-            if (memberAccessExpr.ContainsKey(typeWithMethod))
+            if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
             {
                 Debug.Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
@@ -277,14 +279,14 @@ namespace CHash2Das
             return false;
         }
 
-        public void renameType(TypeData type, TypeRenameDelegate acc)
+        public void renameType(TypeData type, TypeRenameDelegate tr, bool override_ = false)
         {
-            if (typesRename.ContainsKey(type))
+            if (!override_ && typesRename.ContainsKey(type))
             {
                 Debug.Fail($"type rename for {type.type} is already declared");
                 return;
             }
-            typesRename[type] = acc;
+            typesRename[type] = tr;
         }
 
         public string getTypeName(INamedTypeSymbol ts)
@@ -302,9 +304,22 @@ namespace CHash2Das
             return className;
         }
 
-        public void addObjectMemberAccess(string name, MemberAccessDelegate acc)
+        /// <summary>
+        /// Rename a using statement, pass "*" to rename all usings
+        /// </summary>
+        public void renameUsing(string usingName, UsingRenameDelegate ur, bool override_ = false)
         {
-            if (objectMemberAccessExpr.ContainsKey(name))
+            if (!override_ && usingRename.ContainsKey(key: usingName))
+            {
+                Debug.Fail($"using {usingName} is already declared");
+                return;
+            }
+            usingRename[usingName] = ur;
+        }
+
+        public void addObjectMemberAccess(string name, MemberAccessDelegate acc, bool override_ = false)
+        {
+            if (!override_ && objectMemberAccessExpr.ContainsKey(name))
             {
                 Debug.Fail($"object member access {name} is already declared");
                 return;
@@ -1198,6 +1213,12 @@ namespace CHash2Das
 
         string onUsing(UsingDirectiveSyntax u)
         {
+            usingRename.TryGetValue(u.Name.ToString(), out UsingRenameDelegate rename);
+            if (rename != null || usingRename.TryGetValue("*", out rename))
+            {
+                var usingValue = rename.Invoke(this, u.Name.ToString());
+                return usingValue ?? "";
+            }
             return $"// using {u.Name}\n";
         }
 
@@ -2031,7 +2052,7 @@ namespace CHash2Das
             if (requirements.Count > 0)
             {
                 var requirementsStr = string.Join("\nrequire ", requirements);
-                result = $"require {requirementsStr}\n\n{result}";
+                result = $"require {requirementsStr}\n{result}";
             }
             if (topLevel.Count > 0)
             {

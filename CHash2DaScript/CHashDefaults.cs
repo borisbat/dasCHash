@@ -95,6 +95,16 @@ namespace CHash2Das
             return res;
         }
 
+        static CHashConverter.TypeRenameDelegate req(CHashConverter.TypeRenameDelegate sub, string module_name)
+        {
+            CHashConverter.TypeRenameDelegate res = delegate (CHashConverter converter, TypeData td)
+            {
+                converter.addRequirement(module_name);
+                return sub(converter, td);
+            };
+            return res;
+        }
+
         static CHashConverter.InvocationDelegate das_fn(string fnName)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
@@ -192,6 +202,20 @@ namespace CHash2Das
             return res;
         }
 
+        static string das_default_using(CHashConverter converter, string value)
+        {
+            return $"// using {value}";
+        }
+
+        static CHashConverter.UsingRenameDelegate das_using(string value)
+        {
+            CHashConverter.UsingRenameDelegate res = delegate (CHashConverter converter, string usingName)
+            {
+                return $"require {value}";
+            };
+            return res;
+        }
+
         public static void registerInvocations(CHashConverter converter)
         {
             converter.addMethod(new TypeField() { type = nameof(Console), ns = SystemNS, field = nameof(Console.Write) }, das_Write);
@@ -218,6 +242,11 @@ namespace CHash2Das
             converter.addObjectMethod("ToString", das_ToString);
 
             converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
+
+            converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
+
+            // converter.renameUsing("System.Collections.Generic", das_using("daslib/array_boost"));
+            converter.renameUsing("*", das_default_using);
         }
     }
 }
