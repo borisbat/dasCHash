@@ -95,6 +95,16 @@ namespace CHash2Das
             return res;
         }
 
+        static CHashConverter.TypeRenameDelegate req(CHashConverter.TypeRenameDelegate sub, string module_name)
+        {
+            CHashConverter.TypeRenameDelegate res = delegate (CHashConverter converter, TypeData td)
+            {
+                converter.addRequirement(module_name);
+                return sub(converter, td);
+            };
+            return res;
+        }
+
         static CHashConverter.InvocationDelegate das_fn(string fnName)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
@@ -218,6 +228,8 @@ namespace CHash2Das
             converter.addObjectMethod("ToString", das_ToString);
 
             converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
+
+            converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
         }
     }
 }
