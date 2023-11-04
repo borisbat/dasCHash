@@ -1211,7 +1211,10 @@ namespace CHash2Das
         string onUsing(UsingDirectiveSyntax u)
         {
             if (usingRename.TryGetValue(u.Name.ToString(), out UsingRenameDelegate rename))
-                return $"require {rename.Invoke(this, u.Name.ToString())}\n";
+            {
+                var usingName = rename.Invoke(this, u.Name.ToString());
+                return string.IsNullOrEmpty(usingName) ? "" : $"require {usingName}\n";
+            }
             return $"// using {u.Name}\n"; // TODO:
         }
 
