@@ -1,6 +1,7 @@
 ﻿using static System.Console;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace HelloWorld
 {
@@ -590,7 +591,7 @@ namespace HelloWorld
             Console.WriteLine(str);
         }
     }
-    
+
     class AsIsTester
     {
         static void testit()
@@ -613,6 +614,18 @@ namespace HelloWorld
         {
             var z = set13(out int t) + set13(out int q);
             Console.WriteLine($"{t} - {q}");
+        }
+
+        IEnumerator Get()
+        {
+            yield break;
+        }
+
+        IEnumerator<string> GetNames()
+        {
+            yield return "Foo";
+            yield return 1.ToString();
+            yield return true.ToString();
         }
     }
 }
