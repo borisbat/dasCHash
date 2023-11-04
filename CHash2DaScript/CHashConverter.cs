@@ -304,6 +304,9 @@ namespace CHash2Das
             return className;
         }
 
+        /// <summary>
+        /// Rename a using statement, pass "*" to rename all usings
+        /// </summary>
         public void renameUsing(string usingName, UsingRenameDelegate ur, bool override_ = false)
         {
             if (!override_ && usingRename.ContainsKey(key: usingName))
@@ -1210,12 +1213,13 @@ namespace CHash2Das
 
         string onUsing(UsingDirectiveSyntax u)
         {
-            if (usingRename.TryGetValue(u.Name.ToString(), out UsingRenameDelegate rename))
+            usingRename.TryGetValue(u.Name.ToString(), out UsingRenameDelegate rename);
+            if (rename != null || usingRename.TryGetValue("*", out rename))
             {
-                var usingName = rename.Invoke(this, u.Name.ToString());
-                return string.IsNullOrEmpty(usingName) ? "" : $"require {usingName}\n";
+                var usingValue = rename.Invoke(this, u.Name.ToString());
+                return usingValue ?? "";
             }
-            return $"// using {u.Name}\n"; // TODO:
+            return $"// using {u.Name}\n";
         }
 
         string onNamespaceDeclaration(NamespaceDeclarationSyntax namespaceDeclaration)

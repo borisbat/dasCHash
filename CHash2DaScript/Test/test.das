@@ -116,7 +116,6 @@ require daslib/coroutines
 // using System
 // using System.Collections.Generic
 // using System.Collections
-
 // namespaced HelloWorld
 // enum )
 struct TestStruct
