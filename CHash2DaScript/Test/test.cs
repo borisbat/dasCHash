@@ -291,6 +291,7 @@ namespace HelloWorld
             int[,] c = new int[10, 20];
             int[] d = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
             int[] dd = new int[] { 0, 1, 2, 4, 5 };
+            WriteLine($"add {dd} len {dd.Length}");
         }
 
         static void forEachLoop()
@@ -574,6 +575,11 @@ namespace HelloWorld
         {
             // Use this to qualify the members of the class
             // instead of the constructor parameters.
+            this.name = name_;
+            this.alias = alias_;
+        }
+        public void Set(string name_, string alias_)
+        {
             var a = delegate ()
             {
                 this.name = name_;
@@ -587,7 +593,7 @@ namespace HelloWorld
                 this.alias = alias_;
             });
 
-            var str = invokeMyAction((val) => { return val.ToString(); });
+            var str = invokeMyAction((int val) => { return val.ToString(); });
             Console.WriteLine(str);
         }
     }
