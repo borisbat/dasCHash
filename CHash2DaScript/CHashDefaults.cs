@@ -239,6 +239,8 @@ namespace CHash2Das
             converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Sort" }, das_method_noargs("sort"));
             converter.addField(new TypeField() { type = "List`1", ns = CollectionNS, field = "Count" }, das_raw_member(" |> length()"));
 
+            converter.addField(new TypeField() { type = nameof(Array), ns = SystemNS, field = nameof(Array.Length) }, das_raw_member(" |> length()"));
+
             converter.addObjectMethod("ToString", das_ToString);
 
             converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
