@@ -1755,6 +1755,23 @@ namespace CHash2Das
                     return $"{tabstr}return false\n";
                 case SyntaxKind.YieldReturnStatement:
                     return $"{tabstr}yield {onExpressionSyntax((statement as YieldStatementSyntax).Expression)}\n";
+                case SyntaxKind.TryStatement:
+                    {
+                        var tryStatement = statement as TryStatementSyntax;
+                        var result = $"{tabstr}try\n{onBlockSyntax(tryStatement.Block)}";
+                        if (tryStatement.Catches.Count > 0)
+                        {
+                            result += $"{tabstr}recover\n";// {onCatchClause(catchClause)}";
+                            foreach (var catchClause in tryStatement.Catches)
+                            {
+                                result += $"{tabstr}\t// {catchClause.Declaration}\n";
+                                result += onBlockSyntax(catchClause.Block);
+                            }
+                        }
+                        if (tryStatement.Finally != null)
+                            result += $"{tabstr}finally\n{onBlockSyntax(tryStatement.Finally.Block)}";
+                        return result;
+                    }
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";

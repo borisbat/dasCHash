@@ -618,8 +618,15 @@ namespace HelloWorld
 
         static void testit()
         {
-            var z = set13(out int t) + set13(out int q);
-            Console.WriteLine($"{t} - {q}");
+            try
+            {
+                var z = set13(out int t) + set13(out int q);
+                Console.WriteLine($"{t} - {q}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         IEnumerator Get()
