@@ -403,6 +403,23 @@ namespace HelloWorld
             d.Add(new SFoo() { a = 3 });
             Console.WriteLine($"d = {d.ToString()}");
             bool consoleCapsLock = Console.CapsLock;
+
+            List<int> empty = new List<int>();
+            empty ??= new List<int>();
+            empty.Add(13);
+            Console.WriteLine($"empty = {empty.ToString()}");
+
+            var arr = empty ?? new List<int>();
+            WriteLine(arr);
+
+        }
+
+        void testNullCoalescing(int? a)
+        {
+            var b = a ?? 2;
+            Console.WriteLine($"b = {b}");
+            a ??= 10;
+            Console.WriteLine($"a = {a}");
         }
 
         void conditional_expression()

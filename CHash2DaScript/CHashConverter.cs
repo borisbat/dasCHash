@@ -234,6 +234,11 @@ namespace CHash2Das
                         var cname = type as QualifiedNameSyntax;
                         return $"{onTypeSyntax(cname.Left)}::{onTypeSyntax(cname.Right)}";
                     }
+                case SyntaxKind.NullableType:
+                    {
+                        var ntype = type as NullableTypeSyntax;
+                        return $"{onTypeSyntax(ntype.ElementType)}?";
+                    }
                 default:
                     Fail($"unsupported TypeSyntax {type.Kind()}");
                     return $"{type}";
@@ -792,18 +797,20 @@ namespace CHash2Das
                 }
             }
             var newCall = isPointerType(resType.Type) ? "new " : "";
+            var typeName = onTypeSyntax(oce.Type);
+            var complexInit = init.Length > 0 || typeName.StartsWith("array<") || typeName.StartsWith("table<");
             if (oce.ArgumentList != null && oce.ArgumentList.Arguments.Count > 0)
             {
                 var arguments = oce.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)).Aggregate((current, next) => $"{current}, {next}");
-                if (init.Length > 0)
-                    return $"{newCall}[[{onTypeSyntax(oce.Type)}({arguments}){init} ]]";
+                if (complexInit)
+                    return $"{newCall}[[{typeName}({arguments}){init} ]]";
                 else
-                    return $"{newCall}{onTypeSyntax(oce.Type)}({arguments})";
+                    return $"{newCall}{typeName}({arguments})";
             }
-            if (init.Length > 0)
-                return $"{newCall}[[{onTypeSyntax(oce.Type)}(){init} ]]";
+            if (complexInit)
+                return $"{newCall}[[{typeName}(){init} ]]";
             else
-                return $"{newCall}{onTypeSyntax(oce.Type)}()";
+                return $"{newCall}{typeName}()";
         }
 
         private string onObjectCreationExpression_Table(ObjectCreationExpressionSyntax oce)
@@ -1263,6 +1270,28 @@ namespace CHash2Das
                         var tabstr = new string('\t', tabs);
                         appendDecl($"{tabstr}var {des.Identifier.Text} : {onTypeSyntax(decs.Type)}\n");
                         return $"{des.Identifier.Text}";
+                    }
+                case SyntaxKind.CoalesceExpression:
+                    {
+                        var ce = expression as BinaryExpressionSyntax;
+                        var l = onExpressionSyntax(ce.Left);
+                        var r = onExpressionSyntax(ce.Right);
+                        var nullableType = semanticModel.GetTypeInfo(ce.Left).Type?.MetadataName == "Nullable`1";
+                        if (nullableType)
+                        {
+                            return $"({l} ?? {r})";
+                        }
+                        return $"({l} != null ? {l} : {r})";
+                    }
+                case SyntaxKind.CoalesceAssignmentExpression:
+                    {
+                        var cae = expression as AssignmentExpressionSyntax;
+                        var l = onExpressionSyntax(cae.Left);
+                        var r = onExpressionSyntax(cae.Right);
+                        var nullableType = semanticModel.GetTypeInfo(cae.Left).Type?.MetadataName == "Nullable`1";
+                        var derefPrefix = nullableType ? "*" : "";
+                        var tabstr = new string('\t', tabs);
+                        return $"if ({l} == null)\n{tabstr}\t{derefPrefix}{l} = {r}\n";
                     }
                 default:
                     {
