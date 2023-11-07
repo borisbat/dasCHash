@@ -202,16 +202,11 @@ namespace CHash2Das
             return res;
         }
 
-        static string das_default_using(CHashConverter converter, string value)
-        {
-            return $"// using {value}";
-        }
-
         static CHashConverter.UsingRenameDelegate das_using(string value)
         {
             CHashConverter.UsingRenameDelegate res = delegate (CHashConverter converter, string usingName)
             {
-                return $"require {value}";
+                return $"{value}";
             };
             return res;
         }
@@ -247,8 +242,7 @@ namespace CHash2Das
 
             converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
 
-            // converter.renameUsing("System.Collections.Generic", das_using("daslib/array_boost"));
-            converter.renameUsing("*", das_default_using);
+            // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));
         }
     }
 }

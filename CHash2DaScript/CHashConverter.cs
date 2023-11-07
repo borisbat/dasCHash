@@ -164,7 +164,7 @@ namespace CHash2Das
                             case "IEnumerator":
                                 return $"iterator<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}>";
                         }
-                        Fail($"unsupported TypeSyntax {genn}");
+                        // Fail($"unsupported TypeSyntax {genn}");
                         return $"{type}";
                     }
                 case SyntaxKind.QualifiedName:
@@ -195,7 +195,7 @@ namespace CHash2Das
         {
             if (!override_ && onInvExpr.ContainsKey(key))
             {
-                Debug.Fail("invocation expression {key} is already declared");
+                Fail("invocation expression {key} is already declared");
                 return;
             }
             onInvExpr[key] = inv;
@@ -205,7 +205,7 @@ namespace CHash2Das
         {
             if (!override_ && methodInvExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
+                Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             methodInvExpr[typeWithMethod] = inv;
@@ -243,7 +243,7 @@ namespace CHash2Das
         {
             if (!override_ && objectInvExpr.ContainsKey(member))
             {
-                Debug.Fail($"method Object.{member} is already declared");
+                Fail($"method Object.{member} is already declared");
                 return;
             }
             objectInvExpr[member] = inv;
@@ -253,7 +253,7 @@ namespace CHash2Das
         {
             if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
+                Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
@@ -283,7 +283,7 @@ namespace CHash2Das
         {
             if (!override_ && typesRename.ContainsKey(type))
             {
-                Debug.Fail($"type rename for {type.type} is already declared");
+                Fail($"type rename for {type.type} is already declared");
                 return;
             }
             typesRename[type] = tr;
@@ -309,9 +309,9 @@ namespace CHash2Das
         /// </summary>
         public void renameUsing(string usingName, UsingRenameDelegate ur, bool override_ = false)
         {
-            if (!override_ && usingRename.ContainsKey(key: usingName))
+            if (!override_ && usingRename.ContainsKey(usingName))
             {
-                Debug.Fail($"using {usingName} is already declared");
+                Fail($"using {usingName} is already declared");
                 return;
             }
             usingRename[usingName] = ur;
@@ -321,7 +321,7 @@ namespace CHash2Das
         {
             if (!override_ && objectMemberAccessExpr.ContainsKey(name))
             {
-                Debug.Fail($"object member access {name} is already declared");
+                Fail($"object member access {name} is already declared");
                 return;
             }
             objectMemberAccessExpr[name] = acc;
