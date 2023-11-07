@@ -23,6 +23,12 @@ namespace CHash2Das
         List<string> requirements = new List<string>();
         List<string> topLevel = new List<string>();
 
+        Dictionary<TypeData, ClassDeclarationSyntax> genericTypes = new Dictionary<TypeData, ClassDeclarationSyntax>();
+        HashSet<TypeData> dummyTypes = new HashSet<TypeData>();
+
+        HashSet<TemplateInstance> instantiateTemplates = new HashSet<TemplateInstance>();
+        HashSet<string> instantiatedTemplates = new HashSet<string>();
+
         public void addRequirement(string module_name)
         {
             if (!requirements.Contains(module_name))
@@ -52,6 +58,31 @@ namespace CHash2Das
             if (ts == null)
                 return "var"; // unknown (auto) type
             var tt = semanticModel.GetTypeInfo(ts);
+            if (tt.Type is ITypeParameterSymbol tps)
+            {
+                var td = new TypeData()
+                {
+                    type = tps.Name,
+                    ns = tps.DeclaringType.Name,
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+                var contType = semanticModel.GetSymbolInfo(ts).Symbol?.ContainingType;
+                if (contType != null)
+                {
+                    td = new TypeData()
+                    {
+                        type = tps.ToString(),
+                        ns = contType.Name,
+                    };
+                    if (typesRename.TryGetValue(td, out rename))
+                    {
+                        return rename(this, td);
+                    }
+                }
+            }
             var txt = onTypeSyntax(ts);
             if (isPointerType(tt.Type)) txt += "?";
             return txt;
@@ -67,11 +98,24 @@ namespace CHash2Das
             var td = new TypeData()
             {
                 type = type.ToString(),
-                ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString()
+                ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString(),
             };
             if (typesRename.TryGetValue(td, out var rename))
             {
                 return rename(this, td);
+            }
+            var contType = semanticModel.GetSymbolInfo(type).Symbol?.ContainingType;
+            if (contType != null)
+            {
+                td = new TypeData()
+                {
+                    type = type.ToString(),
+                    ns = contType.Name,
+                };
+                if (typesRename.TryGetValue(td, out rename))
+                {
+                    return rename(this, td);
+                }
             }
 
             switch (type.Kind())
@@ -164,8 +208,26 @@ namespace CHash2Das
                             case "IEnumerator":
                                 return $"iterator<{onTypeSyntax(genn.TypeArgumentList.Arguments[0])}>";
                         }
-                        Fail($"unsupported TypeSyntax {genn}");
-                        return $"{type}";
+                        // Fail($"unsupported TypeSyntax {genn}");
+                        var args = genn.TypeArgumentList.Arguments.Select(arg => onTypeSyntax(arg)).ToArray();
+                        var argsVal = genn.TypeArgumentList.Arguments.Count > 0 ? $"_{string.Join("_", args)}" : "";
+                        foreach (var arg in genn.TypeArgumentList.Arguments)
+                        {
+                            // register type instance only if type argument is a known type
+                            if (semanticModel.GetTypeInfo(arg).Type is INamedTypeSymbol ntype)
+                            {
+                                if (!ntype.IsDefinition)
+                                {
+                                    instantiateTemplate(new TypeData()
+                                    {
+                                        type = genn.Identifier.Text,
+                                        ns = semanticModel.GetSymbolInfo(genn).Symbol.ContainingNamespace?.ToDisplayString(),
+                                    }, args);
+                                    break;
+                                }
+                            }
+                        }
+                        return $"{genn.Identifier.Text}{argsVal}";
                     }
                 case SyntaxKind.QualifiedName:
                     {
@@ -191,11 +253,29 @@ namespace CHash2Das
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
         Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
 
+        struct TemplateInstance
+        {
+            public TypeData typeData;
+            public string[] paramNames;
+
+            public override int GetHashCode()
+            {
+                var hash = typeData.GetHashCode();
+                foreach (var param in paramNames)
+                {
+                    hash = hash * 23 + param.GetHashCode();
+                }
+                return hash;
+            }
+        }
+
+        Stack<string[]> currentClassParams = new Stack<string[]>();
+
         public void addInvocation(string key, InvocationDelegate inv, bool override_ = false)
         {
             if (!override_ && onInvExpr.ContainsKey(key))
             {
-                Debug.Fail("invocation expression {key} is already declared");
+                Fail("invocation expression {key} is already declared");
                 return;
             }
             onInvExpr[key] = inv;
@@ -205,7 +285,7 @@ namespace CHash2Das
         {
             if (!override_ && methodInvExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
+                Fail($"method {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             methodInvExpr[typeWithMethod] = inv;
@@ -243,7 +323,7 @@ namespace CHash2Das
         {
             if (!override_ && objectInvExpr.ContainsKey(member))
             {
-                Debug.Fail($"method Object.{member} is already declared");
+                Fail($"method Object.{member} is already declared");
                 return;
             }
             objectInvExpr[member] = inv;
@@ -253,7 +333,7 @@ namespace CHash2Das
         {
             if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
             {
-                Debug.Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
+                Fail($"member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
                 return;
             }
             memberAccessExpr[typeWithMethod] = acc;
@@ -283,10 +363,15 @@ namespace CHash2Das
         {
             if (!override_ && typesRename.ContainsKey(type))
             {
-                Debug.Fail($"type rename for {type.type} is already declared");
+                Fail($"type rename for {type.type} is already declared");
                 return;
             }
             typesRename[type] = tr;
+        }
+
+        public bool removeRenameType(TypeData type)
+        {
+            return typesRename.Remove(type);
         }
 
         public string getTypeName(INamedTypeSymbol ts)
@@ -309,9 +394,9 @@ namespace CHash2Das
         /// </summary>
         public void renameUsing(string usingName, UsingRenameDelegate ur, bool override_ = false)
         {
-            if (!override_ && usingRename.ContainsKey(key: usingName))
+            if (!override_ && usingRename.ContainsKey(usingName))
             {
-                Debug.Fail($"using {usingName} is already declared");
+                Fail($"using {usingName} is already declared");
                 return;
             }
             usingRename[usingName] = ur;
@@ -321,10 +406,19 @@ namespace CHash2Das
         {
             if (!override_ && objectMemberAccessExpr.ContainsKey(name))
             {
-                Debug.Fail($"object member access {name} is already declared");
+                Fail($"object member access {name} is already declared");
                 return;
             }
             objectMemberAccessExpr[name] = acc;
+        }
+
+        public void instantiateTemplate(TypeData typeData, string[] paramNames)
+        {
+            instantiateTemplates.Add(new TemplateInstance()
+            {
+                typeData = typeData,
+                paramNames = paramNames
+            });
         }
 
         public string onArgumentListSyntax(InvocationExpressionSyntax inv)
@@ -683,8 +777,8 @@ namespace CHash2Das
             {
                 return onObjectCreationExpression_ClassOrStruct(oce, restype);
             }
-            Fail($"unsupported object creation {oce}");
-            return $"{oce}";
+            // Fail($"unsupported object creation {oce}");
+            return onObjectCreationExpression_ClassOrStruct(oce, restype);
         }
 
         private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce, TypeInfo resType)
@@ -1235,11 +1329,82 @@ namespace CHash2Das
             return result;
         }
 
+        string parentNamespace(SyntaxNode? st)
+        {
+            var parentToken = st;
+            while (parentToken != null)
+            {
+                if (parentToken is NamespaceDeclarationSyntax nsSyntax)
+                    return nsSyntax.Name.ToString();
+                parentToken = parentToken.Parent;
+            }
+            return "";
+        }
+
         string onClassDeclaration(ClassDeclarationSyntax classDeclaration)
         {
+            var result = "";
+            var hasInstances = false;
+            if (classDeclaration.TypeParameterList != null)
+            {
+                var ns = parentNamespace(classDeclaration);
+                genericTypes[new TypeData { type = classDeclaration.Identifier.ToString(), ns = ns }] = classDeclaration;
+                // stub declaration to register new type instances
+                onClassDeclaration_(classDeclaration, new string[0], /*dry run*/ true);
+
+                foreach (var inst in instantiateTemplates)
+                {
+                    if (inst.typeData.type == classDeclaration.Identifier.ToString() && inst.typeData.ns == ns)
+                    {
+                        hasInstances = true;
+                        result = "\b"; // remove new line
+                        break;
+                    }
+                }
+                if (!hasInstances)
+                {
+                    dummyTypes.Add(new TypeData { type = classDeclaration.Identifier.ToString(), ns = ns });
+                    // result += onClassDeclaration_(classDeclaration, new string[0]);
+                }
+            }
+            else
+            {
+                // default instance
+                result += onClassDeclaration_(classDeclaration, new string[0]);
+            }
+            return result;
+        }
+
+        string onClassDeclaration_(ClassDeclarationSyntax classDeclaration, string[] paramNames, bool dryRun = false)
+        {
             BaseListSyntax? baseList = classDeclaration.BaseList;
+            var paramsVal = paramNames.Length > 0 ? $"_{string.Join("_", paramNames)}" : classDeclaration.TypeParameterList != null ? "_" + classDeclaration.TypeParameterList.Parameters.Select(p => p.Identifier.Text).Aggregate((current, next) => $"{current}_{next}") : "";
             var parent = baseList != null ? $" : {baseList.Types[0]}" : "";
-            var result = $"class {classDeclaration.Identifier}{parent}\n";
+            var result = $"class {classDeclaration.Identifier}{paramsVal}{parent}\n";
+            if (instantiatedTemplates.Contains(result))
+                return "";
+
+            if (!dryRun)
+            {
+                instantiatedTemplates.Add(result);
+                dummyTypes.Remove(new TypeData { type = classDeclaration.Identifier.ToString(), ns = parentNamespace(classDeclaration) });
+            }
+            currentClassParams.Push(paramNames);
+            var paramsData = new List<TypeData>();
+            if (paramNames.Length > 0 && classDeclaration.TypeParameterList != null)
+            {
+                var idx = 0;
+                foreach (TypeParameterSyntax param in classDeclaration.TypeParameterList.Parameters)
+                {
+                    var typeData = new TypeData { type = param.Identifier.Text, ns = classDeclaration.Identifier.ToString() };
+                    paramsData.Add(typeData);
+                    var newName = paramNames[idx++];
+                    renameType(typeData, (CHashConverter converter, TypeData ts) =>
+                    {
+                        return newName;
+                    }, true);
+                }
+            }
             tabs++;
             TextSpan prevSpan = new TextSpan(classDeclaration.Span.Start, 1);
             foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
@@ -1249,6 +1414,11 @@ namespace CHash2Das
                 prevSpan = membersDeclaration.Span;
             }
             tabs--;
+            foreach (var param in paramsData)
+            {
+                removeRenameType(param);
+            }
+            currentClassParams.Pop();
             return result;
         }
 
@@ -1296,7 +1466,15 @@ namespace CHash2Das
         string onConstructorDeclaration(ConstructorDeclarationSyntax methodDeclaration)
         {
             var tabstr = new string('\t', tabs);
-            var result = $"{tabstr}def {methodDeclaration.Identifier}";
+            var genericParams = "";
+            if (methodDeclaration.Parent is ClassDeclarationSyntax)
+            {
+                if (currentClassParams.TryPeek(out string[] paramNames) && paramNames.Length > 0)
+                {
+                    genericParams = $"_{string.Join("_", paramNames)}";
+                }
+            }
+            var result = $"{tabstr}def {methodDeclaration.Identifier}{genericParams}";
             if (methodDeclaration.ParameterList.Parameters.Count != 0)
             {
                 var parameters = methodDeclaration.ParameterList.Parameters
@@ -1755,6 +1933,23 @@ namespace CHash2Das
                     return $"{tabstr}return false\n";
                 case SyntaxKind.YieldReturnStatement:
                     return $"{tabstr}yield {onExpressionSyntax((statement as YieldStatementSyntax).Expression)}\n";
+                case SyntaxKind.TryStatement:
+                    {
+                        var tryStatement = statement as TryStatementSyntax;
+                        var result = $"{tabstr}try\n{onBlockSyntax(tryStatement.Block)}";
+                        if (tryStatement.Catches.Count > 0)
+                        {
+                            result += $"{tabstr}recover\n";// {onCatchClause(catchClause)}";
+                            foreach (var catchClause in tryStatement.Catches)
+                            {
+                                result += $"{tabstr}\t// {catchClause.Declaration}\n";
+                                result += onBlockSyntax(catchClause.Block);
+                            }
+                        }
+                        if (tryStatement.Finally != null)
+                            result += $"{tabstr}finally\n{onBlockSyntax(tryStatement.Finally.Block)}";
+                        return result;
+                    }
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
@@ -2059,6 +2254,25 @@ namespace CHash2Das
                 var topLevelStr = string.Join("\n", topLevel);
                 result = $"{topLevelStr}\n\n{result}";
             }
+            List<TemplateInstance>? tempList = instantiateTemplates.ToList();
+            instantiateTemplates.Clear();
+            foreach (var inst in tempList)
+            {
+                if (genericTypes.TryGetValue(inst.typeData, out var classDecl))
+                {
+                    result += onClassDeclaration_(classDecl, inst.paramNames);
+                }
+            }
+            // dummy types, that were not instantiated but exist in code
+            foreach (var td in dummyTypes)
+            {
+                if (genericTypes.TryGetValue(td, out var classDecl))
+                {
+                    result += onClassDeclaration_(classDecl, new string[0]);
+                }
+            }
+            instantiatedTemplates.Clear();
+            genericTypes.Clear();
             return ProcessBackspaces(result);
         }
     }
