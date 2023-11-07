@@ -518,6 +518,62 @@ namespace HelloWorld
         }
     }
 
+    class Vec<T>
+    {
+        public T x;
+        public T y;
+        public T z;
+
+        public Vec(T x_, T y_, T z_)
+        {
+            x = x_;
+            y = y_;
+            z = z_;
+        }
+
+        string toString()
+        {
+            return $"({x}, {y}, {z})";
+        }
+
+        void testGenerics()
+        {
+            var v1 = new Vec<int>(1, 2, 3);
+            var v2 = new Vec<float>(1, 2, 3);
+            WriteLine(v1.ToString());
+            WriteLine(v2.ToString());
+            WriteLine(new Vec<bool>(true, true, false).ToString());
+        }
+    }
+
+    class Cont<T> where T : new()
+    {
+        public T pop()
+        {
+            var res = new T();
+            return res;
+        }
+    }
+
+    class ContTest
+    {
+        void testCont()
+        {
+            var cont = new Cont<TestStruct>();
+            var t = cont.pop();
+            Console.WriteLine(t.x);
+        }
+    }
+
+    class UnusedCont<T> where T : new()
+    {
+        public T pop()
+        {
+            var res = new T();
+            return res;
+        }
+    }
+
     public class StaticPerson
     {
         public static string FirstName

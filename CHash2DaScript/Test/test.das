@@ -1,11 +1,13 @@
 // Compilation errors:
 //CS5001: Program does not contain a static 'Main' method suitable for an entry point at None
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16566..16575))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16558..16575))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([596..605))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([588..605))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13900..13909))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13892..13909))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15502..15511))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15494..15511))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14964..14973))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14956..14973))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14418..14427))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14410..14427))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([12760..12769))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([12752..12769))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([968..977))
@@ -48,12 +50,15 @@
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([2467..2484))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([3669..3678))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([3661..3678))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15318..15327))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15310..15327))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15837..15846))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15829..15846))
-//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15946..15955))
-//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([15938..15955))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([13966..13975))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14004..14013))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([14042..14051))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16901..16910))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16893..16910))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([17010..17019))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([17002..17019))
+//CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16382..16391))
+//CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([16374..16391))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([5693..5702))
 //CS0012: The type 'Decimal' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([5685..5702))
 //CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a reference to assembly 'System.Runtime, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'. at SourceFile([5790..5799))
@@ -587,6 +592,15 @@ class Cube : Shape
 		side = math::sqrt((value / 6d))
 
 
+
+class ContTest
+	def testCont : void
+		var cont = new Cont_TestStruct()
+		var t = cont->pop()
+		print("{t.x}\n")
+
+
+
 class StaticPerson
 	// static property FirstName : string
 	def static get__FirstName : string
@@ -682,4 +696,80 @@ class TestDeclarationExpression
 		yield "{1}"
 		yield "{true}"
 
+
+class Vec_int
+	x : int
+
+	y : int
+
+	z : int
+
+	def Vec_int (var x_ : int; var y_ : int; var z_ : int)
+		x = x_
+		y = y_
+		z = z_
+
+	def toString : string
+		return "({x}, {y}, {z})"
+
+	def testGenerics : void
+		var v1 = new Vec_int(1, 2, 3)
+		var v2 = new Vec_float(1f, 2f, 3f)
+		print("{*v1}\n")
+		print("{*v2}\n")
+		print("{*new Vec_bool(true, true, false)}\n")
+
+class Vec_float
+	x : float
+
+	y : float
+
+	z : float
+
+	def Vec_float (var x_ : float; var y_ : float; var z_ : float)
+		x = x_
+		y = y_
+		z = z_
+
+	def toString : string
+		return "({x}, {y}, {z})"
+
+	def testGenerics : void
+		var v1 = new Vec_int(1, 2, 3)
+		var v2 = new Vec_float(1f, 2f, 3f)
+		print("{*v1}\n")
+		print("{*v2}\n")
+		print("{*new Vec_bool(true, true, false)}\n")
+
+class Vec_bool
+	x : bool
+
+	y : bool
+
+	z : bool
+
+	def Vec_bool (var x_ : bool; var y_ : bool; var z_ : bool)
+		x = x_
+		y = y_
+		z = z_
+
+	def toString : string
+		return "({x}, {y}, {z})"
+
+	def testGenerics : void
+		var v1 = new Vec_int(1, 2, 3)
+		var v2 = new Vec_float(1f, 2f, 3f)
+		print("{*v1}\n")
+		print("{*v2}\n")
+		print("{*new Vec_bool(true, true, false)}\n")
+
+class Cont_TestStruct
+	def pop : TestStruct
+		var res : TestStruct = TestStruct()
+		return res
+
+class UnusedCont_T
+	def pop : T
+		var res = T()
+		return res
 

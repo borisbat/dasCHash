@@ -241,6 +241,7 @@ namespace CHash2Das
             converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
 
             converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
+            // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
 
             // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));
         }
