@@ -53,6 +53,23 @@ namespace CHash2Das
             Console.WriteLine(message);
         }
 
+        string onVarTypeSyntax(TypeInfo tt)
+        {
+            if (tt.Type is ITypeParameterSymbol tps)
+            {
+                var td = new TypeData()
+                {
+                    type = tps.Name,
+                    ns = tps.DeclaringType.Name,
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+            }
+            var res = dasTypeName(tt.Type);
+            return res ?? tt.Type.Name;
+        }
         string onVarTypeSyntax(TypeSyntax ts)
         {
             if (ts == null)
@@ -87,6 +104,7 @@ namespace CHash2Das
             if (isPointerType(tt.Type)) txt += "?";
             return txt;
         }
+
 
         string onTypeSyntax(TypeSyntax type)
         {
@@ -1289,9 +1307,13 @@ namespace CHash2Das
                         var l = onExpressionSyntax(cae.Left);
                         var r = onExpressionSyntax(cae.Right);
                         var nullableType = semanticModel.GetTypeInfo(cae.Left).Type?.MetadataName == "Nullable`1";
-                        var derefPrefix = nullableType ? "*" : "";
                         var tabstr = new string('\t', tabs);
-                        return $"if ({l} == null)\n{tabstr}\t{derefPrefix}{l} = {r}\n";
+                        if (nullableType)
+                        {
+                            var defType = semanticModel.GetTypeInfo(cae);
+                            return $"if ({l} == null)\n{tabstr}\t {l} = new [[{onVarTypeSyntax(defType)}]]\n{tabstr}\t*{l} = {r}\n";
+                        }
+                        return $"if ({l} == null)\n{tabstr}\t{l} = {r}\n";
                     }
                 default:
                     {
