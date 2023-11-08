@@ -409,7 +409,8 @@ namespace CHash2Das
             {
                 className = rename(this, td);
             }
-            return className;
+            var dasType = dasTypeName(ts);
+            return dasType != "" ? dasType : className;
         }
 
         /// <summary>
@@ -444,46 +445,60 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool generic_types)
         {
-            if (inv.ArgumentList.Arguments.Count > 0)
+            var typeArgsVal = "";
+            var argsVal = "";
+            var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+            if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
             {
-                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
-                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                if (generic_types && methodSymbol.TypeArguments.Length > 0)
                 {
-                    if (isDelegate(methodSymbol.Parameters.Last().Type))
-                    {
-                        var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
-                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
-                        return $"({args}) <| {lastArg}";
-                    }
+                    var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
+                    typeArgsVal = string.Join(", ", typeArgs);
+                }
+                if (inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.Last().Type))
+                {
+                    var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
+                    var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
+                    argsVal = $"{args}) <| {lastArg}";
                 }
             }
+            if (argsVal.Length == 0)
             {
-                var args = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
-                return $"({args})";
+                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression))) + ")";
             }
+            if (typeArgsVal.Length > 0 && inv.ArgumentList.Arguments.Count > 0)
+                return $"({typeArgsVal}, {argsVal}";
+            return $"({typeArgsVal}{argsVal}";
         }
 
-        public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv)
+        public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv, bool generic_types)
         {
-            if (inv.ArgumentList.Arguments.Count > 0)
+            var typeArgsVal = "";
+            var argsVal = "";
+            var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
+            if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
             {
-                var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
-                if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
+                if (generic_types && methodSymbol.TypeArguments.Length > 0)
                 {
-                    if (isDelegate(methodSymbol.Parameters.First().Type))
-                    {
-                        var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
-                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
-                        return $"({args}) <| {lastArg}";
-                    }
+                    var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
+                    typeArgsVal = string.Join(", ", typeArgs);
+                }
+                if (inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.First().Type))
+                {
+                    var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                    var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
+                    argsVal = $"{args}) <| {lastArg}";
                 }
             }
+            if (argsVal.Length == 0)
             {
-                var args = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
-                return $"({args})";
+                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression))) + ")";
             }
+            if (typeArgsVal.Length > 0 && inv.ArgumentList.Arguments.Count > 0)
+                return $"({typeArgsVal}, {argsVal}";
+            return $"({typeArgsVal}{argsVal}";
         }
 
         bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
@@ -519,7 +534,7 @@ namespace CHash2Das
                         {
                             string methodName = methodSymbol.Name; // Name of the method
                             string className = getTypeName(methodSymbol.ContainingType);
-                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
+                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv, false)}";
                         }
                     }
                 }
@@ -544,7 +559,7 @@ namespace CHash2Das
                             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                             IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}{onArgumentListSyntax(inv)}";
+                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}{onArgumentListSyntax(inv, false)}";
                         }
                     }
                 }
@@ -559,7 +574,7 @@ namespace CHash2Das
             }
             if (callText == "")
             {
-                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv)}";
+                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false)}";
             }
             return callText;
         }
@@ -1314,6 +1329,10 @@ namespace CHash2Das
                             return $"if ({l} == null)\n{tabstr}\t {l} = new [[{onVarTypeSyntax(defType)}]]\n{tabstr}\t*{l} = {r}\n";
                         }
                         return $"if ({l} == null)\n{tabstr}\t{l} = {r}\n";
+                    }
+                case SyntaxKind.GenericName:
+                    {
+                        return ""; // onArgumentListSyntax handle this
                     }
                 default:
                     {
