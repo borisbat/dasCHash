@@ -410,7 +410,11 @@ namespace CHash2Das
                 className = rename(this, td);
             }
             var dasType = dasTypeName(ts);
-            return dasType != "" ? dasType : className;
+            if (dasType != "")
+                return dasType;
+            if (isBool(ts))
+                return "bool";
+            return className;
         }
 
         /// <summary>
@@ -559,7 +563,40 @@ namespace CHash2Das
                             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
                             IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{onExpressionSyntax(ma.Expression)}->{methodName}{onArgumentListSyntax(inv, false)}";
+                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
+                            var self = onExpressionSyntax(ma.Expression);
+                            if (self != "")
+                                callText = $"{self}->{callText}";
+                        }
+                    }
+                    else if (inv.Expression.Kind() == SyntaxKind.GenericName)
+                    {
+                        var gns = inv.Expression as GenericNameSyntax;
+                        var genericSymbol = semanticModel.GetSymbolInfo(gns);
+                        InvocationDelegate invExpr = null;
+                        if (genericSymbol.Symbol is IMethodSymbol methodSymbol)
+                        {
+                            getMethod(methodSymbol, out invExpr);
+                        }
+                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {gns.Identifier.Text}");
+                        // getMethod(exprTypeInfo, gns.Identifier.Text, out var invExpr);
+                        if (invExpr == null)
+                        {
+                            objectInvExpr.TryGetValue(gns.Identifier.Text, out invExpr);
+                        }
+                        if (invExpr != null)
+                        {
+                            callText = invExpr(this, inv);
+                        }
+                        else
+                        {
+                            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
+                            IMethodSymbol methodSymbol2 = symbolInfo.Symbol as IMethodSymbol;
+                            var methodName = uniqueMethodName(methodSymbol2);
+                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
+                            var self = onExpressionSyntax(gns);
+                            if (self != "")
+                                callText = $"{self}->{callText}";
                         }
                     }
                 }
@@ -574,6 +611,9 @@ namespace CHash2Das
             }
             if (callText == "")
             {
+                // if (inv.Expression is GenericNameSyntax gns)
+                //     callText = $"{gns.Identifier}{onArgumentListSyntax(inv, true)}";
+                // else
                 callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false)}";
             }
             return callText;
