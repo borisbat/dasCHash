@@ -105,12 +105,12 @@ namespace CHash2Das
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_fn(string fnName)
+        static CHashConverter.InvocationDelegate das_fn(string fnName, bool generic_types = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentListSyntax(inv);
+                var args = converter.onArgumentListSyntax(inv, generic_types);
                 return $"{fnName}{args}";
             };
             return res;
@@ -128,23 +128,23 @@ namespace CHash2Das
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method(string fnName, bool doDeref = true)
+        static CHashConverter.InvocationDelegate das_method(string fnName, bool doDeref = true, bool generic_types = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentListSyntax(inv);
+                var args = converter.onArgumentListSyntax(inv, generic_types);
                 return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
             };
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method_reverse_args(string fnName, bool doDeref = true)
+        static CHashConverter.InvocationDelegate das_method_reverse_args(string fnName, bool doDeref = true, bool generic_types = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
                 var ma = inv.Expression as MemberAccessExpressionSyntax;
-                var args = converter.onArgumentReverseListSyntax(inv);
+                var args = converter.onArgumentReverseListSyntax(inv, generic_types);
                 return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
             };
             return res;
