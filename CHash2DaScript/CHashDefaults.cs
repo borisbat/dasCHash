@@ -255,7 +255,9 @@ namespace CHash2Das
             // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));
 
             // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "StaticGetEmptyCont" }, das_method("__StaticGetEmptyCont"));
+            // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "StaticGetCont" }, das_method("__StaticGetEmptyCont"));
             // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "GetEmptyCont" }, das_method("__GetEmptyCont"));
+            // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "GetCont" }, das_method("__GetCont"));
         }
     }
 }

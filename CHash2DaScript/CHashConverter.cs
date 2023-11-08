@@ -579,7 +579,6 @@ namespace CHash2Das
                             getMethod(methodSymbol, out invExpr);
                         }
                         // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {gns.Identifier.Text}");
-                        // getMethod(exprTypeInfo, gns.Identifier.Text, out var invExpr);
                         if (invExpr == null)
                         {
                             objectInvExpr.TryGetValue(gns.Identifier.Text, out invExpr);
@@ -611,9 +610,6 @@ namespace CHash2Das
             }
             if (callText == "")
             {
-                // if (inv.Expression is GenericNameSyntax gns)
-                //     callText = $"{gns.Identifier}{onArgumentListSyntax(inv, true)}";
-                // else
                 callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false)}";
             }
             return callText;

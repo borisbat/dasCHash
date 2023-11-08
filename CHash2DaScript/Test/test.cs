@@ -598,6 +598,10 @@ namespace HelloWorld
             var intCont = StaticGetCont<int>(10);
             var i = intCont.pop();
             Console.WriteLine(i);
+
+            ContTest contTest = new ContTest();
+            var floatCont = contTest.GetCont<float>(2);
+            WriteLine(floatCont);
         }
         void testCont()
         {
