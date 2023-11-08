@@ -109,7 +109,6 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var ma = inv.Expression as MemberAccessExpressionSyntax;
                 var args = converter.onArgumentListSyntax(inv, generic_types);
                 return $"{fnName}{args}";
             };
@@ -122,19 +121,28 @@ namespace CHash2Das
             {
                 if (inv.ArgumentList.Arguments.Count != 0)
                     converter.Fail($"{fnName} with arguments not supported");
-                var ma = inv.Expression as MemberAccessExpressionSyntax;
                 return $"{fnName}()";
             };
             return res;
+        }
+
+        static string expressionName(CHashConverter converter, InvocationExpressionSyntax inv, bool doDeref)
+        {
+            if (inv.Expression is MemberAccessExpressionSyntax mae)
+                return converter.derefExpr(mae.Expression, doDeref);
+            if (inv.Expression is GenericNameSyntax)
+                return "";
+            return converter.derefExpr(inv.Expression, doDeref);
         }
 
         static CHashConverter.InvocationDelegate das_method(string fnName, bool doDeref = true, bool generic_types = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var ma = inv.Expression as MemberAccessExpressionSyntax;
                 var args = converter.onArgumentListSyntax(inv, generic_types);
-                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
+                var self = expressionName(converter, inv, doDeref);
+                var call = $"{fnName}{args}";
+                return self == "" ? call : $"{self} |> {call}";
             };
             return res;
         }
@@ -143,9 +151,10 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var ma = inv.Expression as MemberAccessExpressionSyntax;
                 var args = converter.onArgumentReverseListSyntax(inv, generic_types);
-                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}{args}";
+                var self = expressionName(converter, inv, doDeref);
+                var call = $"{fnName}{args}";
+                return self == "" ? call : $"{self} |> {call}";
             };
             return res;
         }
@@ -154,21 +163,21 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var ma = inv.Expression as MemberAccessExpressionSyntax;
                 if (inv.ArgumentList.Arguments.Count != 0)
                     converter.Fail($"{fnName} with comparer not supported");
-                return $"{converter.derefExpr(ma.Expression, doDeref)} |> {fnName}()";
+                var self = expressionName(converter, inv, doDeref);
+                var call = $"{fnName}()";
+                return self == "" ? call : $"{self} |> {call}";
             };
             return res;
         }
 
         static string das_ToString(CHashConverter converter, InvocationExpressionSyntax inv)
         {
-            var ma = inv.Expression as MemberAccessExpressionSyntax;
             if (inv.Parent.IsKind(SyntaxKind.Interpolation))
-                return $"{converter.derefExpr(ma.Expression)}";
+                return $"{expressionName(converter, inv, true)}";
             else
-                return $"\"{{{converter.derefExpr(ma.Expression)}}}\"";
+                return $"\"{{{expressionName(converter, inv, true)}}}\"";
         }
 
         /// <summary>
@@ -244,6 +253,9 @@ namespace CHash2Das
             // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
 
             // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));
+
+            // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "StaticGetEmptyCont" }, das_method("__StaticGetEmptyCont"));
+            // converter.addMethod(new TypeField() { type = "ContTest", ns = "HelloWorld", field = "GetEmptyCont" }, das_method("__GetEmptyCont"));
         }
     }
 }

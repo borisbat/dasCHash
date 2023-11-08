@@ -574,16 +574,47 @@ namespace HelloWorld
 
     class ContTest
     {
-        public static Cont<U> GetEmptyCont<U>() where U : new()
+        public Cont<U> StaticGetEmptyCont<U>() where U : new()
         {
             return new Cont<U>();
         }
-        public static Cont<U> GetCont<U>(int size) where U : new()
+        public Cont<U> StaticGetCont<U>(int size) where U : new()
         {
             WriteLine($"size = {size}");
             return new Cont<U>();
         }
+        public Cont<U> GetEmptyCont<U>() where U : new()
+        {
+            return new Cont<U>();
+        }
+        public Cont<U> GetCont<U>(int size) where U : new()
+        {
+            WriteLine($"size = {size}");
+            return new Cont<U>();
+        }
+        void testStaticCont()
+        {
+            var emptyCont = StaticGetEmptyCont<bool>();
+            var intCont = StaticGetCont<int>(10);
+            var i = intCont.pop();
+            Console.WriteLine(i);
+        }
         void testCont()
+        {
+            var cont = new Cont<TestStruct>();
+            var t = cont.pop();
+            Console.WriteLine(t.x);
+
+            var emptyCont = GetEmptyCont<bool>();
+            var intCont = GetCont<int>(10);
+            var i = intCont.pop();
+            Console.WriteLine(i);
+        }
+    }
+
+    class SubContTest : ContTest
+    {
+        void testConts()
         {
             var cont = new Cont<TestStruct>();
             var t = cont.pop();
