@@ -1407,6 +1407,19 @@ namespace CHash2Das
                     {
                         return ""; // onArgumentListSyntax handle this
                     }
+                case SyntaxKind.ConditionalAccessExpression:
+                    {
+                        var cae = expression as ConditionalAccessExpressionSyntax;
+                        var l = onExpressionSyntax(cae.Expression);
+                        var r = onExpressionSyntax(cae.WhenNotNull);
+                        var tabstr = new string('\t', tabs);
+                        return $"if {l} != null\n{tabstr}\t{l}.{r}";
+                    }
+                case SyntaxKind.MemberBindingExpression:
+                    {
+                        var mbe = expression as MemberBindingExpressionSyntax;
+                        return $"{mbe.Name.Identifier.Text}";
+                    }
                 default:
                     {
                         Fail($"unsupported ExpressionSyntax {expression.Kind()}");

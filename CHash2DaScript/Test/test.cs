@@ -693,7 +693,7 @@ namespace HelloWorld
 
         void invokeMe(Action action)
         {
-            action.Invoke();
+            action?.Invoke();
         }
 
         string invokeMyAction(MyAction action)
