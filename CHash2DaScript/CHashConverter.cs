@@ -449,7 +449,7 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool genericTypes, bool addSelf, bool addBrackets)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false)
         {
             var typeArgsVal = "";
             var argsVal = "";
@@ -553,7 +553,7 @@ namespace CHash2Das
                         {
                             string methodName = methodSymbol.Name; // Name of the method
                             string className = getTypeName(methodSymbol.ContainingType);
-                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
                 }
@@ -584,18 +584,18 @@ namespace CHash2Das
                                 {
                                     var selfType = semanticModel.GetTypeInfo(ma.Expression);
                                     var selfTypeName = onVarTypeSyntax(selfType);
-                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, true, true)}";
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, addSelf: true)}";
                                     callText = $"{selfTypeName}`{callText}";
                                 }
                                 else
                                 {
-                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                    callText = $"{methodName}{onArgumentListSyntax(inv)}";
                                     callText = $"{self}->{callText}";
                                 }
                             }
                             else
                             {
-                                callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                callText = $"{methodName}{onArgumentListSyntax(inv)}";
                             }
                         }
                     }
@@ -629,18 +629,18 @@ namespace CHash2Das
                                 {
                                     var selfType = semanticModel.GetTypeInfo(gns);
                                     var selfTypeName = onVarTypeSyntax(selfType);
-                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, true, true)}";
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, addSelf: true)}";
                                     callText = $"{selfTypeName}`{callText}";
                                 }
                                 else
                                 {
-                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                    callText = $"{methodName}{onArgumentListSyntax(inv)}";
                                     callText = $"{self}->{callText}";
                                 }
                             }
                             else
                             {
-                                callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                callText = $"{methodName}{onArgumentListSyntax(inv)}";
                             }
                         }
                     }
@@ -662,7 +662,7 @@ namespace CHash2Das
                         {
                             IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                            callText = $"{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
                 }
@@ -677,7 +677,7 @@ namespace CHash2Das
             }
             if (callText == "")
             {
-                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false, false, true)}";
+                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv)}";
             }
             return callText;
         }
