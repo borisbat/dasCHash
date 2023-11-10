@@ -1,4 +1,4 @@
-using static System.Console;
+﻿using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -449,7 +449,7 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool generic_types)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool generic_types, bool addBrackets = true)
         {
             var typeArgsVal = "";
             var argsVal = "";
@@ -470,11 +470,13 @@ namespace CHash2Das
             }
             if (argsVal.Length == 0)
             {
-                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression))) + ")";
+                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+                if (addBrackets)
+                    argsVal += ")";
             }
             if (typeArgsVal.Length > 0 && inv.ArgumentList.Arguments.Count > 0)
-                return $"({typeArgsVal}, {argsVal}";
-            return $"({typeArgsVal}{argsVal}";
+                return (addBrackets ? "(" : "") + $"{typeArgsVal}, {argsVal}";
+            return (addBrackets ? "(" : "") + $"{typeArgsVal}{argsVal}";
         }
 
         public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv, bool generic_types)
