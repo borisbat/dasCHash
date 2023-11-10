@@ -1454,7 +1454,7 @@ namespace CHash2Das
                         if (nullableType)
                         {
                             var defType = semanticModel.GetTypeInfo(cae);
-                            return $"if ({l} == null)\n{tabstr}\t {l} = new [[{onVarTypeSyntax(defType)}]]\n{tabstr}\t*{l} = {r}\n";
+                            return $"if ({l} == null)\n{tabstr}\t{l} = new [[{onVarTypeSyntax(defType)}]]\n{tabstr}\t*{l} = {r}\n";
                         }
                         return $"if ({l} == null)\n{tabstr}\t{l} = {r}\n";
                     }
@@ -1736,6 +1736,8 @@ namespace CHash2Das
                 prefix += "private ";
             if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
                 prefix += "static ";
+            if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.OverrideKeyword))
+                prefix += "override ";
             IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
             var resType = onVarTypeSyntax(methodDeclaration.ReturnType);
             var annotations = "";

@@ -239,7 +239,7 @@ namespace CHash2Das
             converter.addInvocation("nameof", das_NameOf);
 
             converter.addMethod(new TypeField() { type = nameof(Math), ns = SystemNS, field = nameof(Math.Sqrt) }, req(das_fn("math::sqrt"), "math"));
-            converter.addMethod(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.IsNullOrEmpty) }, das_member(" != null"));
+            converter.addMethod(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.IsNullOrEmpty) }, das_fn("empty"));
             // static member access
             converter.addField(new TypeField() { type = nameof(Console), ns = SystemNS, field = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
