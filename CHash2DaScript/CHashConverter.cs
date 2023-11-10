@@ -68,7 +68,7 @@ namespace CHash2Das
                 }
             }
             var res = dasTypeName(tt.Type);
-            return res ?? tt.Type.Name;
+            return !string.IsNullOrEmpty(res) ? res : tt.Type.Name;
         }
         string onVarTypeSyntax(TypeSyntax ts)
         {
@@ -449,14 +449,14 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool generic_types, bool addBrackets = true)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool genericTypes, bool addSelf, bool addBrackets)
         {
             var typeArgsVal = "";
             var argsVal = "";
             var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
             if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
             {
-                if (generic_types && methodSymbol.TypeArguments.Length > 0)
+                if (genericTypes && methodSymbol.TypeArguments.Length > 0)
                 {
                     var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
                     typeArgsVal = string.Join(", ", typeArgs);
@@ -475,8 +475,10 @@ namespace CHash2Das
                     argsVal += ")";
             }
             if (typeArgsVal.Length > 0 && inv.ArgumentList.Arguments.Count > 0)
-                return (addBrackets ? "(" : "") + $"{typeArgsVal}, {argsVal}";
-            return (addBrackets ? "(" : "") + $"{typeArgsVal}{argsVal}";
+                return (addBrackets ? "(" : "") + (addSelf ? "self, " : "") + $"{typeArgsVal}, {argsVal}";
+            if (typeArgsVal.Length > 0 || inv.ArgumentList.Arguments.Count > 0)
+                return (addBrackets ? "(" : "") + (addSelf ? "self, " : "") + $"{typeArgsVal}{argsVal}";
+            return (addBrackets ? "(" : "") + (addSelf ? "self" : "") + $"{typeArgsVal}{argsVal}";
         }
 
         public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv, bool generic_types)
@@ -551,7 +553,7 @@ namespace CHash2Das
                         {
                             string methodName = methodSymbol.Name; // Name of the method
                             string className = getTypeName(methodSymbol.ContainingType);
-                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv, false)}";
+                            callText = $"{className}`{methodName}{onArgumentListSyntax(inv, false, false, true)}";
                         }
                     }
                 }
@@ -575,10 +577,26 @@ namespace CHash2Das
                         {
                             IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
                             var self = onExpressionSyntax(ma.Expression);
                             if (self != "")
-                                callText = $"{self}->{callText}";
+                            {
+                                if (ma.Expression.ToString() == "base")
+                                {
+                                    var selfType = semanticModel.GetTypeInfo(ma.Expression);
+                                    var selfTypeName = onVarTypeSyntax(selfType);
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, true, true)}";
+                                    callText = $"{selfTypeName}`{callText}";
+                                }
+                                else
+                                {
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                    callText = $"{self}->{callText}";
+                                }
+                            }
+                            else
+                            {
+                                callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                            }
                         }
                     }
                     else if (inv.Expression.Kind() == SyntaxKind.GenericName)
@@ -603,10 +621,27 @@ namespace CHash2Das
                         {
                             IMethodSymbol methodSymbol2 = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol2);
-                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
+                            // callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
                             var self = onExpressionSyntax(gns);
                             if (self != "")
-                                callText = $"{self}->{callText}";
+                            {
+                                if (gns.ToString() == "base")
+                                {
+                                    var selfType = semanticModel.GetTypeInfo(gns);
+                                    var selfTypeName = onVarTypeSyntax(selfType);
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, true, true)}";
+                                    callText = $"{selfTypeName}`{callText}";
+                                }
+                                else
+                                {
+                                    callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                                    callText = $"{self}->{callText}";
+                                }
+                            }
+                            else
+                            {
+                                callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
+                            }
                         }
                     }
                     else if (inv.Expression.Kind() == SyntaxKind.IdentifierName)
@@ -627,7 +662,7 @@ namespace CHash2Das
                         {
                             IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
-                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
+                            callText = $"{methodName}{onArgumentListSyntax(inv, false, false, true)}";
                         }
                     }
                 }
@@ -642,7 +677,7 @@ namespace CHash2Das
             }
             if (callText == "")
             {
-                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false)}";
+                callText = $"{onExpressionSyntax(inv.Expression)}{onArgumentListSyntax(inv, false, false, true)}";
             }
             return callText;
         }
@@ -1419,6 +1454,11 @@ namespace CHash2Das
                     {
                         var mbe = expression as MemberBindingExpressionSyntax;
                         return $"{mbe.Name.Identifier.Text}";
+                    }
+                case SyntaxKind.BaseExpression:
+                    {
+                        var typeInfo = semanticModel.GetTypeInfo(expression);
+                        return typeInfo.Type?.BaseType?.Name ?? "object";
                     }
                 default:
                     {

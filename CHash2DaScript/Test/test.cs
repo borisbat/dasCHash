@@ -513,6 +513,11 @@ namespace HelloWorld
             get;
             set;
         }
+
+        public virtual string Hi()
+        {
+            return "Hi. I am a shape.";
+        }
     }
 
     class Square : Shape
@@ -526,6 +531,11 @@ namespace HelloWorld
         {
             get => side * side;
             set => side = System.Math.Sqrt(value);
+        }
+
+        override public string Hi()
+        {
+            return $"{base.Hi()}I am a square with side {side}";
         }
     }
 

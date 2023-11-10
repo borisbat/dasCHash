@@ -109,7 +109,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, genericTypes);
+                var args = converter.onArgumentListSyntax(inv, genericTypes, false, true);
                 return $"{fnName}{args}";
             };
             return res;
@@ -119,7 +119,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, genericTypes, addBrackets);
+                var args = converter.onArgumentListSyntax(inv, genericTypes, false, addBrackets);
                 return $"{args}{member}";
             };
             return res;
@@ -149,7 +149,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, genericTypes);
+                var args = converter.onArgumentListSyntax(inv, genericTypes, false, true);
                 var self = expressionName(converter, inv, doDeref);
                 var call = $"{fnName}{args}";
                 return self == "" ? call : $"{self} |> {call}";
