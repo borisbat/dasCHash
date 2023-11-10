@@ -274,6 +274,7 @@ namespace CHash2Das
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
+        HashSet<TypeData> dropPointersFlags = new HashSet<TypeData>();
         Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
 
         struct TemplateInstance
@@ -390,6 +391,16 @@ namespace CHash2Das
                 return;
             }
             typesRename[type] = tr;
+        }
+
+        public void dropPointerFlag(TypeData type, bool override_ = false)
+        {
+            if (!override_ && dropPointersFlags.Contains(type))
+            {
+                Fail($"type {type.type} is already declared to drop pointer flag");
+                return;
+            }
+            dropPointersFlags.Add(type);
         }
 
         public bool removeRenameType(TypeData type)
@@ -799,6 +810,15 @@ namespace CHash2Das
             // Check if it's a built-in type (like int, double, etc.)
             if (typeSymbol.IsValueType && typeSymbol.SpecialType != SpecialType.None)
                 return false;
+
+            if (dropPointersFlags.Contains(new TypeData()
+            {
+                type = typeSymbol.Name,
+                ns = typeSymbol.ContainingNamespace?.ToDisplayString(),
+            }))
+            {
+                return false;
+            }
 
             switch (typeSymbol.TypeKind)
             {
