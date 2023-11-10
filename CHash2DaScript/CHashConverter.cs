@@ -1,4 +1,4 @@
-﻿using static System.Console;
+using static System.Console;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -505,27 +505,38 @@ namespace CHash2Das
             return $"({typeArgsVal}{argsVal}";
         }
 
-        bool IsCallingClassMethod(InvocationExpressionSyntax invocation)
+        ISymbol GetSymbolInfo(InvocationExpressionSyntax invocation)
         {
             var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-            return symbolInfo.Symbol is IMethodSymbol;
+            if (symbolInfo.Symbol is IMethodSymbol)
+                return symbolInfo.Symbol;
+            foreach (var can in symbolInfo.CandidateSymbols)
+            {
+                if (can is IMethodSymbol)
+                    return can;
+            }
+            return symbolInfo.Symbol;
         }
 
-        bool IsCallingStaticMethod(InvocationExpressionSyntax invocation)
+        bool IsCallingClassMethod(ISymbol? symbol)
         {
-            var symbolInfo = semanticModel.GetSymbolInfo(invocation);
-            return symbolInfo.Symbol?.IsStatic ?? false;
+            return symbol is IMethodSymbol;
+        }
+
+        bool IsCallingStaticMethod(ISymbol? symbol)
+        {
+            return symbol?.IsStatic ?? false;
         }
 
         string onInvocationExpression(InvocationExpressionSyntax inv)
         {
             var callText = "";
-            if (IsCallingClassMethod(inv))
+            var symbolInfo = GetSymbolInfo(inv);
+            if (IsCallingClassMethod(symbolInfo))
             {
-                if (IsCallingStaticMethod(inv))
+                if (IsCallingStaticMethod(symbolInfo))
                 {
-                    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
-                    IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+                    IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
 
                     // Log($"class static method {key} {symbolInfo.Symbol}");
                     if (methodSymbol != null)
@@ -560,8 +571,7 @@ namespace CHash2Das
                         }
                         else
                         {
-                            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
-                            IMethodSymbol methodSymbol = symbolInfo.Symbol as IMethodSymbol;
+                            IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol);
                             callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
                             var self = onExpressionSyntax(ma.Expression);
@@ -589,13 +599,33 @@ namespace CHash2Das
                         }
                         else
                         {
-                            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(inv);
-                            IMethodSymbol methodSymbol2 = symbolInfo.Symbol as IMethodSymbol;
+                            IMethodSymbol methodSymbol2 = symbolInfo as IMethodSymbol;
                             var methodName = uniqueMethodName(methodSymbol2);
                             callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
                             var self = onExpressionSyntax(gns);
                             if (self != "")
                                 callText = $"{self}->{callText}";
+                        }
+                    }
+                    else if (inv.Expression.Kind() == SyntaxKind.IdentifierName)
+                    {
+                        var ins = inv.Expression as IdentifierNameSyntax;
+                        var exprTypeInfo = semanticModel.GetTypeInfo(ins);
+                        // Log($"type name : {exprTypeInfo.Type.MetadataName}, namespace : {exprTypeInfo.Type.ContainingNamespace?.ToDisplayString()} field : {ins.Identifier.Text}");
+                        getMethod(exprTypeInfo, ins.Identifier.Text, out var invExpr);
+                        if (invExpr == null)
+                        {
+                            objectInvExpr.TryGetValue(ins.Identifier.Text, out invExpr);
+                        }
+                        if (invExpr != null)
+                        {
+                            callText = invExpr(this, inv);
+                        }
+                        else
+                        {
+                            IMethodSymbol methodSymbol = symbolInfo as IMethodSymbol;
+                            var methodName = uniqueMethodName(methodSymbol);
+                            callText = $"{methodName}{onArgumentListSyntax(inv, false)}";
                         }
                     }
                 }
@@ -1345,6 +1375,11 @@ namespace CHash2Das
                         var ce = expression as BinaryExpressionSyntax;
                         var l = onExpressionSyntax(ce.Left);
                         var r = onExpressionSyntax(ce.Right);
+                        if (r == "") // fallback logic for code analysis without CoalesceAssignmentExpression support
+                        {
+                            var tabstr = new string('\t', tabs);
+                            return $"if ({l} == null)\n{tabstr}\t{l}";
+                        }
                         var nullableType = semanticModel.GetTypeInfo(ce.Left).Type?.MetadataName == "Nullable`1";
                         if (nullableType)
                         {
