@@ -348,6 +348,14 @@ namespace HelloWorld
             {38, "256B"},           {39, "512B"},           {40, "1024B"},
         };
 
+        void strings()
+        {
+            var empty = String.IsNullOrEmpty("foo");
+            Write(empty);
+            if (string.IsNullOrEmpty(""))
+                Console.WriteLine("empty");
+        }
+
         void objectInit()
         {
             System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
@@ -505,6 +513,11 @@ namespace HelloWorld
             get;
             set;
         }
+
+        public virtual string Hi()
+        {
+            return "Hi. I am a shape.";
+        }
     }
 
     class Square : Shape
@@ -518,6 +531,11 @@ namespace HelloWorld
         {
             get => side * side;
             set => side = System.Math.Sqrt(value);
+        }
+
+        override public string Hi()
+        {
+            return $"{base.Hi()}I am a square with side {side}";
         }
     }
 
@@ -685,7 +703,7 @@ namespace HelloWorld
 
         void invokeMe(Action action)
         {
-            action.Invoke();
+            action?.Invoke();
         }
 
         string invokeMyAction(MyAction action)
