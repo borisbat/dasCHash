@@ -592,11 +592,11 @@ namespace HelloWorld
 
     class ContTest
     {
-        public Cont<U> StaticGetEmptyCont<U>() where U : new()
+        public static Cont<U> StaticGetEmptyCont<U>() where U : new()
         {
             return new Cont<U>();
         }
-        public Cont<U> StaticGetCont<U>(int size) where U : new()
+        public static Cont<U> StaticGetCont<U>(int size) where U : new()
         {
             WriteLine($"size = {size}");
             return new Cont<U>();
