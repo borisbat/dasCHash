@@ -1369,13 +1369,13 @@ namespace CHash2Das
                                 result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
                         }
                         result += ")";
+                        var tabstr = new string('\t', tabs);
                         if (ame.Body is BlockSyntax bs)
                         {
-                            result += $"\n{onBlockSyntax(bs)}";
+                            result += $"\n{tabstr}\t{onBlockSyntax(bs)}";
                         }
                         else if (ame.Body is InvocationExpressionSyntax invEx)
                         {
-                            var tabstr = new string('\t', tabs);
                             result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
                         }
                         else
@@ -1398,13 +1398,31 @@ namespace CHash2Das
                                 result += $"{varPrefix(param)}{param.Identifier} : {v}{varSuffix(param)}";
                         }
                         result += ")";
+                        var tabstr = new string('\t', tabs);
                         if (ame.Body is BlockSyntax bs)
                         {
-                            result += $"\n{onBlockSyntax(bs)}";
+                            result += $"\n{tabstr}\t{onBlockSyntax(bs)}";
                         }
                         else if (ame.Body is InvocationExpressionSyntax invEx)
                         {
-                            var tabstr = new string('\t', tabs);
+                            result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
+                        }
+                        else
+                            result += $"\n\tpass\n";
+                        return result;
+                    }
+                case SyntaxKind.SimpleLambdaExpression:
+                    {
+                        var ame = expression as SimpleLambdaExpressionSyntax;
+                        var result = expression.Parent.IsKind(SyntaxKind.EqualsValueClause) ? "@ <| (" : "@(";
+                        result += ")";
+                        var tabstr = new string('\t', tabs);
+                        if (ame.Body is BlockSyntax bs)
+                        {
+                            result += $"\n{tabstr}{onBlockSyntax(bs)}";
+                        }
+                        else if (ame.Body is InvocationExpressionSyntax invEx)
+                        {
                             result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
                         }
                         else
