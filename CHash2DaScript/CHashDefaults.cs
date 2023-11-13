@@ -109,7 +109,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, genericTypes:genericTypes);
+                var args = converter.onArgumentListSyntax(inv, genericTypes: genericTypes);
                 return $"{fnName}{args}";
             };
             return res;
@@ -119,7 +119,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, addBrackets:addBrackets, genericTypes:genericTypes);
+                var args = converter.onArgumentListSyntax(inv, addBrackets: addBrackets, genericTypes: genericTypes);
                 return $"{args}{member}";
             };
             return res;
@@ -149,7 +149,19 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentListSyntax(inv, genericTypes:genericTypes);
+                var args = converter.onArgumentListSyntax(inv, genericTypes: genericTypes);
+                var self = expressionName(converter, inv, doDeref);
+                var call = $"{fnName}{args}";
+                return self == "" ? call : $"{self}->{call}";
+            };
+            return res;
+        }
+
+        static CHashConverter.InvocationDelegate das_method_fn(string fnName, bool doDeref = true, bool genericTypes = true)
+        {
+            CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
+            {
+                var args = converter.onArgumentListSyntax(inv, genericTypes: genericTypes);
                 var self = expressionName(converter, inv, doDeref);
                 var call = $"{fnName}{args}";
                 return self == "" ? call : $"{self} |> {call}";
@@ -157,7 +169,7 @@ namespace CHash2Das
             return res;
         }
 
-        static CHashConverter.InvocationDelegate das_method_reverse_args(string fnName, bool doDeref = true, bool genericTypes = true)
+        static CHashConverter.InvocationDelegate das_method_fn_reverse_args(string fnName, bool doDeref = true, bool genericTypes = true)
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
@@ -243,14 +255,14 @@ namespace CHash2Das
             // static member access
             converter.addField(new TypeField() { type = nameof(Console), ns = SystemNS, field = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
 
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Add" }, das_method("push"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Clear" }, das_method("clear"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveAt" }, das_method("erase"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveRange" }, das_method("erase"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Remove" }, das_method("remove_value"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Insert" }, das_method_reverse_args("push"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Contains" }, das_method("has_value"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "IndexOf" }, das_method("find_index"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Add" }, das_method_fn("push"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Clear" }, das_method_fn("clear"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveAt" }, das_method_fn("erase"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveRange" }, das_method_fn("erase"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Remove" }, das_method_fn("remove_value"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Insert" }, das_method_fn_reverse_args("push"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Contains" }, das_method_fn("has_value"));
+            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "IndexOf" }, das_method_fn("find_index"));
             converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Sort" }, das_method_noargs("sort"));
             converter.addField(new TypeField() { type = "List`1", ns = CollectionNS, field = "Count" }, das_raw_member(" |> length()"));
 
@@ -258,7 +270,7 @@ namespace CHash2Das
 
             converter.addObjectMethod("ToString", das_ToString);
 
-            converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method("invoke"));
+            converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method_fn("invoke"));
 
             converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
             // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
