@@ -1,16 +1,4 @@
 // Compilation errors:
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\System.IO.Compression.Native.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\msquic.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\mscorrc.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\mscordbi.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\mscordaccore_amd64_amd64_7.0.1323.51816.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\mscordaccore.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\Microsoft.DiaSymReader.Native.amd64.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\hostpolicy.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\coreclr.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\clrjit.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\clrgc.dll' could not be opened -- PE image doesn't contain managed metadata. at None
-//CS0009: Metadata file 'C:\Program Files\dotnet\shared\Microsoft.NETCore.App\7.0.13\clretwrc.dll' could not be opened -- PE image doesn't contain managed metadata. at None
 //CS5001: Program does not contain a static 'Main' method suitable for an entry point at None
 
 module test
@@ -183,7 +171,6 @@ class HelloProgram
 		var u64u64 = (u64 + u64)		// ulong
 		// var i64u64 = i64 + u64;  // ambiguity, does not compile
 		var fd = (double(f) + d)		// goes to double
-
 		// casts
 		var dd : double = 10.0d
 		var ff : float = 10.0f
