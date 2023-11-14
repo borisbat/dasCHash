@@ -41,6 +41,7 @@ namespace Main
                 result += "// Compilation errors:\n";
                 foreach (var error in errors)
                 {
+                    if (error.Id == "CS5001") continue; // entry point not found
                     var error_text = $"{error.Id}: {error.GetMessage()} at {error.Location}";
                     result += $"//{error_text}\n";
                 }

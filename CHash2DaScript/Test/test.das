@@ -1,5 +1,4 @@
 // Compilation errors:
-//CS5001: Program does not contain a static 'Main' method suitable for an entry point at None
 
 module test
 
