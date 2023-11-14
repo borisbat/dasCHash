@@ -527,7 +527,7 @@ namespace CHash2Das
                 return symbolInfo.Symbol;
             foreach (var can in symbolInfo.CandidateSymbols)
             {
-                if (can is IMethodSymbol)
+                if (can is IMethodSymbol methodSymbol && methodSymbol.IsExtensionMethod)
                     return can;
             }
             return symbolInfo.Symbol;
@@ -1613,7 +1613,22 @@ namespace CHash2Das
         {
             BaseListSyntax? baseList = classDeclaration.BaseList;
             var paramsVal = paramNames.Length > 0 ? $"_{string.Join("_", paramNames)}" : classDeclaration.TypeParameterList != null ? "_" + classDeclaration.TypeParameterList.Parameters.Select(p => p.Identifier.Text).Aggregate((current, next) => $"{current}_{next}") : "";
-            var parent = baseList != null ? $" : {baseList.Types[0]}" : "";
+            var parentTypeName = baseList != null ? baseList.Types[0].ToString() : "";
+            var parentType = baseList != null ? semanticModel.GetTypeInfo(baseList.Types[0].Type) : default;
+            if (parentType.Type != null)
+            {
+                var td = new TypeData()
+                {
+                    type = parentTypeName,
+                    ns = parentType.Type.ContainingNamespace?.ToString() ?? ""
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    parentTypeName = rename(this, td);
+                }
+            }
+
+            var parent = baseList != null ? $" : {parentTypeName}" : "";
             var result = $"class {classDeclaration.Identifier}{paramsVal}{parent}\n";
             if (instantiatedTemplates.Contains(result))
                 return "";
