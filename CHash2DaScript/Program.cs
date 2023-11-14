@@ -5,6 +5,8 @@ using System;
 
 using CHash2Das;
 using System.IO;
+using System.Collections.Immutable;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Main
 {
@@ -20,11 +22,13 @@ namespace Main
             SyntaxTree tree = CSharpSyntaxTree.ParseText(programText);
             CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
 
+            // collect all dlls inside dllsPath
+            var dlls = new List<string>();
+            dlls.AddRange(Directory.GetFiles(Path.GetDirectoryName(typeof(string).Assembly.Location), "*.dll"));
+
             // creating compilation and semantic model
             var compilation = CSharpCompilation.Create("HelloWorld")
-                .AddReferences(
-                    MetadataReference.CreateFromFile(typeof(string).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Console).Assembly.Location))
+                .AddReferences(dlls.Select(dll => MetadataReference.CreateFromFile(dll)))
                 .AddSyntaxTrees(tree);
             SemanticModel model = compilation.GetSemanticModel(tree);
 
