@@ -210,6 +210,8 @@ namespace CHash2Das
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
             {
+                if (acc == null)
+                    return $"self{value}";
                 return $"{converter.derefExpr(acc.Expression, doDeref)}{value}";
             };
             return res;

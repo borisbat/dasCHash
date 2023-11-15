@@ -365,7 +365,12 @@ namespace CHash2Das
 
         public bool getField(TypeInfo ti, string name, out MemberAccessDelegate acc)
         {
-            var curType = ti.Type;
+            return getField(ti.Type, name, out acc);
+        }
+
+        public bool getField(ITypeSymbol? ti, string name, out MemberAccessDelegate acc)
+        {
+            var curType = ti;
             while (curType != null)
             {
                 if (memberAccessExpr.TryGetValue(new TypeField()
@@ -460,7 +465,7 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false, bool pipeDelegate = true)
         {
             var typeArgsVal = "";
             var argsVal = "";
@@ -472,7 +477,7 @@ namespace CHash2Das
                     var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
                     typeArgsVal = string.Join(", ", typeArgs);
                 }
-                if (inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.Last().Type))
+                if (pipeDelegate && inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.Last().Type))
                 {
                     var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
                     var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
@@ -1298,7 +1303,21 @@ namespace CHash2Das
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
                 case SyntaxKind.IdentifierName:
-                    return $"{(expression as IdentifierNameSyntax).Identifier.Text}";
+                    {
+                        var typeInfo = parentClassOrStruct(expression);
+                        var fieldName = (expression as IdentifierNameSyntax).Identifier.Text;
+                        if (typeInfo != null && getField(typeInfo, fieldName, out MemberAccessDelegate acc))
+                        {
+                            MemberAccessExpressionSyntax syntax = default;
+                            return acc(this, syntax);
+                        }
+                        if (objectMemberAccessExpr.TryGetValue(fieldName, out acc))
+                        {
+                            MemberAccessExpressionSyntax syntax = default;
+                            return acc(this, syntax);
+                        }
+                        return $"{fieldName}";
+                    }
                 case SyntaxKind.PreIncrementExpression:
                 case SyntaxKind.PreDecrementExpression:
                     {
@@ -1573,6 +1592,20 @@ namespace CHash2Das
                 parentToken = parentToken.Parent;
             }
             return "";
+        }
+
+        INamedTypeSymbol? parentClassOrStruct(SyntaxNode? st)
+        {
+            var parentToken = st;
+            while (parentToken != null)
+            {
+                if (parentToken is ClassDeclarationSyntax classSyntax)
+                    return semanticModel.GetDeclaredSymbol(classSyntax);
+                if (parentToken is StructDeclarationSyntax structSyntax)
+                    return semanticModel.GetDeclaredSymbol(structSyntax);
+                parentToken = parentToken.Parent;
+            }
+            return default;
         }
 
         string onClassDeclaration(ClassDeclarationSyntax classDeclaration)
