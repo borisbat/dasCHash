@@ -465,6 +465,33 @@ namespace CHash2Das
             });
         }
 
+        public string onExpressionArgumentSyntax(ExpressionSyntax expression)
+        {
+            var argSymbol = semanticModel.GetSymbolInfo(expression);
+            if (expression.Kind() == SyntaxKind.IdentifierName && argSymbol.Symbol is IMethodSymbol methodSymbol)
+            {
+                // delegate which is not a lambda - convert to lambda
+                var @params = "";
+                var args = "";
+                var first = true;
+                foreach (var param in methodSymbol.Parameters)
+                {
+                    if (first) first = false;
+                    else
+                    {
+                        args += ", ";
+                        @params += "; ";
+                    }
+                    string v = dasTypeName(param.Type);
+                    @params += $"var {param.Name} : {v}"; // all args are var
+                    args += $"{param.Name}";
+                }
+                var returnPrefix = methodSymbol.ReturnsVoid ? "" : "return ";
+                return $"@({@params}) {{ {returnPrefix}self->{onExpressionSyntax(expression)}({args}); }}";
+            }
+            return onExpressionSyntax(expression);
+        }
+
         public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false, bool pipeDelegate = true, bool reverseArgs = false)
         {
             var typeArgsVal = "";
@@ -480,26 +507,37 @@ namespace CHash2Das
                 if (pipeDelegate && inv.ArgumentList.Arguments.Count > 0
                     && (reverseArgs && isDelegate(methodSymbol.Parameters.First().Type) || (!reverseArgs && isDelegate(methodSymbol.Parameters.Last().Type))))
                 {
+                    string args = "";
+                    ArgumentSyntax lastArg;
                     if (reverseArgs)
                     {
-                        var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
-                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
-                        argsVal = $"{args}) <| {lastArg}";
+                        args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionArgumentSyntax(arg.Expression)));
+                        lastArg = inv.ArgumentList.Arguments.First();
                     }
                     else
                     {
-                        var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
-                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
-                        argsVal = $"{args}) <| {lastArg}";
+                        args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionArgumentSyntax(arg.Expression)));
+                        lastArg = inv.ArgumentList.Arguments.Last();
+                    }
+                    var isLastArgLambda = lastArg.Expression.Kind() == SyntaxKind.ParenthesizedLambdaExpression || lastArg.Expression.Kind() == SyntaxKind.SimpleLambdaExpression || lastArg.Expression.Kind() == SyntaxKind.AnonymousMethodExpression;
+                    var lastArgValue = onExpressionArgumentSyntax(lastArg.Expression);
+                    if (!isLastArgLambda)
+                    {
+                        var delimiter = args.Length > 0 ? ", " : "";
+                        argsVal = $"{args}{delimiter}{lastArgValue})";
+                    }
+                    else
+                    {
+                        argsVal = $"{args}) <| {lastArgValue}";
                     }
                 }
             }
             if (argsVal.Length == 0)
             {
                 if (reverseArgs)
-                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionArgumentSyntax(arg.Expression)));
                 else
-                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionArgumentSyntax(arg.Expression)));
                 if (addBrackets)
                     argsVal += ")";
             }
@@ -1404,12 +1442,15 @@ namespace CHash2Das
                         result += ")";
                         if (ame.Body is BlockSyntax bs)
                         {
-                            result += $"\n\t{onBlockSyntax(bs)}";
+                            result += $"\n{onBlockSyntax(bs)}";
                         }
                         else if (ame.Body is InvocationExpressionSyntax invEx)
                         {
                             var tabstr = new string('\t', tabs);
-                            result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
+                            if ((semanticModel.GetSymbolInfo(invEx).Symbol as IMethodSymbol)?.ReturnsVoid ?? false)
+                                result += $"\n{tabstr}\t{onInvocationExpression(invEx)}";
+                            else
+                                result += $"\n{tabstr}\treturn {onInvocationExpression(invEx)}";
                         }
                         else
                             result += $"\n\tpass\n";

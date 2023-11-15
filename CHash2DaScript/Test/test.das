@@ -3,6 +3,7 @@
 module test
 
 typedef MyAction = lambda<(var value : int) : string>
+typedef VoidAction = lambda<(var value : int) : void>
 
 require math
 require daslib/coroutines
@@ -592,6 +593,7 @@ class EnumTester
 
 class Employee
 
+
 	private alias : string
 
 	private name : string
@@ -602,6 +604,9 @@ class Employee
 
 	def invokeMyAction (var action : MyAction) : string
 		return action |> invoke(10)
+
+	def invokeVoidAction (var action : VoidAction) : void
+		action |> invoke(10)
 
 	def Employee (var name_ : string; var alias_ : string)
 		self.name = name_
@@ -620,9 +625,30 @@ class Employee
 
 
 		var str = invokeMyAction() <| @(var val : int)
-				return "{val}"
+			return "{val}"
 
 		print("{str}\n")
+
+		var delegate1 : MyAction <- @ <| (var val : int)
+			return "{val}"
+
+		var str1 = invokeMyAction(delegate1)
+		print("{str1}\n")
+
+		invokeMyAction(@(var i : int) { return self->InvokeTest(i); })		// convert to self->InvokeTest()
+		invokeMyAction() <| @(var i : int)
+			return InvokeTest(i)
+
+		invokeVoidAction() <| @(var i : int)
+			VoidInvokeTest(i)
+		invokeVoidAction(@(var i : int) { self->VoidInvokeTest(i); })
+
+	def InvokeTest (var i : int) : string
+		print("{i}\n")
+		return "{i}"
+
+	def VoidInvokeTest (var i : int) : void
+		print("{i}\n")
 
 
 class AsIsTester
