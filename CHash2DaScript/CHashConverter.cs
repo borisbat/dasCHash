@@ -465,7 +465,7 @@ namespace CHash2Das
             });
         }
 
-        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false, bool pipeDelegate = true)
+        public string onArgumentListSyntax(InvocationExpressionSyntax inv, bool addBrackets = true, bool addSelf = false, bool genericTypes = false, bool pipeDelegate = true, bool reverseArgs = false)
         {
             var typeArgsVal = "";
             var argsVal = "";
@@ -477,16 +477,29 @@ namespace CHash2Das
                     var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
                     typeArgsVal = string.Join(", ", typeArgs);
                 }
-                if (pipeDelegate && inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.Last().Type))
+                if (pipeDelegate && inv.ArgumentList.Arguments.Count > 0
+                    && (reverseArgs && isDelegate(methodSymbol.Parameters.First().Type) || (!reverseArgs && isDelegate(methodSymbol.Parameters.Last().Type))))
                 {
-                    var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
-                    var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
-                    argsVal = $"{args}) <| {lastArg}";
+                    if (reverseArgs)
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
+                        argsVal = $"{args}) <| {lastArg}";
+                    }
+                    else
+                    {
+                        var args = string.Join(", ", inv.ArgumentList.Arguments.Take(inv.ArgumentList.Arguments.Count - 1).Select(arg => onExpressionSyntax(arg.Expression)));
+                        var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.Last().Expression);
+                        argsVal = $"{args}) <| {lastArg}";
+                    }
                 }
             }
             if (argsVal.Length == 0)
             {
-                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
+                if (reverseArgs)
+                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
+                else
+                    argsVal = string.Join(", ", inv.ArgumentList.Arguments.Select(arg => onExpressionSyntax(arg.Expression)));
                 if (addBrackets)
                     argsVal += ")";
             }
@@ -495,34 +508,6 @@ namespace CHash2Das
             if (typeArgsVal.Length > 0 || inv.ArgumentList.Arguments.Count > 0)
                 return (addBrackets ? "(" : "") + (addSelf ? "self, " : "") + $"{typeArgsVal}{argsVal}";
             return (addBrackets ? "(" : "") + (addSelf ? "self" : "") + $"{typeArgsVal}{argsVal}";
-        }
-
-        public string onArgumentReverseListSyntax(InvocationExpressionSyntax inv, bool generic_types)
-        {
-            var typeArgsVal = "";
-            var argsVal = "";
-            var invTypeInfo = semanticModel.GetSymbolInfo(inv.Expression);
-            if (invTypeInfo.Symbol is IMethodSymbol methodSymbol)
-            {
-                if (generic_types && methodSymbol.TypeArguments.Length > 0)
-                {
-                    var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
-                    typeArgsVal = string.Join(", ", typeArgs);
-                }
-                if (inv.ArgumentList.Arguments.Count > 0 && isDelegate(methodSymbol.Parameters.First().Type))
-                {
-                    var args = string.Join(", ", inv.ArgumentList.Arguments.TakeLast(inv.ArgumentList.Arguments.Count - 1).Reverse().Select(arg => onExpressionSyntax(arg.Expression)));
-                    var lastArg = onExpressionSyntax(inv.ArgumentList.Arguments.First().Expression);
-                    argsVal = $"{args}) <| {lastArg}";
-                }
-            }
-            if (argsVal.Length == 0)
-            {
-                argsVal = string.Join(", ", inv.ArgumentList.Arguments.Reverse().Select(arg => onExpressionSyntax(arg.Expression))) + ")";
-            }
-            if (typeArgsVal.Length > 0 && inv.ArgumentList.Arguments.Count > 0)
-                return $"({typeArgsVal}, {argsVal}";
-            return $"({typeArgsVal}{argsVal}";
         }
 
         ISymbol GetSymbolInfo(InvocationExpressionSyntax invocation)
