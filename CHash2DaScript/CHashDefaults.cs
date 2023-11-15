@@ -173,7 +173,7 @@ namespace CHash2Das
         {
             CHashConverter.InvocationDelegate res = delegate (CHashConverter converter, InvocationExpressionSyntax inv)
             {
-                var args = converter.onArgumentReverseListSyntax(inv, genericTypes);
+                var args = converter.onArgumentListSyntax(inv, genericTypes, reverseArgs: true);
                 var self = expressionName(converter, inv, doDeref);
                 var call = $"{fnName}{args}";
                 return self == "" ? call : $"{self} |> {call}";
@@ -210,6 +210,8 @@ namespace CHash2Das
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
             {
+                if (acc == null)
+                    return $"self{value}";
                 return $"{converter.derefExpr(acc.Expression, doDeref)}{value}";
             };
             return res;

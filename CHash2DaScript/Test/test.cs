@@ -698,6 +698,7 @@ namespace HelloWorld
     public class Employee
     {
         public delegate string MyAction(int value);
+        public delegate void VoidAction(int value);
         private string alias;
         private string name;
 
@@ -709,6 +710,11 @@ namespace HelloWorld
         string invokeMyAction(MyAction action)
         {
             return action.Invoke(10);
+        }
+
+        void invokeVoidAction(VoidAction action)
+        {
+            action.Invoke(10);
         }
 
         public Employee(string name_, string alias_)
@@ -735,6 +741,28 @@ namespace HelloWorld
 
             var str = invokeMyAction((int val) => { return val.ToString(); });
             Console.WriteLine(str);
+
+            MyAction delegate1 = (int val) => { return val.ToString(); };
+            var str1 = invokeMyAction(delegate1);
+            Console.WriteLine(str1);
+
+            invokeMyAction(InvokeTest); // convert to self->InvokeTest()
+
+            invokeMyAction((int i) => InvokeTest(i));
+
+            invokeVoidAction((int i) => VoidInvokeTest(i));
+            invokeVoidAction(VoidInvokeTest);
+        }
+
+        public string InvokeTest(int i)
+        {
+            Console.WriteLine(i);
+            return i.ToString();
+        }
+
+        public void VoidInvokeTest(int i)
+        {
+            Console.WriteLine(i);
         }
     }
 
