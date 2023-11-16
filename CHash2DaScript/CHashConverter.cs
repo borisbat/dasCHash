@@ -69,6 +69,23 @@ namespace CHash2Das
                     return rename(this, td);
                 }
             }
+            else if (tt is INamedTypeSymbol nts)
+            {
+                var className = nts.Name;
+                var td = new TypeData()
+                {
+                    type = className,
+                    ns = nts.ContainingNamespace?.ToDisplayString()
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+            }
+            else
+            {
+                Fail($"unknown type {tt}");
+            }
             var res = dasTypeName(tt);
             return !string.IsNullOrEmpty(res) ? res : tt.Name;
         }
@@ -465,28 +482,6 @@ namespace CHash2Das
             return typesRename.Remove(type);
         }
 
-        public string getTypeName(INamedTypeSymbol ts)
-        {
-            var className = ts.Name;
-            var td = new TypeData()
-            {
-                type = className,
-                ns = ts.ContainingNamespace?.ToDisplayString()
-            };
-            if (typesRename.TryGetValue(td, out var rename))
-            {
-                className = rename(this, td);
-            }
-            var dasType = onVarTypeSyntax(ts);
-            if (dasType != "")
-                return dasType;
-            if (isBool(ts))
-                return "bool";
-            if (isVoid(ts))
-                return "void";
-            return className;
-        }
-
         /// <summary>
         /// Rename a using statement, pass "*" to rename all usings
         /// </summary>
@@ -645,7 +640,7 @@ namespace CHash2Das
                         else
                         {
                             string methodName = methodSymbol.Name; // Name of the method
-                            string className = getTypeName(methodSymbol.ContainingType);
+                            string className = onVarTypeSyntax(methodSymbol.ContainingType);
                             callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
@@ -1258,7 +1253,7 @@ namespace CHash2Das
 
             if (accessedSymbol != null && accessedSymbol.IsStatic)
             {
-                callPrefix = $"{getTypeName(accessedSymbol.ContainingType)}`{prefix}{accessedSymbol.Name}";
+                callPrefix = $"{onVarTypeSyntax(accessedSymbol.ContainingType)}`{prefix}{accessedSymbol.Name}";
                 return true;
             }
             return false;
@@ -1402,7 +1397,7 @@ namespace CHash2Das
                     {
                         var baseSymbol = semanticModel.GetSymbolInfo(expression);
                         if (baseSymbol.Symbol is INamedTypeSymbol namedTypeSymbol)
-                            return getTypeName(namedTypeSymbol);
+                            return onVarTypeSyntax(namedTypeSymbol);
 
                         var typeInfo = parentClassOrStruct(expression);
                         var fieldName = (expression as IdentifierNameSyntax).Identifier.Text;
