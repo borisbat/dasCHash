@@ -1,5 +1,3 @@
-// Compilation errors:
-
 module test
 
 typedef MyAction = lambda<(var value : int) : string>
@@ -613,7 +611,7 @@ class Employee
 		self.alias = alias_
 
 	def Set (var name_ : string; var alias_ : string) : void
-		var a <- @ <| ()
+		var a : lambda <- @ <| ()
 			self.name = name_
 			self.alias = alias_
 
