@@ -120,19 +120,6 @@ namespace CHash2Das
                 }
             }
             var txt = onTypeSyntax(ts);
-            if (tt.Type is INamedTypeSymbol nts)
-            {
-                var className = nts.Name;
-                var td = new TypeData()
-                {
-                    type = className,
-                    ns = nts.ContainingNamespace?.ToDisplayString()
-                };
-                if (typesRename.TryGetValue(td, out var rename))
-                {
-                    txt = rename(this, td);
-                }
-            }
             if (isPointerType(tt.Type)) txt += "?";
             return txt;
         }
@@ -144,25 +131,40 @@ namespace CHash2Das
             {
                 return "void";
             }
-
-            var td = new TypeData()
             {
-                type = type.ToString(),
-                ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString(),
-            };
-            if (typesRename.TryGetValue(td, out var rename))
-            {
-                return rename(this, td);
+                var td = new TypeData()
+                {
+                    type = type.ToString(),
+                    ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString(),
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
             }
             var contType = semanticModel.GetSymbolInfo(type).Symbol?.ContainingType;
             if (contType != null)
             {
-                td = new TypeData()
+                var td = new TypeData()
                 {
                     type = type.ToString(),
                     ns = contType.Name,
                 };
-                if (typesRename.TryGetValue(td, out rename))
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+            }
+            var tt = semanticModel.GetTypeInfo(type);
+            if (tt.Type is INamedTypeSymbol nts)
+            {
+                var className = nts.Name;
+                var td = new TypeData()
+                {
+                    type = className,
+                    ns = nts.ContainingNamespace?.ToDisplayString()
+                };
+                if (typesRename.TryGetValue(td, out var rename))
                 {
                     return rename(this, td);
                 }
