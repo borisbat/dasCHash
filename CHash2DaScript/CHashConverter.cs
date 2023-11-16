@@ -1323,10 +1323,17 @@ namespace CHash2Das
                         {
                             return $"{onExpressionSyntax(smm.Expression)} {smm.Name.Identifier.Text}";
                         }
+                        var accessedSymbol = semanticModel.GetSymbolInfo(smm).Symbol;
+                        if (accessedSymbol?.IsStatic ?? false)
+                            return $"{onExpressionSyntax(smm.Expression)}`{smm.Name.Identifier.Text}";
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
                 case SyntaxKind.IdentifierName:
                     {
+                        var baseSymbol = semanticModel.GetSymbolInfo(expression);
+                        if (baseSymbol.Symbol is INamedTypeSymbol namedTypeSymbol)
+                            return getTypeName(namedTypeSymbol);
+
                         var typeInfo = parentClassOrStruct(expression);
                         var fieldName = (expression as IdentifierNameSyntax).Identifier.Text;
                         if (typeInfo != null && getField(typeInfo, fieldName, out MemberAccessDelegate acc))
