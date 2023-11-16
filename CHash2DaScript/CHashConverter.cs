@@ -53,9 +53,11 @@ namespace CHash2Das
             Console.WriteLine(message);
         }
 
-        string onVarTypeSyntax(TypeInfo tt)
+        string onVarTypeSyntax(ITypeSymbol? tt)
         {
-            if (tt.Type is ITypeParameterSymbol tps)
+            if (tt == null)
+                return "var";
+            if (tt is ITypeParameterSymbol tps)
             {
                 var td = new TypeData()
                 {
@@ -67,8 +69,25 @@ namespace CHash2Das
                     return rename(this, td);
                 }
             }
-            var res = dasTypeName(tt.Type);
-            return !string.IsNullOrEmpty(res) ? res : tt.Type.Name;
+            else if (tt is INamedTypeSymbol nts)
+            {
+                var className = nts.Name;
+                var td = new TypeData()
+                {
+                    type = className,
+                    ns = nts.ContainingNamespace?.ToDisplayString()
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+            }
+            else
+            {
+                Fail($"unknown type {tt}");
+            }
+            var res = dasTypeName(tt);
+            return !string.IsNullOrEmpty(res) ? res : tt.Name;
         }
         string onVarTypeSyntax(TypeSyntax ts)
         {
@@ -101,6 +120,19 @@ namespace CHash2Das
                 }
             }
             var txt = onTypeSyntax(ts);
+            if (tt.Type is INamedTypeSymbol nts)
+            {
+                var className = nts.Name;
+                var td = new TypeData()
+                {
+                    type = className,
+                    ns = nts.ContainingNamespace?.ToDisplayString()
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    txt = rename(this, td);
+                }
+            }
             if (isPointerType(tt.Type)) txt += "?";
             return txt;
         }
@@ -265,6 +297,7 @@ namespace CHash2Das
 
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
+        public delegate string SetMemberAccessDelegate(CHashConverter converter, AssignmentExpressionSyntax inv);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
         public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
 
@@ -272,6 +305,7 @@ namespace CHash2Das
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<TypeField, InvocationDelegate> methodInvExpr = new Dictionary<TypeField, InvocationDelegate>();
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
+        Dictionary<TypeField, SetMemberAccessDelegate> setMemberAccessExpr = new Dictionary<TypeField, SetMemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
         HashSet<TypeData> dropPointersFlags = new HashSet<TypeData>();
@@ -353,6 +387,16 @@ namespace CHash2Das
             objectInvExpr[member] = inv;
         }
 
+        public void addSetField(TypeField typeWithMethod, SetMemberAccessDelegate acc, bool override_ = false)
+        {
+            if (!override_ && setMemberAccessExpr.ContainsKey(typeWithMethod))
+            {
+                Fail($"set member access {typeWithMethod.type}.{typeWithMethod.field} is already declared");
+                return;
+            }
+            setMemberAccessExpr[typeWithMethod] = acc;
+        }
+
         public void addField(TypeField typeWithMethod, MemberAccessDelegate acc, bool override_ = false)
         {
             if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
@@ -374,6 +418,31 @@ namespace CHash2Das
             while (curType != null)
             {
                 if (memberAccessExpr.TryGetValue(new TypeField()
+                {
+                    type = curType.MetadataName,
+                    ns = curType.ContainingNamespace?.ToDisplayString(),
+                    field = name
+                }, out acc))
+                {
+                    return true;
+                }
+                curType = curType.BaseType;
+            }
+            acc = default;
+            return false;
+        }
+
+        public bool getSetField(TypeInfo ti, string name, out SetMemberAccessDelegate acc)
+        {
+            return getSetField(ti.Type, name, out acc);
+        }
+
+        public bool getSetField(ITypeSymbol? ti, string name, out SetMemberAccessDelegate acc)
+        {
+            var curType = ti;
+            while (curType != null)
+            {
+                if (setMemberAccessExpr.TryGetValue(new TypeField()
                 {
                     type = curType.MetadataName,
                     ns = curType.ContainingNamespace?.ToDisplayString(),
@@ -411,26 +480,6 @@ namespace CHash2Das
         public bool removeRenameType(TypeData type)
         {
             return typesRename.Remove(type);
-        }
-
-        public string getTypeName(INamedTypeSymbol ts)
-        {
-            var className = ts.Name;
-            var td = new TypeData()
-            {
-                type = className,
-                ns = ts.ContainingNamespace?.ToDisplayString()
-            };
-            if (typesRename.TryGetValue(td, out var rename))
-            {
-                className = rename(this, td);
-            }
-            var dasType = dasTypeName(ts);
-            if (dasType != "")
-                return dasType;
-            if (isBool(ts))
-                return "bool";
-            return className;
         }
 
         /// <summary>
@@ -482,7 +531,7 @@ namespace CHash2Das
                         args += ", ";
                         @params += "; ";
                     }
-                    string v = dasTypeName(param.Type);
+                    string v = onVarTypeSyntax(param.Type);
                     @params += $"var {param.Name} : {v}"; // all args are var
                     args += $"{param.Name}";
                 }
@@ -501,7 +550,7 @@ namespace CHash2Das
             {
                 if (genericTypes && methodSymbol.TypeArguments.Length > 0)
                 {
-                    var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{getTypeName(x as INamedTypeSymbol)}>");
+                    var typeArgs = methodSymbol.TypeArguments.Select(x => $"type<{onVarTypeSyntax(x)}>");
                     typeArgsVal = string.Join(", ", typeArgs);
                 }
                 if (pipeDelegate && inv.ArgumentList.Arguments.Count > 0
@@ -591,7 +640,7 @@ namespace CHash2Das
                         else
                         {
                             string methodName = methodSymbol.Name; // Name of the method
-                            string className = getTypeName(methodSymbol.ContainingType);
+                            string className = onVarTypeSyntax(methodSymbol.ContainingType);
                             callText = $"{className}`{methodName}{onArgumentListSyntax(inv)}";
                         }
                     }
@@ -622,7 +671,7 @@ namespace CHash2Das
                                 if (ma.Expression.ToString() == "base")
                                 {
                                     var selfType = semanticModel.GetTypeInfo(ma.Expression);
-                                    var selfTypeName = onVarTypeSyntax(selfType);
+                                    var selfTypeName = onVarTypeSyntax(selfType.Type);
                                     callText = $"{methodName}{onArgumentListSyntax(inv, addSelf: true)}";
                                     callText = $"{selfTypeName}`{callText}";
                                 }
@@ -667,7 +716,7 @@ namespace CHash2Das
                                 if (gns.ToString() == "base")
                                 {
                                     var selfType = semanticModel.GetTypeInfo(gns);
-                                    var selfTypeName = onVarTypeSyntax(selfType);
+                                    var selfTypeName = onVarTypeSyntax(selfType.Type);
                                     callText = $"{methodName}{onArgumentListSyntax(inv, addSelf: true)}";
                                     callText = $"{selfTypeName}`{callText}";
                                 }
@@ -729,6 +778,10 @@ namespace CHash2Das
         bool isBool(ITypeSymbol ts)
         {
             return ts.Equals(compilation.GetSpecialType(SpecialType.System_Boolean));
+        }
+        bool isVoid(ITypeSymbol ts)
+        {
+            return ts.Equals(compilation.GetSpecialType(SpecialType.System_Void));
         }
 
         bool isDouble(ITypeSymbol ts)
@@ -1200,7 +1253,7 @@ namespace CHash2Das
 
             if (accessedSymbol != null && accessedSymbol.IsStatic)
             {
-                callPrefix = $"{getTypeName(accessedSymbol.ContainingType)}`{prefix}{accessedSymbol.Name}";
+                callPrefix = $"{onVarTypeSyntax(accessedSymbol.ContainingType)}`{prefix}{accessedSymbol.Name}";
                 return true;
             }
             return false;
@@ -1256,6 +1309,18 @@ namespace CHash2Das
                         if (isNullExpression(binop.Right)) assign = "=";
                         if (isProperty(binop.Left))
                         {
+                            if (binop.Left is MemberAccessExpressionSyntax leftAccess)
+                            {
+                                ISymbol accessedSymbol = semanticModel.GetSymbolInfo(leftAccess.Expression).Symbol;
+                                if (accessedSymbol != null)
+                                {
+                                    var accessType = semanticModel.GetTypeInfo(leftAccess.Expression);
+                                    if (getSetField(accessType, leftAccess.Name.ToString(), out var sf))
+                                    {
+                                        return sf(this, binop);
+                                    }
+                                }
+                            }
                             if (isStaticProperty(binop.Left, "set__", out string propName))
                             {
                                 return $"{propName}({onExpressionSyntax(binop.Right)})";
@@ -1323,10 +1388,17 @@ namespace CHash2Das
                         {
                             return $"{onExpressionSyntax(smm.Expression)} {smm.Name.Identifier.Text}";
                         }
+                        ISymbol accessedSymbol = semanticModel.GetSymbolInfo(smm).Symbol;
+                        if (accessedSymbol.IsStatic)
+                            return $"{onExpressionSyntax(smm.Expression)}`{smm.Name.Identifier.Text}";
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
                 case SyntaxKind.IdentifierName:
                     {
+                        var baseSymbol = semanticModel.GetSymbolInfo(expression);
+                        if (baseSymbol.Symbol is INamedTypeSymbol namedTypeSymbol)
+                            return onVarTypeSyntax(namedTypeSymbol);
+
                         var typeInfo = parentClassOrStruct(expression);
                         var fieldName = (expression as IdentifierNameSyntax).Identifier.Text;
                         if (typeInfo != null && getField(typeInfo, fieldName, out MemberAccessDelegate acc))
@@ -1517,7 +1589,7 @@ namespace CHash2Das
                         if (nullableType)
                         {
                             var defType = semanticModel.GetTypeInfo(cae);
-                            return $"if ({l} == null)\n{tabstr}\t{l} = new [[{onVarTypeSyntax(defType)}]]\n{tabstr}\t*{l} = {r}\n";
+                            return $"if ({l} == null)\n{tabstr}\t{l} = new [[{onVarTypeSyntax(defType.Type)}]]\n{tabstr}\t*{l} = {r}\n";
                         }
                         return $"if ({l} == null)\n{tabstr}\t{l} = {r}\n";
                     }
@@ -2360,7 +2432,7 @@ namespace CHash2Das
             var values = onVariableDeclarationSyntax(field.Declaration, false);
             string result = "";
             var prefix = "";
-            if (field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword))
+            if (field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.StaticKeyword || mod.Kind() == SyntaxKind.ConstKeyword))
                 prefix += "static ";
             if (field.Modifiers.Any(mod => mod.Kind() == SyntaxKind.PrivateKeyword))
                 prefix += "private ";

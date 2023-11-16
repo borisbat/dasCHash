@@ -217,6 +217,15 @@ namespace CHash2Das
             return res;
         }
 
+        static CHashConverter.SetMemberAccessDelegate das_raw_set_member(string value, bool doDeref = true)
+        {
+            CHashConverter.SetMemberAccessDelegate res = delegate (CHashConverter converter, AssignmentExpressionSyntax ae)
+            {
+                return $"{converter.derefExpr(ae.Left, doDeref)}{value}{converter.derefExpr(ae.Right)}";
+            };
+            return res;
+        }
+
         static CHashConverter.MemberAccessDelegate das_static(string value)
         {
             CHashConverter.MemberAccessDelegate res = delegate (CHashConverter converter, MemberAccessExpressionSyntax acc)
