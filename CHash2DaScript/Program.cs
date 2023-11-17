@@ -38,14 +38,19 @@ namespace Main
             var errors = diagnostics.Where(diag => diag.Severity == DiagnosticSeverity.Error);
             if (errors.Any())
             {
-                result += "// Compilation errors:\n";
+                var errorsValue = "";
                 foreach (var error in errors)
                 {
                     if (error.Id == "CS5001") continue; // entry point not found
                     var error_text = $"{error.Id}: {error.GetMessage()} at {error.Location}";
-                    result += $"//{error_text}\n";
+                    errorsValue += $"//{error_text}\n";
                 }
-                result += "\n";
+                if (errorsValue.Length > 0)
+                {
+                    result += "// Compilation errors:\n";
+                    result += errorsValue;
+                    result += "\n";
+                }
             }
 
             result += $"module {Path.GetFileNameWithoutExtension(path)}\n\n";
