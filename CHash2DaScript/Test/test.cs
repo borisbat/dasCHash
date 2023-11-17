@@ -703,7 +703,7 @@ namespace HelloWorld
     public class Employee
     {
         public delegate string MyAction(int value);
-        public delegate void VoidAction(string value);
+        public delegate void VoidAction(string value, bool flag);
         private string alias;
         private string name;
 
@@ -719,7 +719,7 @@ namespace HelloWorld
 
         void invokeVoidAction(VoidAction action)
         {
-            action.Invoke("test");
+            action.Invoke("test", true);
         }
 
         public Employee(string name_, string alias_)
@@ -755,7 +755,7 @@ namespace HelloWorld
 
             invokeMyAction((int i) => InvokeTest(i));
 
-            invokeVoidAction((i) => VoidInvokeTest(i));
+            invokeVoidAction((i, b) => VoidInvokeTest(i, b));
             invokeVoidAction(VoidInvokeTest);
         }
 
@@ -765,7 +765,7 @@ namespace HelloWorld
             return i.ToString();
         }
 
-        public void VoidInvokeTest(string i)
+        public void VoidInvokeTest(string i, bool flag)
         {
             Console.WriteLine(i);
         }

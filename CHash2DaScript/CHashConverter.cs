@@ -87,6 +87,10 @@ namespace CHash2Das
                 Fail($"unknown type {tt}");
             }
             var res = dasTypeName(tt);
+            if (isString(tt))
+                res = "string";
+            if (isBool(tt))
+                res = "bool";
             return !string.IsNullOrEmpty(res) ? res : tt.Name;
         }
         string onVarTypeSyntax(TypeSyntax ts)
@@ -2523,7 +2527,7 @@ namespace CHash2Das
             foreach (var param in member.ParameterList.Parameters)
             {
                 if (first) first = false;
-                else result += ", ";
+                else result += "; ";
                 result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
             }
             result += $") : {onVarTypeSyntax(member.ReturnType)}>";
