@@ -18,7 +18,11 @@ namespace HelloWorld
         public int a = 13;
         private int b = 13;
 
-        public Foo() { }
+        static Foo instance;
+
+        public Foo() {
+            instance = this;
+         }
         public Foo(int A) { a = A; }
 
         public void bar()

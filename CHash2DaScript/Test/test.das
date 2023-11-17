@@ -23,8 +23,10 @@ class Foo
 
 	private b : int = 13
 
+	static instance : Foo?
+
 	def Foo
-		pass
+		instance = addr(self)
 
 	def Foo (var A : int)
 		a = A

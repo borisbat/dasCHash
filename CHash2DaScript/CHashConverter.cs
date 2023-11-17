@@ -1330,7 +1330,10 @@ namespace CHash2Das
                             else
                                 assign = ":=";
                         }
-                        return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
+                        var rightValue = onExpressionSyntax(binop.Right);
+                        if (rightValue == "self")
+                            rightValue = "addr(self)";
+                        return $"{onExpressionSyntax(binop.Left)} {assign} {rightValue}";
                     }
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
