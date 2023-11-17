@@ -1394,7 +1394,7 @@ namespace CHash2Das
                             return $"{onExpressionSyntax(smm.Expression)} {smm.Name.Identifier.Text}";
                         }
                         ISymbol accessedSymbol = semanticModel.GetSymbolInfo(smm).Symbol;
-                        if (accessedSymbol.IsStatic)
+                        if (accessedSymbol?.IsStatic ?? false)
                             return $"{onExpressionSyntax(smm.Expression)}`{smm.Name.Identifier.Text}";
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
