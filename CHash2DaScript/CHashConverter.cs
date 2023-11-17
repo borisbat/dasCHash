@@ -87,6 +87,10 @@ namespace CHash2Das
                 Fail($"unknown type {tt}");
             }
             var res = dasTypeName(tt);
+            if (isString(tt))
+                res = "string";
+            if (isBool(tt))
+                res = "bool";
             return !string.IsNullOrEmpty(res) ? res : tt.Name;
         }
         string onVarTypeSyntax(TypeSyntax ts)
@@ -120,19 +124,6 @@ namespace CHash2Das
                 }
             }
             var txt = onTypeSyntax(ts);
-            if (tt.Type is INamedTypeSymbol nts)
-            {
-                var className = nts.Name;
-                var td = new TypeData()
-                {
-                    type = className,
-                    ns = nts.ContainingNamespace?.ToDisplayString()
-                };
-                if (typesRename.TryGetValue(td, out var rename))
-                {
-                    txt = rename(this, td);
-                }
-            }
             if (isPointerType(tt.Type)) txt += "?";
             return txt;
         }
@@ -144,25 +135,40 @@ namespace CHash2Das
             {
                 return "void";
             }
-
-            var td = new TypeData()
             {
-                type = type.ToString(),
-                ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString(),
-            };
-            if (typesRename.TryGetValue(td, out var rename))
-            {
-                return rename(this, td);
+                var td = new TypeData()
+                {
+                    type = type.ToString(),
+                    ns = semanticModel.GetSymbolInfo(type).Symbol?.ContainingNamespace?.ToDisplayString(),
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
             }
             var contType = semanticModel.GetSymbolInfo(type).Symbol?.ContainingType;
             if (contType != null)
             {
-                td = new TypeData()
+                var td = new TypeData()
                 {
                     type = type.ToString(),
                     ns = contType.Name,
                 };
-                if (typesRename.TryGetValue(td, out rename))
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    return rename(this, td);
+                }
+            }
+            var tt = semanticModel.GetTypeInfo(type);
+            if (tt.Type is INamedTypeSymbol nts)
+            {
+                var className = nts.Name;
+                var td = new TypeData()
+                {
+                    type = className,
+                    ns = nts.ContainingNamespace?.ToDisplayString()
+                };
+                if (typesRename.TryGetValue(td, out var rename))
                 {
                     return rename(this, td);
                 }
@@ -1328,7 +1334,10 @@ namespace CHash2Das
                             else
                                 assign = ":=";
                         }
-                        return $"{onExpressionSyntax(binop.Left)} {assign} {onExpressionSyntax(binop.Right)}";
+                        var rightValue = onExpressionSyntax(binop.Right);
+                        if (rightValue == "self")
+                            rightValue = "addr(self)";
+                        return $"{onExpressionSyntax(binop.Left)} {assign} {rightValue}";
                     }
                 case SyntaxKind.LeftShiftAssignmentExpression:
                 case SyntaxKind.RightShiftAssignmentExpression:
@@ -1389,7 +1398,7 @@ namespace CHash2Das
                             return $"{onExpressionSyntax(smm.Expression)} {smm.Name.Identifier.Text}";
                         }
                         ISymbol accessedSymbol = semanticModel.GetSymbolInfo(smm).Symbol;
-                        if (accessedSymbol.IsStatic)
+                        if (accessedSymbol?.IsStatic ?? false)
                             return $"{onExpressionSyntax(smm.Expression)}`{smm.Name.Identifier.Text}";
                         return $"{onExpressionSyntax(smm.Expression)}.{smm.Name.Identifier.Text}";
                     }
@@ -1475,7 +1484,7 @@ namespace CHash2Das
                         foreach (var param in ame.ParameterList.Parameters)
                         {
                             if (first) first = false;
-                            else result += ", ";
+                            else result += "; ";
                             string v = onVarTypeSyntax(param.Type);
                             if (v == "var" || v == "var?")
                                 result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
@@ -1504,7 +1513,7 @@ namespace CHash2Das
                         foreach (var param in ame.ParameterList.Parameters)
                         {
                             if (first) first = false;
-                            else result += ", ";
+                            else result += "; ";
                             string v = onVarTypeSyntax(param.Type);
                             if (v == "var" || v == "var?")
                                 result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
@@ -2518,7 +2527,7 @@ namespace CHash2Das
             foreach (var param in member.ParameterList.Parameters)
             {
                 if (first) first = false;
-                else result += ", ";
+                else result += "; ";
                 result += $"{varPrefix(param)}{param.Identifier} : {onVarTypeSyntax(param.Type)}{varSuffix(param)}";
             }
             result += $") : {onVarTypeSyntax(member.ReturnType)}>";

@@ -18,7 +18,12 @@ namespace HelloWorld
         public int a = 13;
         private int b = 13;
 
-        public Foo() { }
+        static Foo instance;
+
+        public Foo()
+        {
+            instance = this;
+        }
         public Foo(int A) { a = A; }
 
         public void bar()
@@ -698,7 +703,7 @@ namespace HelloWorld
     public class Employee
     {
         public delegate string MyAction(int value);
-        public delegate void VoidAction(int value);
+        public delegate void VoidAction(string value, bool flag);
         private string alias;
         private string name;
 
@@ -714,7 +719,7 @@ namespace HelloWorld
 
         void invokeVoidAction(VoidAction action)
         {
-            action.Invoke(10);
+            action.Invoke("test", true);
         }
 
         public Employee(string name_, string alias_)
@@ -750,7 +755,7 @@ namespace HelloWorld
 
             invokeMyAction((int i) => InvokeTest(i));
 
-            invokeVoidAction((int i) => VoidInvokeTest(i));
+            invokeVoidAction((i, b) => VoidInvokeTest(i, b));
             invokeVoidAction(VoidInvokeTest);
         }
 
@@ -760,7 +765,7 @@ namespace HelloWorld
             return i.ToString();
         }
 
-        public void VoidInvokeTest(int i)
+        public void VoidInvokeTest(string i, bool flag)
         {
             Console.WriteLine(i);
         }

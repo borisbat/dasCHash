@@ -1,7 +1,7 @@
 module test
 
 typedef MyAction = lambda<(var value : int) : string>
-typedef VoidAction = lambda<(var value : int) : void>
+typedef VoidAction = lambda<(var value : string; var flag : bool) : void>
 
 require math
 require daslib/coroutines
@@ -23,8 +23,10 @@ class Foo
 
 	private b : int = 13
 
+	static instance : Foo?
+
 	def Foo
-		pass
+		instance = addr(self)
 
 	def Foo (var A : int)
 		a = A
@@ -604,7 +606,7 @@ class Employee
 		return action |> invoke(10)
 
 	def invokeVoidAction (var action : VoidAction) : void
-		action |> invoke(10)
+		action |> invoke("test", true)
 
 	def Employee (var name_ : string; var alias_ : string)
 		self.name = name_
@@ -637,15 +639,15 @@ class Employee
 		invokeMyAction() <| @(var i : int)
 			return InvokeTest(i)
 
-		invokeVoidAction() <| @(var i : int)
-			VoidInvokeTest(i)
-		invokeVoidAction(@(var i : int) { self->VoidInvokeTest(i); })
+		invokeVoidAction() <| @(var i; var b)
+			VoidInvokeTest(i, b)
+		invokeVoidAction(@(var i : string; var flag : bool) { self->VoidInvokeTest(i, flag); })
 
 	def InvokeTest (var i : int) : string
 		print("{i}\n")
 		return "{i}"
 
-	def VoidInvokeTest (var i : int) : void
+	def VoidInvokeTest (var i : string; var flag : bool) : void
 		print("{i}\n")
 
 
