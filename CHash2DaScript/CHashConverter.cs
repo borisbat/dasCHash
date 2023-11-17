@@ -1480,7 +1480,7 @@ namespace CHash2Das
                         foreach (var param in ame.ParameterList.Parameters)
                         {
                             if (first) first = false;
-                            else result += ", ";
+                            else result += "; ";
                             string v = onVarTypeSyntax(param.Type);
                             if (v == "var" || v == "var?")
                                 result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
@@ -1509,7 +1509,7 @@ namespace CHash2Das
                         foreach (var param in ame.ParameterList.Parameters)
                         {
                             if (first) first = false;
-                            else result += ", ";
+                            else result += "; ";
                             string v = onVarTypeSyntax(param.Type);
                             if (v == "var" || v == "var?")
                                 result += $"{varPrefix(param)}{param.Identifier}{varSuffix(param)}";
