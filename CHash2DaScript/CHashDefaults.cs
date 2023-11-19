@@ -19,6 +19,13 @@ namespace CHash2Das
         public string field;
     }
 
+    public struct OperatorOverload
+    {
+        public string type;
+        public string ns;
+        public SyntaxKind kind;
+    }
+
     public partial class CHashDefaults
     {
         const string GlobalNS = "<global namespace>";
@@ -194,6 +201,33 @@ namespace CHash2Das
             return res;
         }
 
+        struct LeftRightExpr
+        {
+            public ExpressionSyntax Left;
+            public ExpressionSyntax Right;
+        }
+
+        static LeftRightExpr get_left_right(ExpressionSyntax expr)
+        {
+            if (expr is BinaryExpressionSyntax binop)
+                return new LeftRightExpr() { Left = binop.Left, Right = binop.Right };
+            if (expr is AssignmentExpressionSyntax assign)
+                return new LeftRightExpr() { Left = assign.Left, Right = assign.Right };
+            return new LeftRightExpr() { Left = default, Right = default };
+        }
+
+        static CHashConverter.OperatorOverloadDelegate das_bin_operator_raw(string fnName, bool doDeref = true, bool genericTypes = true)
+        {
+            CHashConverter.OperatorOverloadDelegate res = delegate (CHashConverter converter, ExpressionSyntax expr)
+            {
+                var binop = get_left_right(expr);
+                var left = converter.onExpressionSyntax(binop.Left);
+                var right = converter.onExpressionSyntax(binop.Right);
+                return $"{left}{fnName}{right}";
+            };
+            return res;
+        }
+
         static string das_ToString(CHashConverter converter, InvocationExpressionSyntax inv)
         {
             if (inv.Parent.IsKind(SyntaxKind.Interpolation))
@@ -284,6 +318,7 @@ namespace CHash2Das
             converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method_fn("invoke"));
 
             converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
+            converter.addOperatorOverload(new OperatorOverload() { type = nameof(Action), ns = SystemNS, kind = SyntaxKind.AddAssignmentExpression }, das_bin_operator_raw(" |> AddListener() <| "));
             // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
 
             // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));

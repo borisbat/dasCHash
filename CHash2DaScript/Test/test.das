@@ -617,6 +617,10 @@ class Employee
 			self.name = name_
 			self.alias = alias_
 
+		a |> AddListener() <| @()
+			self.name = name_
+			self.alias = alias_
+
 		a |> invoke()
 
 		invokeMe() <| @()
