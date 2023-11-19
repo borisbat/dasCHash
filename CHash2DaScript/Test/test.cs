@@ -736,6 +736,11 @@ namespace HelloWorld
                 this.name = name_;
                 this.alias = alias_;
             };
+            a += delegate ()
+            {
+                this.name = name_;
+                this.alias = alias_;
+            };
             a.Invoke();
 
             invokeMe(delegate ()

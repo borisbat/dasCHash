@@ -91,6 +91,8 @@ namespace CHash2Das
                 res = "string";
             if (isBool(tt))
                 res = "bool";
+            if (isVoid(tt))
+                res = "void";
             return !string.IsNullOrEmpty(res) ? res : tt.Name;
         }
         string onVarTypeSyntax(TypeSyntax ts)
@@ -304,6 +306,7 @@ namespace CHash2Das
         public delegate string InvocationDelegate(CHashConverter converter, InvocationExpressionSyntax inv);
         public delegate string MemberAccessDelegate(CHashConverter converter, MemberAccessExpressionSyntax inv);
         public delegate string SetMemberAccessDelegate(CHashConverter converter, AssignmentExpressionSyntax inv);
+        public delegate string OperatorOverloadDelegate(CHashConverter converter, ExpressionSyntax expr);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
         public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
 
@@ -313,6 +316,7 @@ namespace CHash2Das
         Dictionary<TypeField, MemberAccessDelegate> memberAccessExpr = new Dictionary<TypeField, MemberAccessDelegate>();
         Dictionary<TypeField, SetMemberAccessDelegate> setMemberAccessExpr = new Dictionary<TypeField, SetMemberAccessDelegate>();
         Dictionary<string, MemberAccessDelegate> objectMemberAccessExpr = new Dictionary<string, MemberAccessDelegate>();
+        Dictionary<OperatorOverload, OperatorOverloadDelegate> operatorOverloads = new Dictionary<OperatorOverload, OperatorOverloadDelegate>();
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
         HashSet<TypeData> dropPointersFlags = new HashSet<TypeData>();
         Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
@@ -518,6 +522,16 @@ namespace CHash2Das
                 typeData = typeData,
                 paramNames = paramNames
             });
+        }
+
+        public void addOperatorOverload(OperatorOverload operatorOverload, OperatorOverloadDelegate ood, bool override_ = false)
+        {
+            if (!override_ && operatorOverloads.ContainsKey(operatorOverload))
+            {
+                Fail($"operator overload {operatorOverload} is already declared");
+                return;
+            }
+            operatorOverloads[operatorOverload] = ood;
         }
 
         public string onExpressionArgumentSyntax(ExpressionSyntax expression)
@@ -962,6 +976,20 @@ namespace CHash2Das
 
         string onBinaryExpressionSyntax(BinaryExpressionSyntax binop)
         {
+            var leftType = semanticModel.GetTypeInfo(binop.Left).Type;
+            if (leftType != null)
+            {
+                var td = new OperatorOverload()
+                {
+                    type = leftType.Name,
+                    ns = leftType.ContainingNamespace?.ToDisplayString(),
+                    kind = binop.Kind(),
+                };
+                if (operatorOverloads.TryGetValue(td, out var overload))
+                {
+                    return overload(this, binop);
+                }
+            }
             var result = "(";
             result += onExpressionSyntax(binop.Left);
             var token = binop.OperatorToken.ToString();
@@ -1310,6 +1338,20 @@ namespace CHash2Das
                 case SyntaxKind.SimpleAssignmentExpression:
                     {
                         var binop = expression as AssignmentExpressionSyntax;
+                        var leftType = semanticModel.GetTypeInfo(binop.Left).Type;
+                        if (leftType != null)
+                        {
+                            var td = new OperatorOverload()
+                            {
+                                type = leftType.Name,
+                                ns = leftType.ContainingNamespace?.ToDisplayString(),
+                                kind = binop.Kind(),
+                            };
+                            if (operatorOverloads.TryGetValue(td, out var overload))
+                            {
+                                return overload(this, binop);
+                            }
+                        }
                         var typeInfo = semanticModel.GetTypeInfo(binop.Left);
                         var assign = isMoveType(typeInfo.Type) ? "<-" : isCloneType(typeInfo.Type) ? ":=" : "=";
                         if (isNullExpression(binop.Right)) assign = "=";
@@ -1350,6 +1392,20 @@ namespace CHash2Das
                 case SyntaxKind.DivideAssignmentExpression:
                     {
                         var binop = expression as AssignmentExpressionSyntax;
+                        var leftType = semanticModel.GetTypeInfo(binop.Left).Type;
+                        if (leftType != null)
+                        {
+                            var td = new OperatorOverload()
+                            {
+                                type = leftType.Name,
+                                ns = leftType.ContainingNamespace?.ToDisplayString(),
+                                kind = binop.Kind(),
+                            };
+                            if (operatorOverloads.TryGetValue(td, out var overload))
+                            {
+                                return overload(this, binop);
+                            }
+                        }
                         if (isProperty(binop.Left))
                         {
                             var op = binop.OperatorToken.Text;
