@@ -309,6 +309,7 @@ namespace CHash2Das
         public delegate string OperatorOverloadDelegate(CHashConverter converter, ExpressionSyntax expr);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
         public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
+        public delegate string CtorDelegate(CHashConverter converter, ObjectCreationExpressionSyntax objCreation);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
@@ -320,6 +321,7 @@ namespace CHash2Das
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
         HashSet<TypeData> dropPointersFlags = new HashSet<TypeData>();
         Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
+        Dictionary<TypeData, CtorDelegate> ctorExpr = new Dictionary<TypeData, CtorDelegate>();
 
         struct TemplateInstance
         {
@@ -532,6 +534,16 @@ namespace CHash2Das
                 return;
             }
             operatorOverloads[operatorOverload] = ood;
+        }
+
+        public void addCtor(TypeData typeData, CtorDelegate ctor, bool override_ = false)
+        {
+            if (!override_ && ctorExpr.ContainsKey(typeData))
+            {
+                Fail($"ctor {typeData} is already declared");
+                return;
+            }
+            ctorExpr[typeData] = ctor;
         }
 
         public string onExpressionArgumentSyntax(ExpressionSyntax expression)
@@ -1059,6 +1071,14 @@ namespace CHash2Das
 
         private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce, TypeInfo resType)
         {
+            if (ctorExpr.TryGetValue(new TypeData()
+            {
+                type = resType.Type.Name,
+                ns = resType.Type.ContainingNamespace?.ToDisplayString(),
+            }, out var ctor))
+            {
+                return ctor(this, oce);
+            }
             var init = "";
             if (oce.Initializer != null)
             {

@@ -752,6 +752,9 @@ namespace HelloWorld
             var s = string.Empty;
             WriteLine(s);
 
+            var s2 = new String("test");
+            WriteLine(s2);
+
             var str = invokeMyAction((int val) => { return val.ToString(); });
             Console.WriteLine(str);
 

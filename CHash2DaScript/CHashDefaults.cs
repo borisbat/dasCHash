@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -268,6 +269,17 @@ namespace CHash2Das
             };
             return res;
         }
+        static CHashConverter.CtorDelegate das_raw_ctor(string value)
+        {
+            CHashConverter.CtorDelegate res = delegate (CHashConverter converter, ObjectCreationExpressionSyntax oce)
+            {
+                if (oce.ArgumentList == null)
+                    return value;
+                var arguments = oce.ArgumentList.Arguments.Select(arg => converter.onExpressionSyntax(arg.Expression)).Aggregate((current, next) => $"{current}, {next}");
+                return $"{value}({arguments})";
+            };
+            return res;
+        }
 
         static CHashConverter.TypeRenameDelegate das_type_name(string value)
         {
@@ -313,6 +325,7 @@ namespace CHash2Das
 
             converter.addField(new TypeField() { type = nameof(Array), ns = SystemNS, field = nameof(Array.Length) }, das_raw_member(" |> length()"));
             converter.addField(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.Empty) }, das_static("\"\""));
+            converter.addCtor(new TypeData() { type = nameof(String), ns = SystemNS }, das_raw_ctor(""));
 
             converter.addObjectMethod("ToString", das_ToString);
 

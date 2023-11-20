@@ -631,6 +631,9 @@ class Employee
 		var s = ""
 		print("{s}\n")
 
+		var s2 = ("test")
+		print("{s2}\n")
+
 		var str = invokeMyAction() <| @(var val : int)
 			return "{val}"
 
