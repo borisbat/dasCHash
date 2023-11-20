@@ -281,6 +281,41 @@ namespace CHash2Das
             return res;
         }
 
+        static CHashConverter.CtorDelegate das_ctor_args(string value)
+        {
+            CHashConverter.CtorDelegate res = delegate (CHashConverter converter, ObjectCreationExpressionSyntax oce)
+            {
+                if (oce.ArgumentList == null)
+                    return value;
+                var result = value;
+                var arguments = oce.ArgumentList.Arguments.Select(arg => converter.onExpressionSyntax(arg.Expression));
+                var idx = 0;
+                var unknownArgs = false;
+                foreach (var arg in arguments)
+                {
+                    var argName = $"%{idx}%";
+                    if (result.Contains(argName))
+                    {
+                        result = result.Replace(argName, arg);
+                    }
+                    else
+                    {
+                        if (unknownArgs)
+                            result += ", ";
+                        else
+                            result += "(";
+                        unknownArgs = true;
+                        result += arg;
+                    }
+                    idx++;
+                }
+                if (unknownArgs)
+                    result += ")";
+                return result;
+            };
+            return res;
+        }
+
         static CHashConverter.TypeRenameDelegate das_type_name(string value)
         {
             CHashConverter.TypeRenameDelegate res = delegate (CHashConverter converter, TypeData type)
