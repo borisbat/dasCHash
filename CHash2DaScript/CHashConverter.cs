@@ -2583,7 +2583,7 @@ namespace CHash2Das
                         else if (!isAbstract)
                         {
                             needStorage = true;
-                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
+                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}__\n";
                         }
                     }
                     else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
@@ -2601,13 +2601,13 @@ namespace CHash2Das
                         else if (!isAbstract)
                         {
                             needStorage = true;
-                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";
+                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}__ = value\n";
                         }
                     }
                 }
                 if (needStorage)
                 {
-                    result += $"{tabstr}private {propertySyntax.Identifier.Text}`Storage : {ptype}";
+                    result += $"{tabstr}private {propertySyntax.Identifier.Text}__ : {ptype}";
                     if (propertySyntax.Initializer != null)
                         // TODO: use correct assignment operator
                         result += $" = {onExpressionSyntax(propertySyntax.Initializer.Value)}";

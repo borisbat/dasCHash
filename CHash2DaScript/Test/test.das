@@ -408,24 +408,24 @@ class DefaultPerson
 	def operator . FirstName : string
 		return get__FirstName()
 	def get__FirstName : string
-		return FirstName`Storage
+		return FirstName__
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
 	def set__FirstName ( value:string ) : void
-		FirstName`Storage = value
-	private FirstName`Storage : string
+		FirstName__ = value
+	private FirstName__ : string
 
 class DefaultPersonWithInit
 	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
 	def get__FirstName : string
-		return FirstName`Storage
+		return FirstName__
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
 	def set__FirstName ( value:string ) : void
-		FirstName`Storage = value
-	private FirstName`Storage : string = "blahblah"
+		FirstName__ = value
+	private FirstName__ : string = "blahblah"
 
 class Person
 	// property FirstName : string
