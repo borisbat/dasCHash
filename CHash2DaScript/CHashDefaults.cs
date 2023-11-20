@@ -18,6 +18,13 @@ namespace CHash2Das
         public string type;
         public string ns;
         public string field;
+
+        public TypeField(TypeData ti, string field)
+        {
+            type = ti.type;
+            ns = ti.ns;
+            this.field = field;
+        }
     }
 
     public struct OperatorOverload
@@ -25,6 +32,13 @@ namespace CHash2Das
         public string type;
         public string ns;
         public SyntaxKind kind;
+
+        public OperatorOverload(TypeData ti, SyntaxKind kind)
+        {
+            type = ti.type;
+            ns = ti.ns;
+            this.kind = kind;
+        }
     }
 
     public partial class CHashDefaults
@@ -336,38 +350,88 @@ namespace CHash2Das
 
         public static void registerInvocations(CHashConverter converter)
         {
-            converter.addMethod(new TypeField() { type = nameof(Console), ns = SystemNS, field = nameof(Console.Write) }, das_Write);
-            converter.addMethod(new TypeField() { type = nameof(Console), ns = SystemNS, field = nameof(Console.WriteLine) }, das_WriteLine);
-            converter.addMethod(new TypeField() { type = nameof(Debug), ns = SystemNS, field = nameof(Debug.Fail) }, das_WriteError);
+            var consoleTd = new TypeData() { type = nameof(Console), ns = SystemNS };
+            converter.addMethod(consoleTd, nameof(Console.Write), das_Write);
+            converter.addMethod(consoleTd, nameof(Console.WriteLine), das_WriteLine);
+            // static member access
+            converter.addField(consoleTd, "CapsLock", das_raw_member(" |> get_caps_lock()", false));
+
+            var debugTd = new TypeData() { type = nameof(Debug), ns = SystemNS };
+            converter.addMethod(debugTd, nameof(Debug.Fail), das_WriteError);
 
             converter.addInvocation("nameof", das_NameOf);
 
-            converter.addMethod(new TypeField() { type = nameof(Math), ns = SystemNS, field = nameof(Math.Sqrt) }, req(das_fn("math::sqrt"), "math"));
-            converter.addMethod(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.IsNullOrEmpty) }, das_fn("empty"));
-            // static member access
-            converter.addField(new TypeField() { type = nameof(Console), ns = SystemNS, field = "CapsLock" }, das_raw_member(" |> get_caps_lock()", false));
+            var mathTd = new TypeData() { type = nameof(Math), ns = SystemNS };
+            converter.addField(mathTd, nameof(Math.PI), req(das_static("PI"), "math"));
+            converter.addField(mathTd, nameof(Math.Tau), req(das_static("2. * PI"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Sqrt), req(das_fn("sqrt"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Sin), req(das_fn("sin"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Cos), req(das_fn("cos"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Tan), req(das_fn("tan"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Asin), req(das_fn("asin"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Acos), req(das_fn("acos"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Atan), req(das_fn("atan"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Atan2), req(das_fn("atan2"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Pow), req(das_fn("pow"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Abs), req(das_fn("abs"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Round), req(das_fn("round"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Max), req(das_fn("max"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Min), req(das_fn("min"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Log), req(das_fn("log"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Log2), req(das_fn("log2"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Ceiling), req(das_fn("ceil"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Floor), req(das_fn("floor"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Exp), req(das_fn("exp"), "math"));
+            converter.addMethod(mathTd, nameof(Math.Clamp), req(das_fn("clamp"), "math"));
 
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Add" }, das_method_fn("push"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Clear" }, das_method_fn("clear"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveAt" }, das_method_fn("erase"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "RemoveRange" }, das_method_fn("erase"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Remove" }, das_method_fn("remove_value"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Insert" }, das_method_fn_reverse_args("push"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Contains" }, das_method_fn("has_value"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "IndexOf" }, das_method_fn("find_index"));
-            converter.addMethod(new TypeField() { type = "List`1", ns = CollectionNS, field = "Sort" }, das_method_noargs("sort"));
-            converter.addField(new TypeField() { type = "List`1", ns = CollectionNS, field = "Count" }, das_raw_member(" |> length()"));
+            var mathfTd = new TypeData() { type = nameof(MathF), ns = SystemNS };
+            converter.addField(mathfTd, nameof(MathF.PI), req(das_static("PI"), "math"));
+            converter.addField(mathfTd, nameof(MathF.Tau), req(das_static("2. * PI"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Sqrt), req(das_fn("sqrt"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Sin), req(das_fn("sin"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Cos), req(das_fn("cos"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Tan), req(das_fn("tan"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Asin), req(das_fn("asin"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Acos), req(das_fn("acos"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Atan), req(das_fn("atan"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Pow), req(das_fn("pow"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Round), req(das_fn("round"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Max), req(das_fn("max"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Min), req(das_fn("min"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Log), req(das_fn("log"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Log2), req(das_fn("log2"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Ceiling), req(das_fn("ceil"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Floor), req(das_fn("floor"), "math"));
+            converter.addMethod(mathfTd, nameof(MathF.Exp), req(das_fn("exp"), "math"));
 
-            converter.addField(new TypeField() { type = nameof(Array), ns = SystemNS, field = nameof(Array.Length) }, das_raw_member(" |> length()"));
-            converter.addField(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.Empty) }, das_static("\"\""));
-            converter.addCtor(new TypeData() { type = nameof(String), ns = SystemNS }, das_raw_ctor(""));
+            var listTd = new TypeData() { type = "List`1", ns = CollectionNS };
+            converter.addMethod(listTd, "Add", das_method_fn("push"));
+            converter.addMethod(listTd, "Clear", das_method_fn("clear"));
+            converter.addMethod(listTd, "RemoveAt", das_method_fn("erase"));
+            converter.addMethod(listTd, "RemoveRange", das_method_fn("erase"));
+            converter.addMethod(listTd, "Remove", das_method_fn("remove_value"));
+            converter.addMethod(listTd, "Insert", das_method_fn_reverse_args("push"));
+            converter.addMethod(listTd, "Contains", das_method_fn("has_value"));
+            converter.addMethod(listTd, "IndexOf", das_method_fn("find_index"));
+            converter.addMethod(listTd, "Sort", das_method_noargs("sort"));
+            converter.addField(listTd, "Count", das_raw_member(" |> length()"));
+
+            var arrayTd = new TypeData() { type = "Array", ns = SystemNS };
+            converter.addField(arrayTd, nameof(Array.Length), das_raw_member(" |> length()"));
+
+            var stringTd = new TypeData() { type = nameof(String), ns = SystemNS };
+            converter.addCtor(stringTd, das_raw_ctor(""));
+            converter.addField(stringTd, nameof(String.Empty), das_static("\"\""));
+            converter.addMethod(stringTd, nameof(String.IsNullOrEmpty), das_fn("empty"));
 
             converter.addObjectMethod("ToString", das_ToString);
 
-            converter.addMethod(new TypeField() { type = nameof(Delegate), ns = SystemNS, field = "Invoke" }, das_method_fn("invoke"));
+            var delegateTd = new TypeData() { type = nameof(Delegate), ns = SystemNS };
+            converter.addMethod(delegateTd, "Invoke", das_method_fn("invoke"));
 
-            converter.renameType(new TypeData() { type = nameof(Action), ns = SystemNS }, das_type_name("lambda"));
-            converter.addOperatorOverload(new OperatorOverload() { type = nameof(Action), ns = SystemNS, kind = SyntaxKind.AddAssignmentExpression }, das_bin_operator_raw(" |> AddListener() <| "));
+            var actionTd = new TypeData() { type = nameof(Action), ns = SystemNS };
+            converter.renameType(actionTd, das_type_name("lambda"));
+            converter.addOperatorOverload(actionTd, SyntaxKind.AddAssignmentExpression, das_bin_operator_raw(" |> AddListener() <| "));
             // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
 
             // converter.renameUsing("System.Collections.Generic", das_using("require daslib/array_boost"));

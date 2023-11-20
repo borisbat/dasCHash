@@ -491,7 +491,7 @@ class Square : Shape
 	def override get__Area : double
 		return (side * side)
 	def override set__Area ( value:double ) : void
-		side = math::sqrt(value)
+		side = sqrt(value)
 
 	def override Hi : string
 		return "{Shape`Hi(self)}I am a square with side {side}"
@@ -507,7 +507,7 @@ class Cube : Shape
 	def override get__Area : double
 		return ((6d * side) * side)
 	def override set__Area ( value:double ) : void
-		side = math::sqrt((value / 6d))
+		side = sqrt((value / 6d))
 
 
 

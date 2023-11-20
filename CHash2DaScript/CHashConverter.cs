@@ -351,6 +351,10 @@ namespace CHash2Das
             onInvExpr[key] = inv;
         }
 
+        public void addMethod(TypeData typeInfo, string field, InvocationDelegate inv, bool override_ = false)
+        {
+            addMethod(new TypeField(typeInfo, field), inv, override_);
+        }
         public void addMethod(TypeField typeWithMethod, InvocationDelegate inv, bool override_ = false)
         {
             if (!override_ && methodInvExpr.ContainsKey(typeWithMethod))
@@ -399,6 +403,10 @@ namespace CHash2Das
             objectInvExpr[member] = inv;
         }
 
+        public void addSetField(TypeData typeData, string field, SetMemberAccessDelegate acc, bool override_ = false)
+        {
+            addSetField(new TypeField(typeData, field), acc, override_);
+        }
         public void addSetField(TypeField typeWithMethod, SetMemberAccessDelegate acc, bool override_ = false)
         {
             if (!override_ && setMemberAccessExpr.ContainsKey(typeWithMethod))
@@ -409,6 +417,10 @@ namespace CHash2Das
             setMemberAccessExpr[typeWithMethod] = acc;
         }
 
+        public void addField(TypeData typeData, string field, MemberAccessDelegate acc, bool override_ = false)
+        {
+            addField(new TypeField(typeData, field), acc, override_);
+        }
         public void addField(TypeField typeWithMethod, MemberAccessDelegate acc, bool override_ = false)
         {
             if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
@@ -526,6 +538,10 @@ namespace CHash2Das
             });
         }
 
+        public void addOperatorOverload(TypeData td, SyntaxKind kind, OperatorOverloadDelegate ood, bool override_ = false)
+        {
+            addOperatorOverload(new OperatorOverload(td, kind), ood, override_);
+        }
         public void addOperatorOverload(OperatorOverload operatorOverload, OperatorOverloadDelegate ood, bool override_ = false)
         {
             if (!override_ && operatorOverloads.ContainsKey(operatorOverload))
