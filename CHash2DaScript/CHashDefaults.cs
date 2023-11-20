@@ -312,6 +312,7 @@ namespace CHash2Das
             converter.addField(new TypeField() { type = "List`1", ns = CollectionNS, field = "Count" }, das_raw_member(" |> length()"));
 
             converter.addField(new TypeField() { type = nameof(Array), ns = SystemNS, field = nameof(Array.Length) }, das_raw_member(" |> length()"));
+            converter.addField(new TypeField() { type = nameof(String), ns = SystemNS, field = nameof(String.Empty) }, das_static("\"\""));
 
             converter.addObjectMethod("ToString", das_ToString);
 

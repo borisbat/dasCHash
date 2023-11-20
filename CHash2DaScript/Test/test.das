@@ -628,6 +628,9 @@ class Employee
 			self.alias = alias_
 
 
+		var s = ""
+		print("{s}\n")
+
 		var str = invokeMyAction() <| @(var val : int)
 			return "{val}"
 
@@ -662,6 +665,11 @@ class AsIsTester
 			print("{(p as Cube)}\n")
 
 
+class MyException : Exception
+	def MyException (var message : string)
+		pass
+
+
 class TestDeclarationExpression
 	def static set13 (var t : int&) : int
 		t = 13
@@ -673,6 +681,8 @@ class TestDeclarationExpression
 			var q : int
 			var z = (TestDeclarationExpression`set13(t) + TestDeclarationExpression`set13(q))
 			print("{t} - {q}\n")
+			panic("test exception")
+			panic("test my exception")
 		recover
 			// (Exception e)
 			print("{e}\n")

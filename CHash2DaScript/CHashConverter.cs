@@ -1680,6 +1680,11 @@ namespace CHash2Das
                         var typeInfo = semanticModel.GetTypeInfo(expression);
                         return typeInfo.Type?.BaseType?.Name ?? "object";
                     }
+                case SyntaxKind.PredefinedType:
+                    {
+                        var typeInfo = semanticModel.GetTypeInfo(expression);
+                        return onVarTypeSyntax(typeInfo.Type);
+                    }
                 default:
                     {
                         Fail($"unsupported ExpressionSyntax {expression.Kind()}");
@@ -2397,6 +2402,22 @@ namespace CHash2Das
                             result += $"{tabstr}finally\n{onBlockSyntax(tryStatement.Finally.Block)}";
                         return result;
                     }
+                case SyntaxKind.ThrowStatement:
+                    var expr2 = (statement as ThrowStatementSyntax).Expression;
+                    if (expr2 == null)
+                        return $"{tabstr}panic(\"error\")\n";
+
+                    if (expr2.Kind() == SyntaxKind.ObjectCreationExpression)
+                    {
+                        var oce = expr2 as ObjectCreationExpressionSyntax;
+                        var typeInfo = semanticModel.GetTypeInfo(oce);
+                        if (typeInfo.ConvertedType != null && typeInfo.ConvertedType.Name == "Exception")
+                        {
+                            var result = $"{tabstr}panic({onExpressionSyntax(oce.ArgumentList.Arguments[0].Expression)})\n";
+                            return result;
+                        }
+                    }
+                    return $"{tabstr}panic(\"{onExpressionSyntax(expr2).Replace("\"", "\\\"")}\")\n";
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";

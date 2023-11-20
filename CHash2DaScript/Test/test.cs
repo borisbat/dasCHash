@@ -749,6 +749,9 @@ namespace HelloWorld
                 this.alias = alias_;
             });
 
+            var s = string.Empty;
+            WriteLine(s);
+
             var str = invokeMyAction((int val) => { return val.ToString(); });
             Console.WriteLine(str);
 
@@ -786,6 +789,13 @@ namespace HelloWorld
         }
     }
 
+    class MyException : Exception
+    {
+        public MyException(string message) : base(message)
+        {
+        }
+    }
+
     class TestDeclarationExpression
     {
         static int set13(out int t)
@@ -800,6 +810,8 @@ namespace HelloWorld
             {
                 var z = set13(out int t) + set13(out int q);
                 Console.WriteLine($"{t} - {q}");
+                throw new Exception("test exception");
+                throw new MyException("test my exception");
             }
             catch (Exception e)
             {
