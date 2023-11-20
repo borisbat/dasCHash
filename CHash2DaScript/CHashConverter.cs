@@ -309,6 +309,7 @@ namespace CHash2Das
         public delegate string OperatorOverloadDelegate(CHashConverter converter, ExpressionSyntax expr);
         public delegate string TypeRenameDelegate(CHashConverter converter, TypeData ts);
         public delegate string UsingRenameDelegate(CHashConverter converter, string usingName);
+        public delegate string CtorDelegate(CHashConverter converter, ObjectCreationExpressionSyntax objCreation);
 
         Dictionary<string, InvocationDelegate> onInvExpr = new Dictionary<string, InvocationDelegate>();
         Dictionary<string, InvocationDelegate> objectInvExpr = new Dictionary<string, InvocationDelegate>();
@@ -320,6 +321,7 @@ namespace CHash2Das
         Dictionary<TypeData, TypeRenameDelegate> typesRename = new Dictionary<TypeData, TypeRenameDelegate>();
         HashSet<TypeData> dropPointersFlags = new HashSet<TypeData>();
         Dictionary<string, UsingRenameDelegate> usingRename = new Dictionary<string, UsingRenameDelegate>();
+        Dictionary<TypeData, CtorDelegate> ctorExpr = new Dictionary<TypeData, CtorDelegate>();
 
         struct TemplateInstance
         {
@@ -349,6 +351,10 @@ namespace CHash2Das
             onInvExpr[key] = inv;
         }
 
+        public void addMethod(TypeData typeInfo, string field, InvocationDelegate inv, bool override_ = false)
+        {
+            addMethod(new TypeField(typeInfo, field), inv, override_);
+        }
         public void addMethod(TypeField typeWithMethod, InvocationDelegate inv, bool override_ = false)
         {
             if (!override_ && methodInvExpr.ContainsKey(typeWithMethod))
@@ -397,6 +403,10 @@ namespace CHash2Das
             objectInvExpr[member] = inv;
         }
 
+        public void addSetField(TypeData typeData, string field, SetMemberAccessDelegate acc, bool override_ = false)
+        {
+            addSetField(new TypeField(typeData, field), acc, override_);
+        }
         public void addSetField(TypeField typeWithMethod, SetMemberAccessDelegate acc, bool override_ = false)
         {
             if (!override_ && setMemberAccessExpr.ContainsKey(typeWithMethod))
@@ -407,6 +417,10 @@ namespace CHash2Das
             setMemberAccessExpr[typeWithMethod] = acc;
         }
 
+        public void addField(TypeData typeData, string field, MemberAccessDelegate acc, bool override_ = false)
+        {
+            addField(new TypeField(typeData, field), acc, override_);
+        }
         public void addField(TypeField typeWithMethod, MemberAccessDelegate acc, bool override_ = false)
         {
             if (!override_ && memberAccessExpr.ContainsKey(typeWithMethod))
@@ -524,6 +538,10 @@ namespace CHash2Das
             });
         }
 
+        public void addOperatorOverload(TypeData td, SyntaxKind kind, OperatorOverloadDelegate ood, bool override_ = false)
+        {
+            addOperatorOverload(new OperatorOverload(td, kind), ood, override_);
+        }
         public void addOperatorOverload(OperatorOverload operatorOverload, OperatorOverloadDelegate ood, bool override_ = false)
         {
             if (!override_ && operatorOverloads.ContainsKey(operatorOverload))
@@ -532,6 +550,16 @@ namespace CHash2Das
                 return;
             }
             operatorOverloads[operatorOverload] = ood;
+        }
+
+        public void addCtor(TypeData typeData, CtorDelegate ctor, bool override_ = false)
+        {
+            if (!override_ && ctorExpr.ContainsKey(typeData))
+            {
+                Fail($"ctor {typeData} is already declared");
+                return;
+            }
+            ctorExpr[typeData] = ctor;
         }
 
         public string onExpressionArgumentSyntax(ExpressionSyntax expression)
@@ -1059,6 +1087,14 @@ namespace CHash2Das
 
         private string onObjectCreationExpression_ClassOrStruct(ObjectCreationExpressionSyntax oce, TypeInfo resType)
         {
+            if (ctorExpr.TryGetValue(new TypeData()
+            {
+                type = resType.Type.Name,
+                ns = resType.Type.ContainingNamespace?.ToDisplayString(),
+            }, out var ctor))
+            {
+                return ctor(this, oce);
+            }
             var init = "";
             if (oce.Initializer != null)
             {
@@ -1679,6 +1715,11 @@ namespace CHash2Das
                     {
                         var typeInfo = semanticModel.GetTypeInfo(expression);
                         return typeInfo.Type?.BaseType?.Name ?? "object";
+                    }
+                case SyntaxKind.PredefinedType:
+                    {
+                        var typeInfo = semanticModel.GetTypeInfo(expression);
+                        return onVarTypeSyntax(typeInfo.Type);
                     }
                 default:
                     {
@@ -2397,6 +2438,22 @@ namespace CHash2Das
                             result += $"{tabstr}finally\n{onBlockSyntax(tryStatement.Finally.Block)}";
                         return result;
                     }
+                case SyntaxKind.ThrowStatement:
+                    var expr2 = (statement as ThrowStatementSyntax).Expression;
+                    if (expr2 == null)
+                        return $"{tabstr}panic(\"error\")\n";
+
+                    if (expr2.Kind() == SyntaxKind.ObjectCreationExpression)
+                    {
+                        var oce = expr2 as ObjectCreationExpressionSyntax;
+                        var typeInfo = semanticModel.GetTypeInfo(oce);
+                        if (typeInfo.ConvertedType != null && typeInfo.ConvertedType.Name == "Exception")
+                        {
+                            var result = $"{tabstr}panic({onExpressionSyntax(oce.ArgumentList.Arguments[0].Expression)})\n";
+                            return result;
+                        }
+                    }
+                    return $"{tabstr}panic(\"{onExpressionSyntax(expr2).Replace("\"", "\\\"")}\")\n";
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
@@ -2542,7 +2599,7 @@ namespace CHash2Das
                         else if (!isAbstract)
                         {
                             needStorage = true;
-                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}`Storage\n";
+                            result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}__\n";
                         }
                     }
                     else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
@@ -2560,13 +2617,13 @@ namespace CHash2Das
                         else if (!isAbstract)
                         {
                             needStorage = true;
-                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}`Storage = value\n";
+                            result += $"{tabstr}\t{propertySyntax.Identifier.Text}__ = value\n";
                         }
                     }
                 }
                 if (needStorage)
                 {
-                    result += $"{tabstr}private {propertySyntax.Identifier.Text}`Storage : {ptype}";
+                    result += $"{tabstr}private {propertySyntax.Identifier.Text}__ : {ptype}";
                     if (propertySyntax.Initializer != null)
                         // TODO: use correct assignment operator
                         result += $" = {onExpressionSyntax(propertySyntax.Initializer.Value)}";

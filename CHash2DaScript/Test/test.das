@@ -408,24 +408,24 @@ class DefaultPerson
 	def operator . FirstName : string
 		return get__FirstName()
 	def get__FirstName : string
-		return FirstName`Storage
+		return FirstName__
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
 	def set__FirstName ( value:string ) : void
-		FirstName`Storage = value
-	private FirstName`Storage : string
+		FirstName__ = value
+	private FirstName__ : string
 
 class DefaultPersonWithInit
 	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
 	def get__FirstName : string
-		return FirstName`Storage
+		return FirstName__
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
 	def set__FirstName ( value:string ) : void
-		FirstName`Storage = value
-	private FirstName`Storage : string = "blahblah"
+		FirstName__ = value
+	private FirstName__ : string = "blahblah"
 
 class Person
 	// property FirstName : string
@@ -491,7 +491,7 @@ class Square : Shape
 	def override get__Area : double
 		return (side * side)
 	def override set__Area ( value:double ) : void
-		side = math::sqrt(value)
+		side = sqrt(value)
 
 	def override Hi : string
 		return "{Shape`Hi(self)}I am a square with side {side}"
@@ -507,7 +507,7 @@ class Cube : Shape
 	def override get__Area : double
 		return ((6d * side) * side)
 	def override set__Area ( value:double ) : void
-		side = math::sqrt((value / 6d))
+		side = sqrt((value / 6d))
 
 
 
@@ -628,6 +628,12 @@ class Employee
 			self.alias = alias_
 
 
+		var s = ""
+		print("{s}\n")
+
+		var s2 = ("test")
+		print("{s2}\n")
+
 		var str = invokeMyAction() <| @(var val : int)
 			return "{val}"
 
@@ -662,6 +668,11 @@ class AsIsTester
 			print("{(p as Cube)}\n")
 
 
+class MyException : Exception
+	def MyException (var message : string)
+		pass
+
+
 class TestDeclarationExpression
 	def static set13 (var t : int&) : int
 		t = 13
@@ -673,6 +684,8 @@ class TestDeclarationExpression
 			var q : int
 			var z = (TestDeclarationExpression`set13(t) + TestDeclarationExpression`set13(q))
 			print("{t} - {q}\n")
+			panic("test exception")
+			panic("test my exception")
 		recover
 			// (Exception e)
 			print("{e}\n")
