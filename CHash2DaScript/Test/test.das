@@ -612,6 +612,9 @@ class Employee
 		self.name = name_
 		self.alias = alias_
 
+	def DelegateListener : void
+		pass
+
 	def Set (var name_ : string; var alias_ : string) : void
 		var a : lambda <- @ <| ()
 			self.name = name_
@@ -621,6 +624,7 @@ class Employee
 			self.name = name_
 			self.alias = alias_
 
+		a |> AddListener() <| @() { self->DelegateListener(); }
 		a |> invoke()
 
 		invokeMe() <| @()

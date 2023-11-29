@@ -237,7 +237,7 @@ namespace CHash2Das
             {
                 var binop = get_left_right(expr);
                 var left = converter.onExpressionSyntax(binop.Left);
-                var right = converter.onExpressionSyntax(binop.Right);
+                var right = converter.onExpressionArgumentSyntax(binop.Right);
                 return $"{left}{fnName}{right}";
             };
             return res;

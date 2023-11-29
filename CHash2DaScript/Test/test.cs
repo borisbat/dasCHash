@@ -729,6 +729,11 @@ namespace HelloWorld
             this.name = name_;
             this.alias = alias_;
         }
+
+        void DelegateListener()
+        {
+
+        }
         public void Set(string name_, string alias_)
         {
             var a = delegate ()
@@ -741,6 +746,7 @@ namespace HelloWorld
                 this.name = name_;
                 this.alias = alias_;
             };
+            a += DelegateListener;
             a.Invoke();
 
             invokeMe(delegate ()
