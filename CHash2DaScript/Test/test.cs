@@ -11,7 +11,12 @@ namespace HelloWorld
         public int x;
     };
 
-    class Foo
+    interface IFoo
+    {
+        void bar();
+    }
+
+    class Foo : IFoo
     {
         static int count = 13;
 
