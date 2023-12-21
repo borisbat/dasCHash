@@ -16,7 +16,10 @@ struct TestStruct
 	x : int
 
 
-class Foo
+class IFoo
+	def abstract bar : void
+
+class Foo : IFoo
 	static count : int = 13
 
 	a : int = 13

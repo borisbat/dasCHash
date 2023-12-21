@@ -1908,6 +1908,70 @@ namespace CHash2Das
             return result;
         }
 
+        string onInterfaceDeclaration(InterfaceDeclarationSyntax classDeclaration)
+        {
+            BaseListSyntax? baseList = classDeclaration.BaseList;
+            var paramNames = new string[0];
+            var dryRun = false;
+            var paramsVal = paramNames.Length > 0 ? $"_{string.Join("_", paramNames)}" : classDeclaration.TypeParameterList != null ? "_" + classDeclaration.TypeParameterList.Parameters.Select(p => p.Identifier.Text).Aggregate((current, next) => $"{current}_{next}") : "";
+            var parentTypeName = baseList != null ? baseList.Types[0].ToString() : "";
+            var parentType = baseList != null ? semanticModel.GetTypeInfo(baseList.Types[0].Type) : default;
+            if (parentType.Type != null)
+            {
+                var td = new TypeData()
+                {
+                    type = parentTypeName,
+                    ns = parentType.Type.ContainingNamespace?.ToString() ?? ""
+                };
+                if (typesRename.TryGetValue(td, out var rename))
+                {
+                    parentTypeName = rename(this, td);
+                }
+            }
+
+            var parent = baseList != null ? $" : {parentTypeName}" : "";
+            var result = $"class {classDeclaration.Identifier}{paramsVal}{parent}\n";
+            if (instantiatedTemplates.Contains(result))
+                return "";
+
+            if (!dryRun)
+            {
+                instantiatedTemplates.Add(result);
+                dummyTypes.Remove(new TypeData { type = classDeclaration.Identifier.ToString(), ns = parentNamespace(classDeclaration) });
+            }
+            currentClassParams.Push(paramNames);
+            var paramsData = new List<TypeData>();
+            if (paramNames.Length > 0 && classDeclaration.TypeParameterList != null)
+            {
+                var idx = 0;
+                foreach (TypeParameterSyntax param in classDeclaration.TypeParameterList.Parameters)
+                {
+                    var typeData = new TypeData { type = param.Identifier.Text, ns = classDeclaration.Identifier.ToString() };
+                    paramsData.Add(typeData);
+                    var newName = paramNames[idx++];
+                    renameType(typeData, (CHashConverter converter, TypeData ts) =>
+                    {
+                        return newName;
+                    }, true);
+                }
+            }
+            tabs++;
+            TextSpan prevSpan = new TextSpan(classDeclaration.Span.Start, 1);
+            foreach (MemberDeclarationSyntax membersDeclaration in classDeclaration.Members)
+            {
+                InsertComments(ref result, prevSpan, membersDeclaration.Span, membersDeclaration.SyntaxTree);
+                result += onMemberDeclaration(membersDeclaration) + "\n";
+                prevSpan = membersDeclaration.Span;
+            }
+            tabs--;
+            foreach (var param in paramsData)
+            {
+                removeRenameType(param);
+            }
+            currentClassParams.Pop();
+            return result;
+        }
+
         string onStructDeclaration(StructDeclarationSyntax classDeclaration)
         {
             var result = $"struct {classDeclaration.Identifier}\n";
@@ -2008,6 +2072,8 @@ namespace CHash2Das
                 prefix += "static ";
             if (methodDeclaration.Modifiers.Any(mod => mod.Kind() == SyntaxKind.OverrideKeyword))
                 prefix += "override ";
+            if (methodDeclaration.Body == null && methodDeclaration.ExpressionBody == null)
+                prefix += "abstract ";
             IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
             var resType = onVarTypeSyntax(methodDeclaration.ReturnType);
             var annotations = "";
@@ -2029,8 +2095,6 @@ namespace CHash2Das
                 result += $"\n{onBlockSyntax(methodDeclaration.Body)}";
             else if (methodDeclaration.ExpressionBody != null)
                 result += $"\n{tabstr}\t{onExpressionSyntax(methodDeclaration.ExpressionBody.Expression)}\n";
-            else
-                result += $"\n{tabstr}\tpass\n";
             return result;
         }
 
@@ -2680,6 +2744,8 @@ namespace CHash2Das
                     return onNamespaceDeclaration(member as NamespaceDeclarationSyntax);
                 case SyntaxKind.ClassDeclaration:
                     return onClassDeclaration(member as ClassDeclarationSyntax);
+                case SyntaxKind.InterfaceDeclaration:
+                    return onInterfaceDeclaration(member as InterfaceDeclarationSyntax);
                 case SyntaxKind.MethodDeclaration:
                     return onMethodDeclaration(member as MethodDeclarationSyntax);
                 case SyntaxKind.FieldDeclaration:
