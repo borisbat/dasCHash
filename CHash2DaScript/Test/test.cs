@@ -499,6 +499,22 @@ namespace HelloWorld
             set => _firstName = value;
         }
         private string _firstName;
+        private int _age;
+
+        public int Age
+        {
+            get => _age;
+            set => _age = value;
+        }
+
+        void testAge()
+        {
+            Age = 13;
+            Console.WriteLine(Age);
+            Age += 1;
+            Age /= 2;
+            WriteLine(Age);
+        }
     }
 
     class Goo

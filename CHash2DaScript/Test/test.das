@@ -457,6 +457,25 @@ class PersonWithArrows	// new style operator
 
 	private _firstName : string
 
+	private _age : int
+
+	// property Age : int
+	def operator . Age : int
+		return get__Age()
+	def get__Age : int
+		return _age
+	def operator . Age := ( value:int )
+		set__Age(value)
+	def set__Age ( value:int ) : void
+		_age = value
+
+	def testAge : void
+		Age := 13
+		print("{Age}\n")
+		Age := Age + 1
+		Age := Age / 2
+		print("{Age}\n")
+
 
 class Goo
 	def static testProperty : void

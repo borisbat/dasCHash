@@ -1298,9 +1298,13 @@ namespace CHash2Das
 
         bool isProperty(ExpressionSyntax expression)
         {
-            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
-            var memberAccess = expression as MemberAccessExpressionSyntax;
-            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            if (expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
+            {
+                var memberAccess = expression as MemberAccessExpressionSyntax;
+                ISymbol propAccessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+                return propAccessedSymbol is IPropertySymbol;
+            }
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(expression).Symbol;
             return accessedSymbol is IPropertySymbol;
         }
 
