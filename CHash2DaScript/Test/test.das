@@ -407,55 +407,89 @@ class HelloProgram
 
 
 class DefaultPerson
-	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
+
 	def get__FirstName : string
 		return FirstName__
+
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
+
 	def set__FirstName ( value:string ) : void
 		FirstName__ = value
+
 	private FirstName__ : string
 
 class DefaultPersonWithInit
-	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
+
 	def get__FirstName : string
 		return FirstName__
+
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
+
 	def set__FirstName ( value:string ) : void
 		FirstName__ = value
+
 	private FirstName__ : string = "blahblah"
 
 class Person
-	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
+
 	def get__FirstName : string
 		return _firstName
+
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
+
 	def set__FirstName ( value:string ) : void
 		_firstName = value
+
 
 	private _firstName : string
 
 
 class PersonWithArrows	// new style operator
-	// property FirstName : string
 	def operator . FirstName : string
 		return get__FirstName()
+
 	def get__FirstName : string
 		return _firstName
+
 	def operator . FirstName := ( value:string )
 		set__FirstName(value)
+
 	def set__FirstName ( value:string ) : void
 		_firstName = value
 
+
 	private _firstName : string
+
+	private _age : int
+
+	def operator . Age : int
+		return get__Age()
+
+	def get__Age : int
+		return _age
+
+	def operator . Age := ( value:int )
+		set__Age(value)
+
+	def set__Age ( value:int ) : void
+		_age = value
+
+
+	def testAge : void
+		Age := 13
+		print("{Age}\n")
+		Age := Age + 1
+		Age := Age / 2
+		print("{Age}\n")
 
 
 class Goo
@@ -472,13 +506,16 @@ class Goo
 
 
 class Shape
-	// property Area : double
 	def operator . Area : double
 		return get__Area()
+
 	def abstract get__Area : double
+
 	def operator . Area := ( value:double )
 		set__Area(value)
+
 	def abstract set__Area ( value:double ) : void
+
 
 	def Hi : string
 		return "Hi. I am a shape."
@@ -490,11 +527,12 @@ class Square : Shape
 	def Square (var s : double)
 		side = s
 
-	// property Area : double
 	def override get__Area : double
 		return (side * side)
+
 	def override set__Area ( value:double ) : void
 		side = sqrt(value)
+
 
 	def override Hi : string
 		return "{Shape`Hi(self)}I am a square with side {side}"
@@ -506,11 +544,12 @@ class Cube : Shape
 	def Cube (var s : double)
 		side = s
 
-	// property Area : double
 	def override get__Area : double
 		return ((6d * side) * side)
+
 	def override set__Area ( value:double ) : void
 		side = sqrt((value / 6d))
+
 
 
 
@@ -564,11 +603,12 @@ class SubContTest : ContTest
 
 
 class StaticPerson
-	// static property FirstName : string
 	def static get__FirstName : string
 		return _firstName
+
 	def static set__FirstName ( value:string ) : void
 		_firstName = value
+
 
 	static private _firstName : string
 

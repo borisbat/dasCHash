@@ -1298,9 +1298,13 @@ namespace CHash2Das
 
         bool isProperty(ExpressionSyntax expression)
         {
-            if (expression.Kind() != SyntaxKind.SimpleMemberAccessExpression) return false;
-            var memberAccess = expression as MemberAccessExpressionSyntax;
-            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+            if (expression.Kind() == SyntaxKind.SimpleMemberAccessExpression)
+            {
+                var memberAccess = expression as MemberAccessExpressionSyntax;
+                ISymbol propAccessedSymbol = semanticModel.GetSymbolInfo(memberAccess).Symbol;
+                return propAccessedSymbol is IPropertySymbol;
+            }
+            ISymbol accessedSymbol = semanticModel.GetSymbolInfo(expression).Symbol;
             return accessedSymbol is IPropertySymbol;
         }
 
@@ -2642,7 +2646,7 @@ namespace CHash2Das
             string abstractMod = isAbstract ? "abstract " : "";
             string staticMod = isStatic ? "static " : "";
             string overrideMod = isOverride ? "override " : "";
-            string result = $"{tabstr}// {staticMod}property {propertySyntax.Identifier.Text} : {ptype}\n";
+            string result = "";
             if (propertySyntax.AccessorList != null)
             {
                 bool needStorage = false;
@@ -2653,7 +2657,7 @@ namespace CHash2Das
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
-                            result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n";
+                            result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n\n";
                         }
                         result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
                         if (accessor.Body != null)
@@ -2665,13 +2669,14 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\treturn {propertySyntax.Identifier.Text}__\n";
                         }
+                        result += "\n";
                     }
                     else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
                     {
                         if (!isOverride && !isStatic)
                         {
                             result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} := ( value:{ptype} )\n";
-                            result += $"{tabstr}\tset__{propertySyntax.Identifier.Text}(value)\n";
+                            result += $"{tabstr}\tset__{propertySyntax.Identifier.Text}(value)\n\n";
                         }
                         result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}set__{propertySyntax.Identifier.Text} ( value:{ptype} ) : void\n";
                         if (accessor.Body != null)
@@ -2683,6 +2688,7 @@ namespace CHash2Das
                             needStorage = true;
                             result += $"{tabstr}\t{propertySyntax.Identifier.Text}__ = value\n";
                         }
+                        result += "\n";
                     }
                 }
                 if (needStorage)
