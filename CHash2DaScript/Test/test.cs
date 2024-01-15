@@ -864,7 +864,7 @@ namespace HelloWorld
         void testObject()
         {
             object a = 13;
-            List<object> b = null;
+            List<object> b = new List<object> { 13, "test", true };
             WriteLine(a);
             WriteLine(b);
         }

@@ -1209,6 +1209,15 @@ namespace CHash2Das
                             result += $"{kv}; ";
                         }
                     }
+                    else if (element.Kind() == SyntaxKind.StringLiteralExpression
+                        || element.Kind() == SyntaxKind.NumericLiteralExpression
+                        || element.Kind() == SyntaxKind.NullLiteralExpression
+                        || element.Kind() == SyntaxKind.Utf8StringLiteralExpression
+                        || element.Kind() == SyntaxKind.TrueLiteralExpression
+                        || element.Kind() == SyntaxKind.FalseLiteralExpression)
+                    {
+                        result += $"{onExpressionSyntax(element)}; ";
+                    }
                     else
                     {
                         Fail($"expecting complex initialization in {element.Kind()}");
