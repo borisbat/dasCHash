@@ -745,6 +745,12 @@ class TestDeclarationExpression
 		yield "{1}"
 		yield "{true}"
 
+	def testObject : void
+		var a : any? = 13
+		var b : array<any>? = new [{any? 13; "test"; true; }]
+		print("{a}\n")
+		print("{b}\n")
+
 
 class Vec_int
 	x : int

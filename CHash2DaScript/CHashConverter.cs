@@ -220,6 +220,7 @@ namespace CHash2Das
                             case "ushort": return "uint16";
                             case "long": return "int64";
                             case "ulong": return "uint64";
+                            case "object": return "any";
                             default:
                                 Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";
@@ -1207,6 +1208,15 @@ namespace CHash2Das
                             Fail($"expecting key => value in {kv}");
                             result += $"{kv}; ";
                         }
+                    }
+                    else if (element.Kind() == SyntaxKind.StringLiteralExpression
+                        || element.Kind() == SyntaxKind.NumericLiteralExpression
+                        || element.Kind() == SyntaxKind.NullLiteralExpression
+                        || element.Kind() == SyntaxKind.Utf8StringLiteralExpression
+                        || element.Kind() == SyntaxKind.TrueLiteralExpression
+                        || element.Kind() == SyntaxKind.FalseLiteralExpression)
+                    {
+                        result += $"{onExpressionSyntax(element)}; ";
                     }
                     else
                     {
