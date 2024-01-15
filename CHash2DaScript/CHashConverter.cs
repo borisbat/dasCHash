@@ -220,6 +220,7 @@ namespace CHash2Das
                             case "ushort": return "uint16";
                             case "long": return "int64";
                             case "ulong": return "uint64";
+                            case "object": return "any";
                             default:
                                 Fail($"unknown PredefinedType keyword {ptype.Keyword}");
                                 return $"{ptype.Keyword.Text}";

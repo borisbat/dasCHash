@@ -860,5 +860,13 @@ namespace HelloWorld
             yield return 1.ToString();
             yield return true.ToString();
         }
+
+        void testObject()
+        {
+            object a = 13;
+            List<object> b = null;
+            WriteLine(a);
+            WriteLine(b);
+        }
     }
 }
