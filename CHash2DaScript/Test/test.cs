@@ -865,8 +865,8 @@ namespace HelloWorld
         {
             object a = 13;
             List<object> b = new List<object> { 13, "test", true };
-            WriteLine(a);
-            WriteLine(b);
+            WriteLine(a);;
+            WriteLine(b);;
         }
     }
 }
