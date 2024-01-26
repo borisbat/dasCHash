@@ -2532,6 +2532,8 @@ namespace CHash2Das
                         }
                     }
                     return $"{tabstr}panic(\"{onExpressionSyntax(expr2).Replace("\"", "\\\"")}\")\n";
+                case SyntaxKind.EmptyStatement: // extra ;
+                    return "";
                 default:
                     Fail($"unsupported StatementSyntax {statement.Kind()}");
                     return $"{statement};";
