@@ -512,6 +512,10 @@ namespace HelloWorld
             Age = 13;
             Console.WriteLine(Age);
             Age += 1;
+            Age ++;
+            Age --;
+            --Age;
+            ++Age;
             Age /= 2;
             WriteLine(Age);
         }

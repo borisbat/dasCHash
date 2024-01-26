@@ -1532,12 +1532,36 @@ namespace CHash2Das
                 case SyntaxKind.PreDecrementExpression:
                     {
                         var preop = expression as PrefixUnaryExpressionSyntax;
+                        if (isProperty(preop.Operand))
+                        {
+                            var op = preop.OperatorToken.Text;
+                            var cutop = op.Substring(0, op.Length - 1);
+                            if (isStaticProperty(preop.Operand, "set__", out string propName))
+                            {
+                                isStaticProperty(preop.Operand, "get__", out string getPropName);
+                                return $"{propName}({getPropName} {cutop} 1)";
+                            }
+                            else
+                                return $"{onExpressionSyntax(preop.Operand)} := {onExpressionSyntax(preop.Operand)} {cutop} 1";
+                        }
                         return $"{preop.OperatorToken.Value}{onExpressionSyntax(preop.Operand)}";
                     }
                 case SyntaxKind.PostIncrementExpression:
                 case SyntaxKind.PostDecrementExpression:
                     {
                         var postop = expression as PostfixUnaryExpressionSyntax;
+                        if (isProperty(postop.Operand))
+                        {
+                            var op = postop.OperatorToken.Text;
+                            var cutop = op.Substring(0, op.Length - 1);
+                            if (isStaticProperty(postop.Operand, "set__", out string propName))
+                            {
+                                isStaticProperty(postop.Operand, "get__", out string getPropName);
+                                return $"{propName}({getPropName} {cutop} 1)";
+                            }
+                            else
+                                return $"{onExpressionSyntax(postop.Operand)} := {onExpressionSyntax(postop.Operand)} {cutop} 1";
+                        }
                         return $"{onExpressionSyntax(postop.Operand)}{postop.OperatorToken.Value}";
                     }
                 case SyntaxKind.InterpolatedStringExpression:

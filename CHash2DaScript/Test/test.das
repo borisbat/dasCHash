@@ -488,6 +488,10 @@ class PersonWithArrows	// new style operator
 		Age := 13
 		print("{Age}\n")
 		Age := Age + 1
+		Age := Age + 1
+		Age := Age - 1
+		Age := Age - 1
+		Age := Age + 1
 		Age := Age / 2
 		print("{Age}\n")
 
