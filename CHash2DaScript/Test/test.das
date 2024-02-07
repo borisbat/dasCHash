@@ -645,7 +645,7 @@ class Employee
 
 	private name : string
 
-	def invokeMe (var action : lambda) : void
+	def invokeMe (var action : lambda<void>) : void
 		if action != null
 			action.Invoke()
 
@@ -663,7 +663,7 @@ class Employee
 		pass
 
 	def Set (var name_ : string; var alias_ : string) : void
-		var a : lambda <- @ <| ()
+		var a : lambda<void> <- @ <| ()
 			self.name = name_
 			self.alias = alias_
 

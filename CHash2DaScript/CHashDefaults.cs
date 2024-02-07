@@ -430,7 +430,7 @@ namespace CHash2Das
             converter.addMethod(delegateTd, "Invoke", das_method_fn("invoke"));
 
             var actionTd = new TypeData() { type = nameof(Action), ns = SystemNS };
-            converter.renameType(actionTd, das_type_name("lambda"));
+            converter.renameType(actionTd, das_type_name("lambda<void>"));
             converter.addOperatorOverload(actionTd, SyntaxKind.AddAssignmentExpression, das_bin_operator_raw(" |> AddListener() <| "));
             // converter.instantiateTemplate(new TypeData() { type = "Vec", ns = "HelloWorld" }, new string[] { "int" });
 
