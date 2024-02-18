@@ -62,7 +62,7 @@ namespace CHash2Das
                 var td = new TypeData()
                 {
                     type = tps.Name,
-                    ns = tps.DeclaringType.Name,
+                    ns = tps.DeclaringType?.Name,
                 };
                 if (typesRename.TryGetValue(td, out var rename))
                 {
@@ -105,7 +105,7 @@ namespace CHash2Das
                 var td = new TypeData()
                 {
                     type = tps.Name,
-                    ns = tps.DeclaringType.Name,
+                    ns = tps.DeclaringType?.Name,
                 };
                 if (typesRename.TryGetValue(td, out var rename))
                 {
@@ -1758,6 +1758,12 @@ namespace CHash2Das
                     {
                         var typeInfo = semanticModel.GetTypeInfo(expression);
                         return onVarTypeSyntax(typeInfo.Type);
+                    }
+                case SyntaxKind.QueryExpression:
+                    {
+                        // skip, just print as is
+                        var tabstr = new string('\t', tabs);
+                        return $"{tabstr}{expression.ToString()}";
                     }
                 default:
                     {
