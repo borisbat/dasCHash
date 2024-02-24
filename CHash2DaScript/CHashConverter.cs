@@ -62,7 +62,7 @@ namespace CHash2Das
                 var td = new TypeData()
                 {
                     type = tps.Name,
-                    ns = tps.DeclaringType.Name,
+                    ns = tps.DeclaringType?.Name,
                 };
                 if (typesRename.TryGetValue(td, out var rename))
                 {
@@ -105,7 +105,7 @@ namespace CHash2Das
                 var td = new TypeData()
                 {
                     type = tps.Name,
-                    ns = tps.DeclaringType.Name,
+                    ns = tps.DeclaringType?.Name,
                 };
                 if (typesRename.TryGetValue(td, out var rename))
                 {
@@ -1759,6 +1759,12 @@ namespace CHash2Das
                         var typeInfo = semanticModel.GetTypeInfo(expression);
                         return onVarTypeSyntax(typeInfo.Type);
                     }
+                case SyntaxKind.QueryExpression:
+                    {
+                        // skip, just print as is
+                        var tabstr = new string('\t', tabs);
+                        return $"{tabstr}{expression.ToString()}";
+                    }
                 default:
                     {
                         Fail($"unsupported ExpressionSyntax {expression.Kind()}");
@@ -2692,10 +2698,10 @@ namespace CHash2Das
                     {
                         if (!isOverride && !isStatic)
                         {
-                            result += $"{tabstr}def operator . {propertySyntax.Identifier.Text} : {ptype}\n";
+                            result += $"{tabstr}def const operator . {propertySyntax.Identifier.Text} : {ptype}\n";
                             result += $"{tabstr}\treturn get__{propertySyntax.Identifier.Text}()\n\n";
                         }
-                        result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}get__{propertySyntax.Identifier.Text} : {ptype}\n";
+                        result += $"{tabstr}def {abstractMod}{overrideMod}{staticMod}const get__{propertySyntax.Identifier.Text} : {ptype}\n";
                         if (accessor.Body != null)
                             result += onBlockSyntax(accessor.Body);
                         else if (accessor.ExpressionBody != null)

@@ -407,10 +407,10 @@ class HelloProgram
 
 
 class DefaultPerson
-	def operator . FirstName : string
+	def const operator . FirstName : string
 		return get__FirstName()
 
-	def get__FirstName : string
+	def const get__FirstName : string
 		return FirstName__
 
 	def operator . FirstName := ( value:string )
@@ -422,10 +422,10 @@ class DefaultPerson
 	private FirstName__ : string
 
 class DefaultPersonWithInit
-	def operator . FirstName : string
+	def const operator . FirstName : string
 		return get__FirstName()
 
-	def get__FirstName : string
+	def const get__FirstName : string
 		return FirstName__
 
 	def operator . FirstName := ( value:string )
@@ -437,10 +437,10 @@ class DefaultPersonWithInit
 	private FirstName__ : string = "blahblah"
 
 class Person
-	def operator . FirstName : string
+	def const operator . FirstName : string
 		return get__FirstName()
 
-	def get__FirstName : string
+	def const get__FirstName : string
 		return _firstName
 
 	def operator . FirstName := ( value:string )
@@ -454,10 +454,10 @@ class Person
 
 
 class PersonWithArrows	// new style operator
-	def operator . FirstName : string
+	def const operator . FirstName : string
 		return get__FirstName()
 
-	def get__FirstName : string
+	def const get__FirstName : string
 		return _firstName
 
 	def operator . FirstName := ( value:string )
@@ -471,10 +471,10 @@ class PersonWithArrows	// new style operator
 
 	private _age : int
 
-	def operator . Age : int
+	def const operator . Age : int
 		return get__Age()
 
-	def get__Age : int
+	def const get__Age : int
 		return _age
 
 	def operator . Age := ( value:int )
@@ -510,10 +510,10 @@ class Goo
 
 
 class Shape
-	def operator . Area : double
+	def const operator . Area : double
 		return get__Area()
 
-	def abstract get__Area : double
+	def abstract const get__Area : double
 
 	def operator . Area := ( value:double )
 		set__Area(value)
@@ -531,7 +531,7 @@ class Square : Shape
 	def Square (var s : double)
 		side = s
 
-	def override get__Area : double
+	def override const get__Area : double
 		return (side * side)
 
 	def override set__Area ( value:double ) : void
@@ -548,7 +548,7 @@ class Cube : Shape
 	def Cube (var s : double)
 		side = s
 
-	def override get__Area : double
+	def override const get__Area : double
 		return ((6d * side) * side)
 
 	def override set__Area ( value:double ) : void
@@ -607,7 +607,7 @@ class SubContTest : ContTest
 
 
 class StaticPerson
-	def static get__FirstName : string
+	def static const get__FirstName : string
 		return _firstName
 
 	def static set__FirstName ( value:string ) : void
